@@ -73,6 +73,14 @@
             background-color: #d35400;
         }
 
+        .btn-danger {
+            background-color: #ef4444;
+            color: #ffffff;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
         /* ==========================================
            2. 頂部大圖橫幅 (Banner / Hero Section)
            ========================================== */
@@ -405,6 +413,68 @@
         }
 
         /* ==========================================
+           3-2. 購物車與結帳彈跳視窗
+           ========================================== */
+        .cart-modal {
+            background: #ffffff;
+            width: 100%;
+            max-width: 650px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .cart-items-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8fafc;
+        }
+
+        .cart-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        .cart-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .checkout-form-group {
+            margin-bottom: 12px;
+        }
+
+        .checkout-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .checkout-form-group input, 
+        .checkout-form-group select, 
+        .checkout-form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* ==========================================
            4. 水電弱電工程與預約區塊
            ========================================== */
         .toggle-service-container {
@@ -718,12 +788,19 @@
         }
 
         /* ==========================================
-           7. 右下角懸浮會員按鈕與彈出視窗 (Floating Auth Widget)
+           7. 右下角懸浮按鈕與彈出視窗 (Floating Widgets)
            ========================================== */
-        .floating-auth-btn {
+        .floating-container {
             position: fixed;
             bottom: 30px;
             right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 999;
+        }
+
+        .floating-btn {
             width: 60px;
             height: 60px;
             background-color: #0066cc;
@@ -734,18 +811,33 @@
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
             cursor: pointer;
-            z-index: 999;
             transition: background-color 0.2s, transform 0.2s;
             font-size: 24px;
-            position: fixed;
+            position: relative;
+            border: none;
         }
 
-        .floating-auth-btn.logged-in {
+        .floating-btn.logged-in {
             background-color: #10b981; /* 已登入顯示綠色 */
         }
 
-        .floating-auth-btn:hover {
+        .floating-btn:hover {
             transform: scale(1.08);
+        }
+
+        /* 購物車數量紅點徽章 */
+        .cart-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background-color: #ef4444;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
         }
 
         .auth-modal-overlay {
@@ -1166,12 +1258,71 @@
     </footer>
 
     <!-- ==========================================
-       右下角會員登入/註冊浮動按鈕與彈出視窗
+       右下角懸浮按鈕區 (購物車 + 會員中心)
        ========================================== -->
-    <div class="floating-auth-btn" id="floatingAuthBtn" onclick="handleFloatingBtnClick()" title="會員中心">
-        👤
+    <div class="floating-container">
+        <!-- 購物車按鈕 (附帶數量小紅點) -->
+        <button type="button" class="floating-btn" id="floatingCartBtn" onclick="openCartModal()" title="檢視購物車">
+            🛒
+            <span class="cart-badge" id="cartBadge">0</span>
+        </button>
+
+        <!-- 會員中心按鈕 -->
+        <button type="button" class="floating-btn" id="floatingAuthBtn" onclick="handleFloatingBtnClick()" title="會員登入">
+            👤
+        </button>
     </div>
 
+    <!-- 購物車與填寫資料送出訂單視窗 -->
+    <div class="auth-modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
+        <div class="cart-modal" onclick="event.stopPropagation()">
+            <div class="auth-modal-header">
+                <h3>🛒 您的購物車清單與結帳</h3>
+                <button class="auth-close-btn" onclick="closeCartModal()">×</button>
+            </div>
+            <div class="auth-modal-body">
+                <!-- 購物車商品清單項目 -->
+                <div class="cart-items-list" id="cartItemsListContainer">
+                    <p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>
+                </div>
+                <div style="text-align: right; font-size: 16px; font-weight: bold; color: #e67e22; margin-bottom: 20px;" id="cartTotalPriceSummary">
+                    總計金額：NT$ 0
+                </div>
+
+                <!-- 填寫收件與訂單資料給後台 -->
+                <h4 style="font-size: 15px; color: #1e293b; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">填寫收件與訂單資料</h4>
+                <form onsubmit="submitOrderToBackend(event)">
+                    <div class="checkout-form-group">
+                        <label>收件人姓名</label>
+                        <input type="text" id="orderReceiverName" placeholder="請輸入收件人真實姓名" required>
+                    </div>
+                    <div class="checkout-form-group">
+                        <label>聯絡電話</label>
+                        <input type="tel" id="orderReceiverPhone" placeholder="0912-345-678" required>
+                    </div>
+                    <div class="checkout-form-group">
+                        <label>收件地址 / 寄送超商</label>
+                        <input type="text" id="orderReceiverAddress" placeholder="請輸入完整收件地址" required>
+                    </div>
+                    <div class="checkout-form-group">
+                        <label>付款方式</label>
+                        <select id="orderPaymentMethod">
+                            <option value="貨到付款">貨到付款</option>
+                            <option value="ATM 轉帳">ATM 轉帳匯款</option>
+                            <option value="線上信用卡">線上信用卡支付</option>
+                        </select>
+                    </div>
+                    <div class="checkout-form-group">
+                        <label>備註事項</label>
+                        <textarea id="orderNote" rows="2" placeholder="是否有特殊配送需求或交代事項..."></textarea>
+                    </div>
+                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">確認送出訂單給後台</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 會員中心彈出視窗 -->
     <div class="auth-modal-overlay" id="authModalOverlay" onclick="closeAuthModal(event)">
         <div class="auth-modal" onclick="event.stopPropagation()">
             <div class="auth-modal-header">
@@ -1281,7 +1432,7 @@
         </div>
     </div>
 
-    <!-- JavaScript 互動與動態熱銷排序邏輯 -->
+    <!-- JavaScript 互動與購物車、結帳邏輯 -->
     <script>
         const defaultProducts = [
             {
@@ -1356,7 +1507,10 @@
         }
 
         let selectedProductForModal = null;
-        let selectedSpecPrice = 0; // 記錄目前選擇規格的價格
+        let selectedSpecPrice = 0; 
+
+        // 全域購物車陣列
+        let cartItems = [];
 
         // 全域登入狀態變數
         let isLoggedIn = false;
@@ -1364,6 +1518,7 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             renderProducts('all');
+            updateCartBadge();
         });
 
         function filterCategory(categoryName, btnElement) {
@@ -1389,7 +1544,6 @@
             filtered.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
-                // 檢查是否登入，未登入則提示並開啟登入視窗
                 card.onclick = () => {
                     if (!isLoggedIn) {
                         alert('⚠️ 瀏覽商品與加入購物車功能需要先登入會員帳號！');
@@ -1419,7 +1573,7 @@
         }
 
         /* ==========================================
-           商城商品彈跳視窗與動態切換價格邏輯
+           商城商品彈跳視窗與購物車邏輯
            ========================================== */
         function openShopModal(product) {
             selectedProductForModal = product;
@@ -1429,7 +1583,6 @@
             document.getElementById('modalProdDesc').textContent = product.description || "暫無詳細介紹";
             document.getElementById('modalQtyInput').value = 1;
 
-            // 動態渲染規格按鈕
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
 
@@ -1438,7 +1591,6 @@
                 specs = [{ name: '標準規格', price: product.price }];
             }
 
-            // 預設選中第一個規格並設定其價格
             selectedSpecPrice = specs[0].price !== undefined ? specs[0].price : product.price;
             document.getElementById('modalProdPrice').textContent = `NT$ ${selectedSpecPrice}`;
 
@@ -1466,7 +1618,6 @@
             parent.querySelectorAll('.spec-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
-            // 切換成該規格對應的價格
             selectedSpecPrice = price;
             document.getElementById('modalProdPrice').textContent = `NT$ ${price}`;
         }
@@ -1481,12 +1632,128 @@
 
         function confirmAddToCart() {
             if (!selectedProductForModal) return;
-            const qty = document.getElementById('modalQtyInput').value;
+            const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
             const activeSpecBtn = document.querySelector('.spec-btn.active');
             const specName = activeSpecBtn ? activeSpecBtn.textContent.split(' (')[0] : '標準規格';
 
-            alert(`成功將「${selectedProductForModal.name}」(${specName}) x ${qty} 加入購物車！\n單價：NT$ ${selectedSpecPrice}，總計：NT$ ${selectedSpecPrice * qty}`);
+            // 檢查購物車是否已有相同商品與規格
+            const existingIndex = cartItems.findIndex(item => item.id === selectedProductForModal.id && item.spec === specName);
+            if (existingIndex > -1) {
+                cartItems[existingIndex].qty += qty;
+            } else {
+                cartItems.push({
+                    id: selectedProductForModal.id,
+                    name: selectedProductForModal.name,
+                    spec: specName,
+                    price: selectedSpecPrice,
+                    qty: qty
+                });
+            }
+
+            updateCartBadge();
+            alert(`成功將「${selectedProductForModal.name}」(${specName}) x ${qty} 加入購物車！`);
             document.getElementById('shopModalOverlay').classList.remove('active');
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cartBadge');
+            const totalCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
+            if (totalCount > 0) {
+                badge.textContent = totalCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function openCartModal() {
+            if (!isLoggedIn) {
+                alert('⚠️ 請先登入會員帳號才能查看與結帳購物車！');
+                openAuthModal();
+                return;
+            }
+            renderCartItems();
+            document.getElementById('cartModalOverlay').classList.add('active');
+        }
+
+        function closeCartModal(e) {
+            if (!e || e.target.id === 'cartModalOverlay' || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('cartModalOverlay').classList.remove('active');
+            }
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cartItemsListContainer');
+            const summary = document.getElementById('cartTotalPriceSummary');
+            container.innerHTML = '';
+
+            if (cartItems.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>';
+                summary.textContent = '總計金額：NT$ 0';
+                return;
+            }
+
+            let totalPrice = 0;
+            cartItems.forEach((item, index) => {
+                const subTotal = item.price * item.qty;
+                totalPrice += subTotal;
+
+                const row = document.createElement('div');
+                row.className = 'cart-item-row';
+                row.innerHTML = `
+                    <div>
+                        <strong>${item.name}</strong> <span style="font-size: 12px; color: #64748b;">(${item.spec})</span><br>
+                        NT$ ${item.price} × ${item.qty} = <strong style="color: #e67e22;">NT$ ${subTotal}</strong>
+                    </div>
+                    <button type="button" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeCartItem(${index})">刪除</button>
+                `;
+                container.appendChild(row);
+            });
+
+            summary.textContent = `總計金額：NT$ ${totalPrice}`;
+        }
+
+        function removeCartItem(index) {
+            cartItems.splice(index, 1);
+            updateCartBadge();
+            renderCartItems();
+        }
+
+        function submitOrderToBackend(e) {
+            e.preventDefault();
+            if (cartItems.length === 0) {
+                alert('購物車是空的，無法送出訂單！');
+                return;
+            }
+
+            const receiverName = document.getElementById('orderReceiverName').value;
+            const receiverPhone = document.getElementById('orderReceiverPhone').value;
+            const receiverAddress = document.getElementById('orderReceiverAddress').value;
+            const paymentMethod = document.getElementById('orderPaymentMethod').value;
+            const orderNote = document.getElementById('orderNote').value;
+
+            const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            // 模擬將訂單資料打包送出給後台
+            const orderData = {
+                user: currentUser,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                paymentMethod,
+                orderNote,
+                items: cartItems,
+                totalAmount: totalPrice,
+                orderTime: new Date().toLocaleString()
+            };
+
+            console.log("【後台收到新訂單】", orderData);
+            alert(`🎉 訂單已成功送出給後台！\n收件人：${receiverName}\n總金額：NT$ ${totalPrice}\n感謝您的訂購！`);
+
+            // 清空購物車並關閉視窗
+            cartItems = [];
+            updateCartBadge();
+            document.getElementById('cartModalOverlay').classList.remove('active');
         }
 
         /* ==========================================
@@ -1587,7 +1854,6 @@
             document.getElementById('authModalOverlay').classList.remove('active');
         }
 
-        // 點擊右下角按鈕：若已登入則顯示已登入會員資訊或登出選項，若未登入則打開登入窗
         function handleFloatingBtnClick() {
             if (isLoggedIn) {
                 if (confirm(`您目前已登入帳號：${currentUser}\n是否要登出系統？`)) {
@@ -1651,15 +1917,16 @@
             e.preventDefault();
             const emailVal = document.getElementById('loginEmailInput').value;
             
-            // 設定登入成功狀態
             isLoggedIn = true;
             currentUser = emailVal;
 
-            // 變更右下角按鈕狀態為已登入
             const floatBtn = document.getElementById('floatingAuthBtn');
             floatBtn.classList.add('logged-in');
             floatBtn.textContent = '✅';
             floatBtn.title = `已登入: ${currentUser} (點擊可登出)`;
+
+            // 自動將登入時的帳號填入收件人姓名或聯絡信箱（方便測試）
+            document.getElementById('orderReceiverName').value = currentUser;
 
             alert(`🎉 登入成功！歡迎回來，${currentUser}`);
             closeAuthModal();
