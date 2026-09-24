@@ -853,7 +853,7 @@
         }
 
         .floating-btn.logged-in {
-            background-color: #10b981; /* 已登入顯示綠色 */
+            background-color: #10b981; /* 已登入顯示綠色圓圈 */
         }
 
         .floating-btn:hover {
@@ -1305,7 +1305,7 @@
             <span class="cart-badge" id="cartBadge">0</span>
         </button>
 
-        <!-- 會員中心按鈕 -->
+        <!-- 會員中心 / 登出按鈕 -->
         <button type="button" class="floating-btn" id="floatingAuthBtn" onclick="handleFloatingBtnClick()" title="會員登入">
             👤
         </button>
@@ -1561,6 +1561,22 @@
         let currentUser = null;
 
         document.addEventListener("DOMContentLoaded", function() {
+            // 檢查是否已存在持久化登入狀態
+            const savedLogin = localStorage.getItem('shop_isLoggedIn');
+            const savedUser = localStorage.getItem('shop_currentUser');
+            if (savedLogin === 'true' && savedUser) {
+                isLoggedIn = true;
+                currentUser = savedUser;
+                const floatBtn = document.getElementById('floatingAuthBtn');
+                if (floatBtn) {
+                    floatBtn.classList.add('logged-in');
+                    floatBtn.textContent = '✅';
+                    floatBtn.title = `已登入: ${currentUser} (點擊可登出)`;
+                }
+                const receiverInput = document.getElementById('orderReceiverName');
+                if (receiverInput) receiverInput.value = currentUser;
+            }
+
             renderCategoryTabs();
             renderProducts('all');
             updateCartBadge();
@@ -1614,7 +1630,6 @@
                     hotBadgeHTML = `<div class="hot-badge">🔥 熱銷排行 #${index + 1}</div>`;
                 }
 
-                // 卡片主圖優先抓取 images 陣列的第一張，若無則抓 img
                 const displayImg = (item.images && item.images.length > 0) ? item.images[0] : (item.img || '');
 
                 card.innerHTML = `
@@ -1641,7 +1656,6 @@
             document.getElementById('modalProdDesc').textContent = product.description || "暫無詳細介紹";
             document.getElementById('modalQtyInput').value = 1;
 
-            // 處理多張圖片輪播與縮圖
             let imgList = [];
             if (product.images && Array.isArray(product.images) && product.images.length > 0) {
                 imgList = product.images;
@@ -1651,11 +1665,9 @@
                 imgList = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
             }
 
-            // 設定預設大圖
             const mainImgElement = document.getElementById('modalProdImg');
             mainImgElement.src = imgList[0];
 
-            // 渲染縮圖
             const thumbnailsContainer = document.getElementById('modalThumbnailsContainer');
             thumbnailsContainer.innerHTML = '';
             
@@ -1671,7 +1683,6 @@
                 thumbnailsContainer.appendChild(thumb);
             });
 
-            // 規格處理
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
 
@@ -1964,14 +1975,21 @@
         function openAuthModal() { document.getElementById('authModalOverlay').classList.add('active'); }
         function closeAuthModal() { document.getElementById('authModalOverlay').classList.remove('active'); }
 
+        // 右下角會員/登出按鈕點擊處理
         function handleFloatingBtnClick() {
             if (isLoggedIn) {
-                if (confirm(`您目前已登入帳號：${currentUser}\n是否要登出系統？`)) {
+                if (confirm(`您目前已登入帳號：${currentUser}\n是否要進行登出？`)) {
                     isLoggedIn = false;
                     currentUser = null;
-                    document.getElementById('floatingAuthBtn').classList.remove('logged-in');
-                    document.getElementById('floatingAuthBtn').textContent = '👤';
-                    alert('已成功登出會員！');
+                    // 清除 localStorage 儲存的登入資訊
+                    localStorage.removeItem('shop_isLoggedIn');
+                    localStorage.removeItem('shop_currentUser');
+
+                    const floatBtn = document.getElementById('floatingAuthBtn');
+                    floatBtn.classList.remove('logged-in');
+                    floatBtn.textContent = '👤';
+                    floatBtn.title = '會員登入';
+                    alert('已成功登出系統！');
                 }
             } else {
                 switchAuthTab('login');
@@ -2028,12 +2046,18 @@
             isLoggedIn = true;
             currentUser = emailVal;
 
+            // 儲存登入狀態至 localStorage 實現跨重整與關閉瀏覽器維持登入
+            localStorage.setItem('shop_isLoggedIn', 'true');
+            localStorage.setItem('shop_currentUser', currentUser);
+
             const floatBtn = document.getElementById('floatingAuthBtn');
             floatBtn.classList.add('logged-in');
             floatBtn.textContent = '✅';
-            floatBtn.title = `已登入: ${currentUser}`;
+            floatBtn.title = `已登入: ${currentUser} (點擊可登出)`;
 
-            document.getElementById('orderReceiverName').value = currentUser;
+            const orderNameInput = document.getElementById('orderReceiverName');
+            if(orderNameInput) orderNameInput.value = currentUser;
+
             alert(`🎉 登入成功！歡迎回來，${currentUser}`);
             closeAuthModal();
         }
