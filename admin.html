@@ -37,6 +37,9 @@
         .admin-cat-btn { padding: 8px 18px; background-color: #fff; border: 1px solid #cbd5e1; border-radius: 30px; font-size: 14px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; }
         .admin-cat-btn:hover { border-color: #0d6efd; color: #0d6efd; }
         .admin-cat-btn.active { background-color: #0d6efd; color: #fff; border-color: #0d6efd; box-shadow: 0 3px 8px rgba(13, 110, 253, 0.25); }
+        .preview-thumb-box { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
+        .preview-thumb-box img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
+        .preview-thumb-box .btn-remove-thumb { position: absolute; top: -6px; right: -6px; padding: 0.1rem 0.3rem; font-size: 0.6rem; border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -90,7 +93,7 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>圖片</th>
+                                <th>圖片 (封面/多圖)</th>
                                 <th>商品名稱</th>
                                 <th>所屬類別</th>
                                 <th>價格</th>
@@ -108,7 +111,6 @@
             <div class="tab-pane fade" id="orders" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2><i class="fa-solid fa-bag-shopping me-2 text-primary"></i>顧客購買訂單</h2>
-                    <input type="text" id="orderSearch" class="form-control w-25" placeholder="搜尋顧客姓名、商品或訂單號...">
                 </div>
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -146,7 +148,6 @@
             <div class="tab-pane fade" id="repair" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2><i class="fa-solid fa-screwdriver-wrench me-2 text-warning"></i>維修諮詢單據</h2>
-                    <input type="text" id="repairSearch" class="form-control w-25" placeholder="搜尋顧客姓名、電話或諮詢項目...">
                 </div>
                 <div class="table-responsive p-3">
                     <table class="table table-hover align-middle">
@@ -155,7 +156,7 @@
                                 <th>諮詢單號</th>
                                 <th>顧客姓名</th>
                                 <th>聯絡電話</th>
-                                <th>維修地點</th>
+                                <th>諮詢項目與時段</th>
                                 <th>故障摘要</th>
                                 <th>申請時間</th>
                                 <th>處理狀態</th>
@@ -201,9 +202,9 @@
                         </div>
                     </div>
                     
-                    <!-- 同步前台的商品規格/款式及價格設定 -->
+                    <!-- 規格設定 -->
                     <div class="mb-3 p-3 border rounded bg-light">
-                        <label class="form-label fw-bold text-primary"><i class="fa-solid fa-tags me-1"></i> 商品規格 / 款式與價格設定 (同步前台展示)</label>
+                        <label class="form-label fw-bold text-primary"><i class="fa-solid fa-tags me-1"></i> 商品規格 / 款式與價格設定</label>
                         <div class="row g-2 mb-2">
                             <div class="col-md-7">
                                 <input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱 (例如：標準規格、禮盒裝)">
@@ -215,20 +216,24 @@
                                 <button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button>
                             </div>
                         </div>
-                        <div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2">
-                            <!-- 動態產生的規格標籤會顯示在這裡 -->
-                        </div>
-                        <small class="text-muted d-block mt-2">💡 提示：點擊已產生的規格標籤可直接載入至上方欄位進行修改。</small>
+                        <div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">商品圖片上傳或輸入網址</label>
-                        <input type="file" class="form-control mb-2" id="prodImageFile" accept="image/*" onchange="previewImage(event)">
-                        <input type="text" class="form-control" id="prodImg" placeholder="或者直接貼上圖片網址 (URL)">
-                        <div class="mt-2">
-                            <img id="imgPreview" src="" alt="預覽圖" style="max-height: 120px; display: none; border-radius: 6px; border: 1px solid #ddd;">
+                    <!-- 多圖輪播設定區 -->
+                    <div class="mb-3 p-3 border rounded bg-light">
+                        <label class="form-label fw-bold text-success"><i class="fa-solid fa-images me-1"></i> 商品多圖輪播設定 (第一張將自動作為封面圖片)</label>
+                        <div class="input-group mb-2">
+                            <input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)">
+                            <button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button>
                         </div>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" id="prodImgUrlInput" placeholder="或者貼上單張圖片網址 (URL) 點擊右側加入">
+                            <button class="btn btn-outline-secondary" type="button" onclick="addImgUrlManual()">加入</button>
+                        </div>
+                        <div class="form-text text-muted mb-2">您可以上傳或新增多张圖片，供客人在前台商品詳情頁透過滑動式輪播欣賞[cite: 11]。</div>
+                        <div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-bold">商品內容 / 詳細介紹</label>
                         <textarea class="form-control" id="prodDescription" rows="4" placeholder="請輸入商品詳細說明與規格..."></textarea>
@@ -283,6 +288,11 @@
                 { name: "禮盒裝", price: 180 }
             ],
             img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
+            images: [
+                "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
+                "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=500&q=80",
+                "https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=500&q=80"
+            ],
             description: "嚴選優質小麥與天然酵母手作烘焙，口感鬆軟香氣濃郁。"
         },
         {
@@ -296,25 +306,32 @@
                 { name: "特惠組合包", price: 450 }
             ],
             img: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
+            images: [
+                "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
+                "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=500&q=80"
+            ],
             description: "手工精心製作，送禮自用兩相宜。"
         },
         {
             id: 3,
-            name: "居家修繕 DIY 專業配件組",
-            category: "水電五金",
-            price: 350,
-            sales: 140,
+            name: "冷泡蕎麥特調茶飲 (瓶裝)",
+            category: "烘焙與茶飲",
+            price: 60,
+            sales: 180,
             specs: [
-                { name: "標準套裝", price: 350 },
-                { name: "Pro 專業加強版", price: 580 }
+                { name: "標準規格", price: 60 }
             ],
-            img: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80",
-            description: "專業水電修繕必備的高品質工具組。"
+            img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80",
+            images: [
+                "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80"
+            ],
+            description: "嚴選黃金蕎麥冷泡萃取，無咖啡因清香解膩。"
         }
     ];
 
     let currentAdminCategory = 'all';
-    let currentEditingSpecs = []; // 暫存目前編輯中的商品規格物件陣列：{name, price}
+    let currentEditingSpecs = [];
+    let currentEditingImages = []; // 用於儲存編輯中的多圖陣列
 
     function getStoredCategories() {
         const data = localStorage.getItem('shop_categories');
@@ -327,7 +344,13 @@
 
     function getStoredProducts() {
         const data = localStorage.getItem('shop_products');
-        return data ? JSON.parse(data) : defaultProducts;
+        if (!data) return defaultProducts;
+        let products = JSON.parse(data);
+        // 相容舊資料格式：若無 images 陣列則自動把 img 轉為陣列
+        return products.map(p => ({
+            ...p,
+            images: (p.images && p.images.length > 0) ? p.images : [p.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80']
+        }));
     }
 
     function saveStoredProducts(prods) {
@@ -362,7 +385,7 @@
         }
 
         if (products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">此類別目前尚無商品，點擊右上角「新增商品」來上架！</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">此類別目前尚無商品！</td></tr>`;
             return;
         }
 
@@ -371,9 +394,15 @@
                 ? prod.specs.map(s => `<span class="badge bg-secondary me-1">${s.name} ($${s.price})</span>`).join('') 
                 : '<span class="text-muted small">無特殊規格</span>';
 
+            const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
+            const imgCountBadge = (prod.images && prod.images.length > 1) ? `<br><span class="badge bg-success mt-1" style="font-size:0.65rem;">${prod.images.length}張圖</span>` : '';
+
             tbody.innerHTML += `
                 <tr>
-                    <td><img src="${prod.img}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'"></td>
+                    <td>
+                        <img src="${coverImg}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'">
+                        ${imgCountBadge}
+                    </td>
                     <td><strong>${prod.name}</strong><br><small class="text-muted text-truncate-2" style="max-width: 250px;">${prod.description || ''}</small></td>
                     <td><span class="badge bg-info text-dark">${prod.category}</span></td>
                     <td class="text-success fw-bold">$${prod.price}</td>
@@ -435,7 +464,6 @@
         filterAdminCategory('all');
     }
 
-    // 規格與價格標籤管理功能
     function renderSpecsContainer() {
         const container = document.getElementById('specsContainer');
         if (currentEditingSpecs.length === 0) {
@@ -457,7 +485,7 @@
         const priceVal = Number(priceInput.value);
 
         if (!nameVal || isNaN(priceVal)) return alert('請輸入完整的規格名稱與價格！');
-        if (currentEditingSpecs.some(s => s.name === nameVal)) return alert('此規格名稱已存在！若要修改請直接點擊該規格標籤。');
+        if (currentEditingSpecs.some(s => s.name === nameVal)) return alert('此規格名稱已存在！');
         
         currentEditingSpecs.push({ name: nameVal, price: priceVal });
         nameInput.value = '';
@@ -465,21 +493,63 @@
         renderSpecsContainer();
     }
 
-    // 點擊已存在的規格標籤，帶回上方欄位進行編輯
     function editSpecOption(index) {
         const spec = currentEditingSpecs[index];
         document.getElementById('newSpecNameInput').value = spec.name;
         document.getElementById('newSpecPriceInput').value = spec.price;
-        
-        // 暫時從陣列移除，修改完後重新送出
         currentEditingSpecs.splice(index, 1);
         renderSpecsContainer();
-        document.getElementById('newSpecNameInput').focus();
     }
 
     function removeSpecOption(index) {
         currentEditingSpecs.splice(index, 1);
         renderSpecsContainer();
+    }
+
+    // 渲染多圖預覽清單
+    function renderImagePreviewContainer() {
+        const container = document.getElementById('imagePreviewContainer');
+        if (currentEditingImages.length === 0) {
+            container.innerHTML = `<span class="text-muted small">尚未新增任何輪播照片</span>`;
+            return;
+        }
+        container.innerHTML = currentEditingImages.map((imgUrl, index) => `
+            <div class="preview-thumb-box">
+                <img src="${imgUrl}" alt="預覽圖 ${index+1}">
+                ${index === 0 ? '<span class="position-absolute bottom-0 start-0 badge bg-primary" style="font-size:0.55rem;">封面</span>' : ''}
+                <button type="button" class="btn btn-danger btn-remove-thumb" onclick="removeImage(${index})"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        `).join('');
+    }
+
+    function handleImageFiles(event) {
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentEditingImages.push(e.target.result);
+                renderImagePreviewContainer();
+            }
+            reader.readAsDataURL(file);
+        }
+        event.target.value = ''; // 清空檔案 input
+    }
+
+    function addImgUrlManual() {
+        const input = document.getElementById('prodImgUrlInput');
+        const url = input.value.trim();
+        if (!url) return alert('請輸入圖片網址！');
+        currentEditingImages.push(url);
+        input.value = '';
+        renderImagePreviewContainer();
+    }
+
+    function removeImage(index) {
+        currentEditingImages.splice(index, 1);
+        renderImagePreviewContainer();
     }
 
     function openProductModal(id = null) {
@@ -489,13 +559,14 @@
         document.getElementById('prodName').value = '';
         document.getElementById('prodPrice').value = '';
         document.getElementById('prodSales').value = '100';
-        document.getElementById('prodImg').value = '';
+        document.getElementById('prodImgUrlInput').value = '';
         document.getElementById('prodImageFile').value = '';
         document.getElementById('prodDescription').value = '';
-        document.getElementById('imgPreview').style.display = 'none';
         
-        currentEditingSpecs = [{ name: '標準規格', price: 0 }]; // 預設規格
+        currentEditingSpecs = [{ name: '標準規格', price: 0 }];
+        currentEditingImages = [];
         renderSpecsContainer();
+        renderImagePreviewContainer();
 
         if (id) {
             modalTitle.textContent = '編輯商品';
@@ -507,18 +578,13 @@
                 document.getElementById('prodCategory').value = prod.category;
                 document.getElementById('prodPrice').value = prod.price;
                 document.getElementById('prodSales').value = prod.sales;
-                document.getElementById('prodImg').value = prod.img;
                 document.getElementById('prodDescription').value = prod.description || '';
                 
-                // 載入該商品的規格與價格
-                currentEditingSpecs = prod.specs ? prod.specs.map(s => typeof s === 'string' ? { name: s, price: prod.price } : { ...s }) : [{ name: '標準規格', price: prod.price }];
+                currentEditingSpecs = prod.specs ? prod.specs.map(s => ({ ...s })) : [{ name: '標準規格', price: prod.price }];
                 renderSpecsContainer();
 
-                if (prod.img) {
-                    const preview = document.getElementById('imgPreview');
-                    preview.src = prod.img;
-                    preview.style.display = 'block';
-                }
+                currentEditingImages = prod.images ? [...prod.images] : [prod.img];
+                renderImagePreviewContainer();
             }
         } else {
             modalTitle.textContent = '新增商品';
@@ -528,29 +594,16 @@
         modal.show();
     }
 
-    function previewImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('prodImg').value = e.target.result;
-                const preview = document.getElementById('imgPreview');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            }
-            reader.readAsDataURL(file);
-        }
-    }
-
     function saveProduct() {
         const editId = document.getElementById('prodEditId').value;
         const name = document.getElementById('prodName').value.trim();
         const category = document.getElementById('prodCategory').value;
         const price = Number(document.getElementById('prodPrice').value);
         const sales = Number(document.getElementById('prodSales').value);
-        const img = document.getElementById('prodImg').value.trim() || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80';
         const description = document.getElementById('prodDescription').value.trim();
         const specs = [...currentEditingSpecs];
+        const images = currentEditingImages.length > 0 ? [...currentEditingImages] : ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+        const img = images[0]; // 第一張作為封面
 
         if (!name || isNaN(price)) {
             alert('請完整填寫商品名稱與正確價格！');
@@ -558,12 +611,11 @@
         }
 
         let products = getStoredProducts();
-
         if (editId) {
-            products = products.map(p => p.id == editId ? { ...p, name, category, price, sales, specs, img, description } : p);
+            products = products.map(p => p.id == editId ? { ...p, name, category, price, sales, specs, img, images, description } : p);
         } else {
             const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
-            products.push({ id: newId, name, category, price, sales, specs, img, description });
+            products.push({ id: newId, name, category, price, sales, specs, img, images, description });
         }
 
         saveStoredProducts(products);
@@ -581,29 +633,74 @@
         }
     }
 
-    const mockOrders = [
-        { id: "ORD-20260901", customer: "張先生", phone: "0912-345-678", items: [{ name: "招牌手作烘焙麵包", qty: 2, price: 120 }], total: 240, date: "2026-09-15 10:30", status: "已付款" }
-    ];
-    const mockRepairs = [
-        { id: "REP-2026001", customer: "陳先生", phone: "0933-111-222", address: "台北市內湖區", category: "加壓馬達 / 水電工程", issue: "浴室加壓馬達運轉異常。", date: "2026-09-15 09:00", status: "未處理" }
-    ];
-
     function renderOrders() {
         const tbody = document.getElementById('orderTableBody');
         tbody.innerHTML = '';
-        mockOrders.forEach(o => {
-            tbody.innerHTML += `<tr><td><strong>${o.id}</strong></td><td>${o.customer}<br><small>${o.phone}</small></td><td>${o.items.map(i=>i.name).join(', ')}</td><td class="text-primary fw-bold">$${o.total}</td><td><small>${o.date}</small></td><td><span class="badge bg-success">${o.status}</span></td><td><button class="btn btn-sm btn-outline-primary">檢視</button></td></tr>`;
+        let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        
+        if(orders.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無顧客訂單。</td></tr>`;
+            document.getElementById('totalOrdersCount').innerText = '0';
+            document.getElementById('totalSalesAmount').innerText = '$0';
+            return;
+        }
+
+        let totalSales = 0;
+        orders.forEach(o => {
+            totalSales += o.total;
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${o.id}</strong></td>
+                    <td>${o.customer}<br><small>${o.phone}</small></td>
+                    <td>${o.items.map(i=> `${i.name} (${i.spec}) x${i.qty}`).join(', ')}</td>
+                    <td class="text-primary fw-bold">$${o.total}</td>
+                    <td><small>${o.date}</small></td>
+                    <td><span class="badge bg-success">${o.status}</span></td>
+                    <td><button class="btn btn-sm btn-outline-primary" onclick="alert('收件地址：${o.address}\\n付款方式：${o.paymentMethod}\\n備註：${o.orderNote || "無"}')">檢視</button></td>
+                </tr>
+            `;
         });
-        document.getElementById('totalOrdersCount').innerText = mockOrders.length;
-        document.getElementById('totalSalesAmount').innerText = '$240';
+        document.getElementById('totalOrdersCount').innerText = orders.length;
+        document.getElementById('totalSalesAmount').innerText = `$${totalSales}`;
     }
 
+    // 渲染從前台送出的水電諮詢單到後台
     function renderRepairs() {
         const tbody = document.getElementById('repairTableBody');
         tbody.innerHTML = '';
-        mockRepairs.forEach(r => {
-            tbody.innerHTML += `<tr><td><strong>${r.id}</strong></td><td>${r.customer}</td><td>${r.phone}</td><td><small>${r.address}</small></td><td>${r.issue}</td><td><small>${r.date}</small></td><td><span class="badge bg-danger">${r.status}</span></td><td><button class="btn btn-sm btn-primary">觀看</button></td></tr>`;
+        let repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
+
+        if (repairs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">目前尚無維修諮詢單。</td></tr>`;
+            return;
+        }
+
+        repairs.forEach((r, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${r.id}</strong></td>
+                    <td>${r.name}</td>
+                    <td>${r.phone}</td>
+                    <td><span class="badge bg-warning text-dark">${r.category}</span><br><small class="text-muted">時段: ${r.times}</small></td>
+                    <td><small class="text-truncate-2" style="max-width: 200px;">${r.desc}</small></td>
+                    <td><small>${r.date}</small></td>
+                    <td><span class="badge bg-primary">${r.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="alert('諮詢項目：${r.category}\\n預約時段：${r.times}\\n詳細需求：\\n${r.desc}')">詳細</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRepair(${index})">刪除</button>
+                    </td>
+                </tr>
+            `;
         });
+    }
+
+    function deleteRepair(index) {
+        if (confirm('確定要刪除此筆維修諮詢單嗎？')) {
+            let repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
+            repairs.splice(index, 1);
+            localStorage.setItem('shop_repairs', JSON.stringify(repairs));
+            renderRepairs();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
