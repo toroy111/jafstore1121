@@ -239,7 +239,7 @@
         }
 
         /* ==========================================
-           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal)
+           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal) 與多圖輪播
            ========================================== */
         .shop-modal-overlay {
             position: fixed;
@@ -262,7 +262,7 @@
         .shop-modal {
             background: #ffffff;
             width: 100%;
-            max-width: 700px;
+            max-width: 750px;
             border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
             overflow: hidden;
@@ -312,12 +312,47 @@
             }
         }
 
+        /* 多圖輪播與縮圖樣式 */
+        .modal-gallery-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         .shop-modal-img {
             width: 100%;
             height: 260px;
             object-fit: cover;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+        }
+
+        .modal-thumbnails {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .thumbnail-img {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid #cbd5e1;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .thumbnail-img:hover {
+            border-color: #0066cc;
+        }
+
+        .thumbnail-img.active {
+            border-color: #0066cc;
+            box-shadow: 0 0 5px rgba(0, 102, 204, 0.4);
         }
 
         .shop-modal-details {
@@ -1051,24 +1086,21 @@
     <section id="shop" class="shop-section">
         <div class="container">
             <h2 class="section-title">嚴選優質商品</h2>
-            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與規格（需登入會員）</p>
+            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與多圖輪播規格（需登入會員）</p>
 
             <!-- 分類標籤按鈕列 -->
-            <div class="category-tabs">
+            <div class="category-tabs" id="categoryTabsContainer">
                 <button type="button" class="category-btn active" onclick="filterCategory('all', this)">🔥 全部商品 (依熱銷排序)</button>
-                <button type="button" class="category-btn" onclick="filterCategory('烘焙與茶飲', this)">🥐 手工烘焙與茶飲</button>
-                <button type="button" class="category-btn" onclick="filterCategory('生活用品', this)">🛠️ 生活用品</button>
-                <button type="button" class="category-btn" onclick="filterCategory('水電五金', this)">🛠️ 水電五金</button>
             </div>
 
             <!-- 商品動態渲染容器 -->
             <div class="grid-4" id="productGrid">
-                <!-- 這裡會由 JavaScript 自動根據分類與銷量排序填入商品 -->
+                <!-- 這裡會由 JavaScript 自動根據後台資料與分類填入商品圖片、品名與金額 -->
             </div>
         </div>
     </section>
 
-    <!-- 商品詳情彈跳視窗 (模仿蝦皮規格選擇) -->
+    <!-- 商品詳情彈跳視窗 (含多圖輪播與規格選擇) -->
     <div class="shop-modal-overlay" id="shopModalOverlay" onclick="closeShopModal(event)">
         <div class="shop-modal" onclick="event.stopPropagation()">
             <div class="shop-modal-header">
@@ -1076,9 +1108,15 @@
                 <button class="shop-close-btn" onclick="closeShopModal()">×</button>
             </div>
             <div class="shop-modal-body">
-                <div>
+                <!-- 左側：多圖輪播與縮圖區塊 -->
+                <div class="modal-gallery-container">
                     <img id="modalProdImg" src="" alt="商品圖片" class="shop-modal-img">
+                    <div class="modal-thumbnails" id="modalThumbnailsContainer">
+                        <!-- 動態填入縮圖 -->
+                    </div>
                 </div>
+
+                <!-- 右側：詳細資料與規格 -->
                 <div class="shop-modal-details">
                     <div class="modal-prod-title" id="modalProdNameName">商品名稱</div>
                     <div class="modal-prod-price" id="modalProdPrice">NT$ 0</div>
@@ -1181,17 +1219,17 @@
 
                     <!-- 右側：需求預約表單 -->
                     <div class="contact-form">
-                        <form action="#" method="post">
+                        <form onsubmit="submitRepairConsultation(event)">
                             <div class="form-row">
-                                <input type="text" placeholder="您的姓名" required>
-                                <input type="tel" placeholder="聯絡電話" required>
+                                <input type="text" id="repairName" placeholder="您的姓名" required>
+                                <input type="tel" id="repairPhone" placeholder="聯絡電話" required>
                             </div>
-                            <select required>
+                            <select id="repairCategory" required>
                                 <option value="" disabled selected>請選擇水電諮詢項目</option>
-                                <option value="plumbing">水電維修 / 施工預約</option>
-                                <option value="weak_current">弱電 / 網路 / 對講機工程</option>
-                                <option value="other">代客安裝</option>
-                                <option value="other">其他水電問題</option>
+                                <option value="水電維修 / 施工預約">水電維修 / 施工預約</option>
+                                <option value="弱電 / 網路 / 對講機工程">弱電 / 網路 / 對講機工程</option>
+                                <option value="代客安裝">代客安裝</option>
+                                <option value="其他水電問題">其他水電問題</option>
                             </select>
 
                             <!-- 方便的時間：下拉選單容器 -->
@@ -1234,8 +1272,8 @@
                                 <span class="field-hint">💡 拍攝故障處、開關箱或安裝位置，能幫助師傅快速評估與準備工具！</span>
                             </div>
 
-                            <textarea rows="4" placeholder="請簡述您的需求（如：1樓到3樓對講機拉線、開關故障等）..." required></textarea>
-                            <button type="button" class="btn btn-primary" style="width: 100%;">送出水電預約諮詢</button>
+                            <textarea id="repairDesc" rows="4" placeholder="請簡述您的需求（如：1樓到3樓對講機拉線、開關故障等）..." required></textarea>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">送出水電預約諮詢</button>
                         </form>
                     </div>
                 </div>
@@ -1432,8 +1470,9 @@
         </div>
     </div>
 
-    <!-- JavaScript 互動與購物車、結帳邏輯 -->
+    <!-- JavaScript 互動與多圖輪播、購物車邏輯 -->
     <script>
+        const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
         const defaultProducts = [
             {
                 id: 1,
@@ -1446,6 +1485,11 @@
                     { name: "禮盒裝", price: 180 }
                 ],
                 img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
+                images: [
+                    "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80"
+                ],
                 description: "嚴選優質小麥與天然酵母手作烘焙，口感鬆軟香氣濃郁，每天新鮮出爐限量供應。"
             },
             {
@@ -1459,6 +1503,10 @@
                     { name: "特惠組合包", price: 450 }
                 ],
                 img: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
+                images: [
+                    "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"
+                ],
                 description: "手工精心製作多種經典口味餅乾，送禮自用兩相宜，口感酥脆不甜膩。"
             },
             {
@@ -1472,6 +1520,9 @@
                     { name: "大瓶裝", price: 100 }
                 ],
                 img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80",
+                images: [
+                    "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80"
+                ],
                 description: "嚴選黃金蕎麥冷泡萃取，無咖啡因清香解膩，冰涼飲用風味最佳。"
             },
             {
@@ -1485,21 +1536,18 @@
                     { name: "Pro 專業加強版", price: 580 }
                 ],
                 img: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80",
-                description: "專業水電修繕與居家DIY必備的高品質工具組，耐用度高、操作順手。"
-            },
-            {
-                id: 5,
-                name: "多功能防觸電安全插座",
-                category: "水電五金",
-                price: 180,
-                sales: 95,
-                specs: [
-                    { name: "標準規格", price: 180 }
+                images: [
+                    "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80",
+                    "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80"
                 ],
-                img: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=500&q=80",
-                description: "具備安全防護門設計，有效預防異物誤觸，提升居家與孩童用電安全。"
+                description: "專業水電修繕與居家DIY必備的高品質工具組，耐用度高、操作順手。"
             }
         ];
+
+        function getStoredCategories() {
+            const data = localStorage.getItem('shop_categories');
+            return data ? JSON.parse(data) : defaultCategories;
+        }
 
         function getStoredProducts() {
             const data = localStorage.getItem('shop_products');
@@ -1508,23 +1556,31 @@
 
         let selectedProductForModal = null;
         let selectedSpecPrice = 0; 
-
-        // 全域購物車陣列
         let cartItems = [];
-
-        // 全域登入狀態變數
         let isLoggedIn = false;
         let currentUser = null;
 
         document.addEventListener("DOMContentLoaded", function() {
+            renderCategoryTabs();
             renderProducts('all');
             updateCartBadge();
         });
 
+        function renderCategoryTabs() {
+            const container = document.getElementById('categoryTabsContainer');
+            const categories = getStoredCategories();
+
+            let html = `<button type="button" class="category-btn active" onclick="filterCategory('all', this)">🔥 全部商品 (依熱銷排序)</button>`;
+            categories.forEach(cat => {
+                html += `<button type="button" class="category-btn" onclick="filterCategory('${cat}', this)">🛠️ ${cat}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
         function filterCategory(categoryName, btnElement) {
             const buttons = document.querySelectorAll('.category-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
 
             renderProducts(categoryName);
         }
@@ -1558,9 +1614,12 @@
                     hotBadgeHTML = `<div class="hot-badge">🔥 熱銷排行 #${index + 1}</div>`;
                 }
 
+                // 卡片主圖優先抓取 images 陣列的第一張，若無則抓 img
+                const displayImg = (item.images && item.images.length > 0) ? item.images[0] : (item.img || '');
+
                 card.innerHTML = `
                     ${hotBadgeHTML}
-                    <img src="${item.img}" alt="${item.name}" class="product-img">
+                    <img src="${displayImg}" alt="${item.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                     <div class="product-info">
                         <span class="product-category-tag">${item.category}</span>
                         <div class="product-title">${item.name}</div>
@@ -1573,16 +1632,46 @@
         }
 
         /* ==========================================
-           商城商品彈跳視窗與購物車邏輯
+           商城商品彈跳視窗與多圖輪播切換邏輯
            ========================================== */
         function openShopModal(product) {
             selectedProductForModal = product;
             document.getElementById('modalProdTitle').textContent = product.name;
             document.getElementById('modalProdNameName').textContent = product.name;
-            document.getElementById('modalProdImg').src = product.img;
             document.getElementById('modalProdDesc').textContent = product.description || "暫無詳細介紹";
             document.getElementById('modalQtyInput').value = 1;
 
+            // 處理多張圖片輪播與縮圖
+            let imgList = [];
+            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                imgList = product.images;
+            } else if (product.img) {
+                imgList = [product.img];
+            } else {
+                imgList = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+            }
+
+            // 設定預設大圖
+            const mainImgElement = document.getElementById('modalProdImg');
+            mainImgElement.src = imgList[0];
+
+            // 渲染縮圖
+            const thumbnailsContainer = document.getElementById('modalThumbnailsContainer');
+            thumbnailsContainer.innerHTML = '';
+            
+            imgList.forEach((imgUrl, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = imgUrl;
+                thumb.className = `thumbnail-img ${idx === 0 ? 'active' : ''}`;
+                thumb.onclick = () => {
+                    mainImgElement.src = imgUrl;
+                    document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                };
+                thumbnailsContainer.appendChild(thumb);
+            });
+
+            // 規格處理
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
 
@@ -1636,7 +1725,6 @@
             const activeSpecBtn = document.querySelector('.spec-btn.active');
             const specName = activeSpecBtn ? activeSpecBtn.textContent.split(' (')[0] : '標準規格';
 
-            // 檢查購物車是否已有相同商品與規格
             const existingIndex = cartItems.findIndex(item => item.id === selectedProductForModal.id && item.spec === specName);
             if (existingIndex > -1) {
                 cartItems[existingIndex].qty += qty;
@@ -1731,26 +1819,27 @@
             const receiverAddress = document.getElementById('orderReceiverAddress').value;
             const paymentMethod = document.getElementById('orderPaymentMethod').value;
             const orderNote = document.getElementById('orderNote').value;
-
             const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-            // 模擬將訂單資料打包送出給後台
             const orderData = {
-                user: currentUser,
-                receiverName,
-                receiverPhone,
-                receiverAddress,
+                id: "ORD-" + Date.now(),
+                customer: receiverName,
+                phone: receiverPhone,
+                address: receiverAddress,
                 paymentMethod,
                 orderNote,
                 items: cartItems,
-                totalAmount: totalPrice,
-                orderTime: new Date().toLocaleString()
+                total: totalPrice,
+                date: new Date().toLocaleString(),
+                status: "已付款"
             };
 
-            console.log("【後台收到新訂單】", orderData);
+            let existingOrders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+            existingOrders.unshift(orderData);
+            localStorage.setItem('shop_orders', JSON.stringify(existingOrders));
+
             alert(`🎉 訂單已成功送出給後台！\n收件人：${receiverName}\n總金額：NT$ ${totalPrice}\n感謝您的訂購！`);
 
-            // 清空購物車並關閉視窗
             cartItems = [];
             updateCartBadge();
             document.getElementById('cartModalOverlay').classList.remove('active');
@@ -1762,9 +1851,7 @@
         function toggleWaterElectric() {
             const section = document.getElementById('waterElectricSection');
             const btn = document.getElementById('toggleBtn');
-            
             section.classList.toggle('show');
-            
             if (section.classList.contains('show')) {
                 section.scrollIntoView({ behavior: 'smooth' });
                 if(btn) btn.textContent = '收合水電弱電工程選單';
@@ -1791,7 +1878,6 @@
         });
 
         let addedTimes = [];
-
         function addSelectedTime() {
             const selectedDay = document.querySelector('input[name="dayRadio"]:checked');
             const selectedSlot = document.querySelector('input[name="slotRadio"]:checked');
@@ -1802,7 +1888,6 @@
             }
 
             const timeString = selectedDay.value + ' ' + selectedSlot.value;
-
             if (addedTimes.includes(timeString)) {
                 alert('這個時段已經加入過了喔！');
                 return;
@@ -1810,7 +1895,6 @@
 
             addedTimes.push(timeString);
             renderTimes();
-
             selectedDay.checked = false;
             selectedSlot.checked = false;
             document.getElementById('dropdownList').classList.remove('active');
@@ -1825,20 +1909,17 @@
             const container = document.getElementById('selectedTimesContainer');
             const emptyTip = document.getElementById('emptyTimeTip');
             const finalInput = document.getElementById('finalTimesInput');
-
             const tags = container.querySelectorAll('.time-tag');
             tags.forEach(tag => tag.remove());
 
             if (addedTimes.length > 0) {
                 if (emptyTip) emptyTip.style.display = 'none';
-                
                 addedTimes.forEach((timeStr, index) => {
                     const tag = document.createElement('div');
                     tag.className = 'time-tag';
                     tag.innerHTML = `<span>${timeStr}</span><span class="remove-btn" onclick="removeTime(${index})">×</span>`;
                     container.appendChild(tag);
                 });
-
                 finalInput.value = addedTimes.join(', ');
             } else {
                 if (emptyTip) emptyTip.style.display = 'block';
@@ -1846,13 +1927,42 @@
             }
         }
 
-        function openAuthModal() {
-            document.getElementById('authModalOverlay').classList.add('active');
+        function submitRepairConsultation(e) {
+            e.preventDefault();
+            const name = document.getElementById('repairName').value;
+            const phone = document.getElementById('repairPhone').value;
+            const category = document.getElementById('repairCategory').value;
+            const times = document.getElementById('finalTimesInput').value;
+            const desc = document.getElementById('repairDesc').value;
+
+            if (!times) {
+                alert('請至少新增一個方便的預約時段！');
+                return;
+            }
+
+            const repairData = {
+                id: "REP-" + Date.now(),
+                name: name,
+                phone: phone,
+                category: category,
+                times: times,
+                desc: desc,
+                date: new Date().toLocaleString(),
+                status: "處理中"
+            };
+
+            let existingRepairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
+            existingRepairs.unshift(repairData);
+            localStorage.setItem('shop_repairs', JSON.stringify(existingRepairs));
+
+            alert(`🎉 維修諮詢單已成功送出！\n我們將盡快與您聯繫安排時間。`);
+            e.target.reset();
+            addedTimes = [];
+            renderTimes();
         }
 
-        function closeAuthModal() {
-            document.getElementById('authModalOverlay').classList.remove('active');
-        }
+        function openAuthModal() { document.getElementById('authModalOverlay').classList.add('active'); }
+        function closeAuthModal() { document.getElementById('authModalOverlay').classList.remove('active'); }
 
         function handleFloatingBtnClick() {
             if (isLoggedIn) {
@@ -1861,7 +1971,6 @@
                     currentUser = null;
                     document.getElementById('floatingAuthBtn').classList.remove('logged-in');
                     document.getElementById('floatingAuthBtn').textContent = '👤';
-                    document.getElementById('floatingAuthBtn').title = '會員登入';
                     alert('已成功登出會員！');
                 }
             } else {
@@ -1916,18 +2025,15 @@
         function handleLogin(e) {
             e.preventDefault();
             const emailVal = document.getElementById('loginEmailInput').value;
-            
             isLoggedIn = true;
             currentUser = emailVal;
 
             const floatBtn = document.getElementById('floatingAuthBtn');
             floatBtn.classList.add('logged-in');
             floatBtn.textContent = '✅';
-            floatBtn.title = `已登入: ${currentUser} (點擊可登出)`;
+            floatBtn.title = `已登入: ${currentUser}`;
 
-            // 自動將登入時的帳號填入收件人姓名或聯絡信箱（方便測試）
             document.getElementById('orderReceiverName').value = currentUser;
-
             alert(`🎉 登入成功！歡迎回來，${currentUser}`);
             closeAuthModal();
         }
@@ -1943,16 +2049,11 @@
             const p1 = document.getElementById('registerPassword').value;
             const p2 = document.getElementById('registerConfirmPassword').value;
             
-            if (p1 !== p2) {
-                alert('兩次輸入的密碼不一致，請重新確認！');
-                return;
-            }
+            if (p1 !== p2) { alert('兩次輸入的密碼不一致！'); return; }
 
             pendingRegisterData = { name, phone, email, password: p1 };
             generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            alert(`【後台通知】驗證碼已成功發送至您的信箱：${email}\n（測試模擬驗證碼為：${generatedVerificationCode}）`);
-
+            alert(`【後台模擬】驗證碼已發送至：${email}\n（驗證碼為：${generatedVerificationCode}）`);
             document.getElementById('verifyTargetEmail').textContent = email;
             switchAuthTab('verifyRegister');
         }
@@ -1960,25 +2061,19 @@
         function handleVerifyRegister(e) {
             e.preventDefault();
             const userInputCode = document.getElementById('registerCodeInput').value.trim();
-
-            if (userInputCode !== generatedVerificationCode) {
-                alert('驗證碼錯誤，請重新核對信箱中的 6 位數驗證碼！');
-                return;
-            }
-
-            alert(`驗證成功！歡迎 ${pendingRegisterData.name} 正式加入會員。請重新登入。`);
+            if (userInputCode !== generatedVerificationCode) { alert('驗證碼錯誤！'); return; }
+            alert(`驗證成功！歡迎 ${pendingRegisterData.name} 加入會員。請重新登入。`);
             switchAuthTab('login');
         }
 
         function resendRegisterCode() {
             generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            alert(`【後台通知】已重新發送驗證碼至：${pendingRegisterData.email}\n（測試模擬新驗證碼為：${generatedVerificationCode}）`);
+            alert(`【後台模擬】已重新發送驗證碼：${generatedVerificationCode}`);
         }
 
         function handleForgotPassword(e) {
             e.preventDefault();
-            const email = document.getElementById('forgotEmail').value;
-            alert(`驗證與重設密碼資訊已成功透過後台發送至：${email}\n請前往您的信箱收信並重新更換密碼！`);
+            alert(`重設密碼驗證信已發送至：${document.getElementById('forgotEmail').value}`);
             switchAuthTab('login');
         }
     </script>
