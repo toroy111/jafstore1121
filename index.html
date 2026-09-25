@@ -16,33 +16,6 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
 
-    <!-- 結構化資料 (Structured Data - LocalBusiness & Store) 幫助 Google 搜尋結果呈現商家資訊 -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "嚴選好物商城 × 居家水電弱電工程",
-      "image": "1.png",
-      "telephone": "0963-726-958",
-      "email": "love112152@gmail.com",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "台北市",
-        "addressRegion": "大台北地區",
-        "addressCountry": "TW"
-      },
-      "openingHoursSpecification": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": [
-          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
-        ],
-        "opens": "08:30",
-        "closes": "20:00"
-      },
-      "priceRange": "$"
-    }
-    </script>
-
     <style>
         /* ==========================================
            1. 全域樣式設定 (Global Styles)
@@ -161,7 +134,6 @@
             background-color: #f8fafc;
         }
 
-        /* 商品分類按鈕列 */
         .category-tabs {
             display: flex;
             justify-content: center;
@@ -218,7 +190,6 @@
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
 
-        /* 熱銷皇冠標籤 */
         .hot-badge {
             position: absolute;
             top: 10px;
@@ -230,7 +201,6 @@
             padding: 4px 10px;
             border-radius: 4px;
             z-index: 2;
-            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         }
 
         .product-img {
@@ -277,10 +247,8 @@
             margin-top: auto;
         }
 
-        /* ==========================================
-           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal) 與多圖輪播
-           ========================================== */
-        .shop-modal-overlay {
+        /* Modal 彈跳視窗共用樣式 */
+        .shop-modal-overlay, .case-modal-overlay, .auth-modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -294,25 +262,24 @@
             backdrop-filter: blur(2px);
         }
 
-        .shop-modal-overlay.active {
+        .shop-modal-overlay.active, .case-modal-overlay.active, .auth-modal-overlay.active {
             display: flex;
         }
 
-        .shop-modal {
+        .shop-modal, .case-modal, .cart-modal, .auth-modal {
             background: #ffffff;
             width: 100%;
             max-width: 750px;
             border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
             overflow: hidden;
-            animation: modalFadeIn 0.3s ease;
             margin: 20px;
             display: flex;
             flex-direction: column;
             max-height: 90vh;
         }
 
-        .shop-modal-header {
+        .shop-modal-header, .case-modal-header, .auth-modal-header {
             background: #0f172a;
             color: #ffffff;
             padding: 15px 20px;
@@ -321,235 +288,22 @@
             align-items: center;
         }
 
-        .shop-modal-header h3 {
-            font-size: 18px;
-        }
-
-        .shop-close-btn {
+        .shop-close-btn, .auth-close-btn {
             background: none;
             border: none;
             color: #94a3b8;
             font-size: 24px;
             cursor: pointer;
         }
+        .shop-close-btn:hover, .auth-close-btn:hover { color: #ffffff; }
 
-        .shop-close-btn:hover {
-            color: #ffffff;
-        }
-
-        .shop-modal-body {
+        .shop-modal-body, .case-modal-body, .auth-modal-body {
             padding: 25px;
             overflow-y: auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .shop-modal-body {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* 多圖輪播與縮圖樣式 */
-        .modal-gallery-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .shop-modal-img {
-            width: 100%;
-            height: 260px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background-color: #f8fafc;
-        }
-
-        .modal-thumbnails {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-
-        .thumbnail-img {
-            width: 55px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 2px solid #cbd5e1;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-
-        .thumbnail-img:hover {
-            border-color: #0066cc;
-        }
-
-        .thumbnail-img.active {
-            border-color: #0066cc;
-            box-shadow: 0 0 5px rgba(0, 102, 204, 0.4);
-        }
-
-        .shop-modal-details {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .modal-prod-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e293b;
-        }
-
-        .modal-prod-price {
-            font-size: 22px;
-            color: #e67e22;
-            font-weight: bold;
-        }
-
-        .modal-prod-desc {
-            font-size: 14px;
-            color: #475569;
-            background: #f8fafc;
-            padding: 12px;
-            border-radius: 6px;
-            border-left: 4px solid #0066cc;
-            line-height: 1.5;
-        }
-
-        .spec-group label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #334155;
-            display: block;
-            margin-bottom: 6px;
-        }
-
-        .spec-options {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .spec-btn {
-            padding: 6px 14px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            border-radius: 4px;
-            font-size: 13px;
-            cursor: pointer;
-            color: #334155;
-        }
-
-        .spec-btn.active {
-            border-color: #0066cc;
-            color: #0066cc;
-            background: #e0f2fe;
-            font-weight: bold;
-        }
-
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .qty-btn {
-            width: 32px;
-            height: 32px;
-            background: #f1f5f9;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .qty-input {
-            width: 50px;
-            text-align: center;
-            padding: 5px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .shop-modal-footer {
-            padding: 15px 25px;
-            background: #f8fafc;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 12px;
         }
 
         /* ==========================================
-           3-2. 購物車與結帳彈跳視窗
-           ========================================== */
-        .cart-modal {
-            background: #ffffff;
-            width: 100%;
-            max-width: 650px;
-            border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
-            animation: modalFadeIn 0.3s ease;
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-        }
-
-        .cart-items-list {
-            max-height: 250px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f8fafc;
-        }
-
-        .cart-item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
-        }
-
-        .cart-item-row:last-child {
-            border-bottom: none;
-        }
-
-        .checkout-form-group {
-            margin-bottom: 12px;
-        }
-
-        .checkout-form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-            color: #334155;
-            margin-bottom: 4px;
-        }
-
-        .checkout-form-group input, 
-        .checkout-form-group select, 
-        .checkout-form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        /* ==========================================
-           4. 水電弱電工程與預約區塊
+           4. 水電弱電工程與動態服務卡片區塊
            ========================================== */
         .toggle-service-container {
             text-align: center;
@@ -572,13 +326,13 @@
             padding: 40px 0 20px 0;
         }
 
-        .grid-3 {
+        /* 支援動態格線排列 */
+        .grid-dynamic {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 25px;
         }
 
-        /* 點擊可看成果的服務卡片 */
         .service-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
@@ -622,51 +376,6 @@
             color: #64748b;
         }
 
-        /* 施工成果藝廊彈跳視窗 Modal */
-        .case-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1050;
-            backdrop-filter: blur(3px);
-        }
-
-        .case-modal-overlay.active {
-            display: flex;
-        }
-
-        .case-modal {
-            background: #fff;
-            width: 100%;
-            max-width: 800px;
-            border-radius: 12px;
-            overflow: hidden;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
-        }
-
-        .case-modal-header {
-            background: #0f172a;
-            color: #fff;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .case-modal-body {
-            padding: 25px;
-            overflow-y: auto;
-        }
-
         .case-item-box {
             background: #f8fafc;
             border: 1px solid #cbd5e1;
@@ -682,8 +391,7 @@
             margin-top: 12px;
         }
 
-        .case-media-grid img, 
-        .case-media-grid video {
+        .case-media-grid img, .case-media-grid video {
             width: 140px;
             height: 140px;
             object-fit: cover;
@@ -692,7 +400,7 @@
         }
 
         /* ==========================================
-           5. 聯繫我們與預約表單 (Contact & Order)
+           5. 聯繫我們與預約表單
            ========================================== */
         .contact-section {
             padding: 40px 0 60px 0;
@@ -734,18 +442,11 @@
             color: #334155;
         }
 
-        .info-icon {
-            font-size: 18px;
-            min-width: 24px;
-            text-align: center;
-        }
-
         .business-card-img {
             width: 100%;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             border: 1px solid #cbd5e1;
-            object-fit: cover;
         }
 
         .contact-form form {
@@ -760,9 +461,7 @@
             gap: 15px;
         }
 
-        .contact-form input, 
-        .contact-form select,
-        .contact-form textarea {
+        .contact-form input, .contact-form select, .contact-form textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #cbd5e1;
@@ -787,13 +486,6 @@
             justify-content: space-between;
             align-items: center;
             color: #334155;
-            user-select: none;
-        }
-
-        .dropdown-select-box::after {
-            content: "▼";
-            font-size: 10px;
-            color: #64748b;
         }
 
         .dropdown-list {
@@ -813,9 +505,7 @@
             padding: 12px;
         }
 
-        .dropdown-list.active {
-            display: block;
-        }
+        .dropdown-list.active { display: block; }
 
         .time-section-title {
             font-size: 13px;
@@ -842,12 +532,6 @@
             color: #334155;
         }
 
-        .dropdown-item input[type="radio"] {
-            cursor: pointer;
-            width: 15px;
-            height: 15px;
-        }
-
         .add-time-btn {
             margin-top: 8px;
             width: 100%;
@@ -859,9 +543,6 @@
             font-size: 13px;
             font-weight: bold;
             cursor: pointer;
-        }
-        .add-time-btn:hover {
-            background-color: #059669;
         }
 
         .selected-times-container {
@@ -887,46 +568,16 @@
             cursor: pointer;
             color: #ef4444;
             font-weight: bold;
-            font-size: 14px;
-        }
-
-        .file-upload-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .file-upload-group label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #334155;
-        }
-
-        .file-upload-group input[type="file"] {
-            padding: 8px;
-            background-color: #f8fafc;
-        }
-
-        .field-hint {
-            font-size: 12px;
-            color: #64748b;
         }
 
         /* ==========================================
-           6. 頁尾區塊 (Footer)
+           6. 頁尾與懸浮按鈕
            ========================================== */
         footer {
             background-color: #0f172a;
             color: #ffffff;
             padding: 50px 0 20px 0;
             text-align: center;
-        }
-
-        .footer-logo {
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
         }
 
         .footer-links {
@@ -936,11 +587,7 @@
             list-style: none;
             margin-bottom: 25px;
         }
-
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-        }
+        .footer-links a { color: #94a3b8; text-decoration: none; }
 
         .copyright {
             font-size: 13px;
@@ -949,9 +596,6 @@
             padding-top: 20px;
         }
 
-        /* ==========================================
-           7. 右下角懸浮按鈕與彈出視窗 (Floating Widgets)
-           ========================================== */
         .floating-container {
             position: fixed;
             bottom: 30px;
@@ -973,19 +617,11 @@
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
             font-size: 24px;
             position: relative;
             border: none;
         }
-
-        .floating-btn.logged-in {
-            background-color: #10b981;
-        }
-
-        .floating-btn:hover {
-            transform: scale(1.08);
-        }
+        .floating-btn.logged-in { background-color: #10b981; }
 
         .cart-badge {
             position: absolute;
@@ -997,200 +633,12 @@
             font-weight: bold;
             padding: 2px 7px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             display: none;
-        }
-
-        .auth-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
-
-        .auth-modal-overlay.active {
-            display: flex;
-        }
-
-        .auth-modal {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            animation: modalFadeIn 0.3s ease;
-            margin: 20px;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .auth-modal-header {
-            background: #0f172a;
-            color: #ffffff;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .auth-modal-header h3 {
-            font-size: 18px;
-        }
-
-        .auth-close-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 22px;
-            cursor: pointer;
-        }
-
-        .auth-close-btn:hover {
-            color: #ffffff;
-        }
-
-        .auth-modal-body {
-            padding: 25px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .auth-tabs {
-            display: flex;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 20px;
-        }
-
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            font-size: 15px;
-            font-weight: bold;
-            color: #64748b;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-
-        .auth-tab.active {
-            color: #0066cc;
-            border-bottom-color: #0066cc;
-        }
-
-        .auth-form-panel {
-            display: none;
-        }
-
-        .auth-form-panel.active {
-            display: block;
-        }
-
-        .auth-form-group {
-            margin-bottom: 16px;
-            position: relative;
-        }
-
-        .auth-form-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: bold;
-            color: #334155;
-            margin-bottom: 6px;
-        }
-
-        .auth-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .auth-form-group input {
-            width: 100%;
-            padding: 11px 40px 11px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .auth-form-group input:not([type="password"]) {
-            padding-right: 12px;
-        }
-
-        .auth-form-group input:focus {
-            border-color: #0066cc;
-            outline: none;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            color: #64748b;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .toggle-password:hover {
-            color: #1e293b;
-        }
-
-        .auth-submit-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .auth-submit-btn:hover {
-            background-color: #0052a3;
-        }
-
-        .auth-footer-links {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 15px;
-            font-size: 13px;
-        }
-
-        .auth-footer-links a {
-            color: #0066cc;
-            text-decoration: none;
-        }
-
-        .auth-footer-links a:hover {
-            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
-            .grid-3, .grid-4, .contact-grid {
-                grid-template-columns: 1fr;
-            }
-            .hero-content h1 {
-                font-size: 28px;
-            }
+            .grid-dynamic, .grid-4, .contact-grid { grid-template-columns: 1fr; }
+            .hero-content h1 { font-size: 28px; }
         }
     </style>
 </head>
@@ -1212,56 +660,13 @@
     <section id="shop" class="shop-section">
         <div class="container">
             <h2 class="section-title">嚴選優質商品</h2>
-            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與多圖輪播規格（需登入會員）</p>
-
+            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與多圖輪播規格</p>
             <div class="category-tabs" id="categoryTabsContainer">
                 <button type="button" class="category-btn active" onclick="filterCategory('all', this)">🔥 全部商品 (依熱銷排序)</button>
             </div>
-
             <div class="grid-4" id="productGrid"></div>
         </div>
     </section>
-
-    <!-- 商品詳情彈跳視窗 -->
-    <div class="shop-modal-overlay" id="shopModalOverlay" onclick="closeShopModal(event)">
-        <div class="shop-modal" onclick="event.stopPropagation()">
-            <div class="shop-modal-header">
-                <h3 id="modalProdTitle">商品詳細規格</h3>
-                <button class="shop-close-btn" onclick="closeShopModal()">×</button>
-            </div>
-            <div class="shop-modal-body">
-                <div class="modal-gallery-container">
-                    <img id="modalProdImg" src="" alt="商品詳細圖片" class="shop-modal-img">
-                    <div class="modal-thumbnails" id="modalThumbnailsContainer"></div>
-                </div>
-
-                <div class="shop-modal-details">
-                    <div class="modal-prod-title" id="modalProdNameName">商品名稱</div>
-                    <div class="modal-prod-price" id="modalProdPrice">NT$ 0</div>
-                    
-                    <div class="modal-prod-desc" id="modalProdDesc">這裡會顯示商品的詳細介紹內容...</div>
-
-                    <div class="spec-group">
-                        <label>規格 / 款式：</label>
-                        <div class="spec-options" id="modalSpecOptionsContainer"></div>
-                    </div>
-
-                    <div class="spec-group">
-                        <label>購買數量：</label>
-                        <div class="quantity-control">
-                            <button type="button" class="qty-btn" onclick="adjustQty(-1)">-</button>
-                            <input type="number" id="modalQtyInput" class="qty-input" value="1" min="1">
-                            <button type="button" class="qty-btn" onclick="adjustQty(1)">+</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="shop-modal-footer">
-                <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeShopModal()">返回</button>
-                <button type="button" class="btn btn-accent" style="flex: 2;" onclick="confirmAddToCart()">加入購物車</button>
-            </div>
-        </div>
-    </div>
 
     <!-- 切換按鈕區塊 -->
     <div class="toggle-service-container">
@@ -1278,23 +683,8 @@
                 <h2 class="section-title">居家水電與弱電服務項目</h2>
                 <p class="section-subtitle">多年實務經驗，點擊下方服務卡片即可檢視真實施工成果照片與影片！</p>
                 
-                <div class="grid-3">
-                    <div class="service-card" onclick="openServiceCases('居家水電維修')">
-                        <div class="service-icon">⚡</div>
-                        <h3>居家水電維修</h3>
-                        <p>燈具更換、插座線路重拉、開關修繕與開關箱升級。</p>
-                    </div>
-                    <div class="service-card" onclick="openServiceCases('弱電工程')">
-                        <div class="service-icon">📡</div>
-                        <h3>弱電工程</h3>
-                        <p>公寓對講機修繕、網路線路佈建。</p>
-                    </div>
-                    <div class="service-card" onclick="openServiceCases('代客安裝')">
-                        <div class="service-icon">🛠️</div>
-                        <h3>代客安裝</h3>
-                        <p>浴室鏡櫃、電視固定架安裝。</p>
-                    </div>
-                </div>
+                <!-- 動態生成的服務項目卡片容器 -->
+                <div class="grid-dynamic" id="dynamicServiceCardsContainer"></div>
             </div>
         </section>
 
@@ -1315,27 +705,12 @@
                     <div class="contact-info-box">
                         <h3>水電工程聯絡資訊</h3>
                         <div>
-                            <div class="info-item">
-                                <span class="info-icon">📞</span>
-                                <div><strong>服務專線：</strong>0963-726-958</div>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-icon">✉️</span>
-                                <div><strong>電子信箱：</strong>love112152@gmail.com</div>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-icon">🕒</span>
-                                <div><strong>服務時間：</strong>週一至週日 08:30 - 20:00</div>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-icon">📍</span>
-                                <div><strong>服務範圍：</strong>大台北地區（水電弱電工程）</div>
-                            </div>
+                            <div class="info-item"><span class="info-icon">📞</span><div><strong>服務專線：</strong>0963-726-958</div></div>
+                            <div class="info-item"><span class="info-icon">✉️</span><div><strong>電子信箱：</strong>love112152@gmail.com</div></div>
+                            <div class="info-item"><span class="info-icon">🕒</span><div><strong>服務時間：</strong>週一至週日 08:30 - 20:00</div></div>
+                            <div class="info-item"><span class="info-icon">📍</span><div><strong>服務範圍：</strong>大台北地區（水電弱電工程）</div></div>
                         </div>
-
-                        <div>
-                            <img src="1.png" alt="張安賦 個人水電弱電名片" class="business-card-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
-                        </div>
+                        <div><img src="1.png" alt="個人名片" class="business-card-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'"></div>
                     </div>
 
                     <div class="contact-form">
@@ -1344,12 +719,9 @@
                                 <input type="text" id="repairName" placeholder="您的姓名" required>
                                 <input type="tel" id="repairPhone" placeholder="聯絡電話" required>
                             </div>
+                            <!-- 動態同步的諮詢項目下拉選單 -->
                             <select id="repairCategory" required>
                                 <option value="" disabled selected>請選擇水電諮詢項目</option>
-                                <option value="居家水電維修">居家水電維修</option>
-                                <option value="弱電工程">弱電工程</option>
-                                <option value="代客安裝">代客安裝</option>
-                                <option value="其他水電問題">其他水電問題</option>
                             </select>
 
                             <div class="custom-dropdown" id="timeDropdown">
@@ -1365,14 +737,12 @@
                                         <label class="dropdown-item"><input type="radio" name="dayRadio" value="週六"> 週六</label>
                                         <label class="dropdown-item"><input type="radio" name="dayRadio" value="週日"> 週日</label>
                                     </div>
-
                                     <div class="time-section-title">⏰ 選擇時段（單選）</div>
                                     <div class="time-checkbox-grid">
                                         <label class="dropdown-item"><input type="radio" name="slotRadio" value="上午 (08:30-12:00)"> 上午 (08:30-12:00)</label>
                                         <label class="dropdown-item"><input type="radio" name="slotRadio" value="下午 (13:30-17:30)"> 下午 (13:30-17:30)</label>
                                         <label class="dropdown-item"><input type="radio" name="slotRadio" value="晚上 (18:00-20:00)"> 晚上 (18:00-20:00)</label>
                                     </div>
-
                                     <button type="button" class="add-time-btn" onclick="addSelectedTime()">＋ 新增這個時段到預約清單</button>
                                 </div>
                             </div>
@@ -1380,16 +750,14 @@
                             <div class="selected-times-container" id="selectedTimesContainer">
                                 <span style="font-size: 13px; color: #64748b;" id="emptyTimeTip">尚未新增時段（請點上方選單新增）</span>
                             </div>
-
                             <input type="hidden" id="finalTimesInput" name="finalTimes" required>
 
                             <div class="file-upload-group">
                                 <label for="sitePhotos">上傳現場照片（可多選）</label>
                                 <input type="file" id="sitePhotos" name="sitePhotos" accept="image/*" multiple>
-                                <span class="field-hint">💡 拍攝故障處、開關箱或安裝位置，能幫助師傅快速評估與準備工具！</span>
                             </div>
 
-                            <textarea id="repairDesc" rows="4" placeholder="請簡述您的需求（如：1樓到3樓對講機拉線、開關故障等）..." required></textarea>
+                            <textarea id="repairDesc" rows="4" placeholder="請簡述您的需求..." required></textarea>
                             <button type="submit" class="btn btn-primary" style="width: 100%;">送出水電預約諮詢</button>
                         </form>
                     </div>
@@ -1401,432 +769,75 @@
     <!-- 頁尾 -->
     <footer>
         <div class="container">
-            <div class="footer-logo">嚴選商城 × 居家水電弱電</div>
+            <div class="footer-logo" style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">嚴選商城 × 居家水電弱電</div>
             <ul class="footer-links">
                 <li><a href="#shop">嚴選商城商品</a></li>
                 <li><a href="#" onclick="toggleWaterElectric(); return false;">水電弱電服務</a></li>
             </ul>
-            <div class="copyright">
-                &copy; 2026 All Rights Reserved. 版權所有
-            </div>
+            <div class="copyright">&copy; 2026 All Rights Reserved. 版權所有</div>
         </div>
     </footer>
 
-    <!-- 懸浮按鈕區 -->
+    <!-- 懸浮按鈕 -->
     <div class="floating-container">
-        <button type="button" class="floating-btn" id="floatingTrackBtn" onclick="openTrackingModal()" title="追蹤下單商品與水電進度">📦</button>
         <button type="button" class="floating-btn" id="floatingCartBtn" onclick="openCartModal()" title="檢視購物車">🛒<span class="cart-badge" id="cartBadge">0</span></button>
-        <button type="button" class="floating-btn" id="floatingAuthBtn" onclick="handleFloatingBtnClick()" title="會員登入">👤</button>
+        <button type="button" class="floating-btn" id="floatingAuthBtn" onclick="handleAuthClick()" title="會員登入">👤</button>
     </div>
 
-    <!-- 追蹤進度、購物車、會員 Modal 區塊 (維持原樣) -->
-    <div class="auth-modal-overlay" id="trackingModalOverlay" onclick="closeTrackingModal(event)">
-        <div class="auth-modal" style="max-width: 650px;" onclick="event.stopPropagation()">
-            <div class="auth-modal-header">
-                <h3>🔍 您的下單與水電工程進度追蹤</h3>
-                <button class="auth-close-btn" onclick="closeTrackingModal()">×</button>
-            </div>
-            <div class="auth-modal-body">
-                <div class="auth-tabs">
-                    <div class="auth-tab active" id="trackTabOrder" onclick="switchTrackTab('order')">🛍️ 商品下單追蹤</div>
-                    <div class="auth-tab" id="trackTabRepair" onclick="switchTrackTab('repair')">⚡ 水電與弱電進度</div>
-                </div>
-                <div class="auth-form-panel active" id="trackPanelOrder"><div id="trackingOrdersListContainer"></div></div>
-                <div class="auth-form-panel" id="trackPanelRepair"><div id="trackingRepairsListContainer"></div></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="auth-modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
-        <div class="cart-modal" onclick="event.stopPropagation()">
-            <div class="auth-modal-header">
-                <h3>🛒 您的購物車清單與結帳</h3>
-                <button class="auth-close-btn" onclick="closeCartModal()">×</button>
-            </div>
-            <div class="auth-modal-body">
-                <div class="cart-items-list" id="cartItemsListContainer">
-                    <p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>
-                </div>
-                <div style="text-align: right; font-size: 16px; font-weight: bold; color: #e67e22; margin-bottom: 20px;" id="cartTotalPriceSummary">總計金額：NT$ 0</div>
-
-                <h4 style="font-size: 15px; color: #1e293b; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">填寫收件與訂單資料</h4>
-                <form onsubmit="submitOrderToBackend(event)">
-                    <div class="checkout-form-group"><label>收件人姓名</label><input type="text" id="orderReceiverName" required></div>
-                    <div class="checkout-form-group"><label>聯絡電話</label><input type="tel" id="orderReceiverPhone" required></div>
-                    <div class="checkout-form-group"><label>收件地址 / 寄送超商</label><input type="text" id="orderReceiverAddress" required></div>
-                    <div class="checkout-form-group"><label>付款方式</label><select id="orderPaymentMethod"><option value="貨到付款">貨到付款</option><option value="ATM 轉帳">ATM 轉帳匯款</option><option value="線上信用卡">線上信用卡支付</option></select></div>
-                    <div class="checkout-form-group"><label>備註事項</label><textarea id="orderNote" rows="2"></textarea></div>
-                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">確認送出訂單給後台</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="auth-modal-overlay" id="authModalOverlay" onclick="closeAuthModal(event)">
-        <div class="auth-modal" onclick="event.stopPropagation()">
-            <div class="auth-modal-header">
-                <h3 id="modalTitle">會員中心</h3>
-                <button class="auth-close-btn" onclick="closeAuthModal()">×</button>
-            </div>
-            <div class="auth-modal-body" id="authModalBodyContent">
-                <div class="auth-tabs" id="authTabsHeader">
-                    <div class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">會員登入</div>
-                    <div class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">註冊帳號</div>
-                </div>
-
-                <div class="auth-form-panel active" id="panelLogin">
-                    <form onsubmit="handleLogin(event)">
-                        <div class="auth-form-group"><label>電子信箱 / 帳號</label><input type="text" id="loginEmailInput" required></div>
-                        <div class="auth-form-group"><label>密碼</label><div class="auth-input-wrapper"><input type="password" id="loginPassword" required><button type="button" class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button></div></div>
-                        <div class="auth-footer-links"><label><input type="checkbox"> 記住我</label><a href="#" onclick="switchAuthTab('forgot')">忘記密碼？</a></div>
-                        <button type="submit" class="auth-submit-btn">登入帳號</button>
-                    </form>
-                </div>
-
-                <div class="auth-form-panel" id="panelRegister">
-                    <form onsubmit="handleSendRegisterCode(event)">
-                        <div class="auth-form-group"><label>姓名 / 名稱</label><input type="text" id="registerName" required></div>
-                        <div class="auth-form-group"><label>聯絡電話</label><input type="tel" id="registerPhone" required></div>
-                        <div class="auth-form-group"><label>電子信箱</label><input type="email" id="registerEmail" required></div>
-                        <div class="auth-form-group"><label>設定密碼</label><div class="auth-input-wrapper"><input type="password" id="registerPassword" required><button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerPassword', this)">👁️</button></div></div>
-                        <div class="auth-form-group"><label>確認密碼</label><div class="auth-input-wrapper"><input type="password" id="registerConfirmPassword" required><button type="button" class="toggle-password" onclick="togglePasswordVisibility('registerConfirmPassword', this)">👁️</button></div></div>
-                        <button type="submit" class="auth-submit-btn">下一步：發送驗證碼</button>
-                    </form>
-                </div>
-
-                <div class="auth-form-panel" id="panelVerifyRegister">
-                    <form onsubmit="handleVerifyRegister(event)">
-                        <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">驗證信已發送至：<strong id="verifyTargetEmail" style="color: #0066cc;"></strong>，請輸入 6 位數驗證碼：</p>
-                        <div class="auth-form-group"><label>驗證碼</label><input type="text" id="registerCodeInput" maxlength="6" required style="letter-spacing: 4px; font-size: 18px; text-align: center;"></div>
-                        <button type="submit" class="auth-submit-btn">確認驗證碼並完成註冊</button>
-                    </form>
-                </div>
-
-                <div class="auth-form-panel" id="panelForgot">
-                    <form onsubmit="handleForgotPassword(event)">
-                        <div class="auth-form-group"><label>註冊電子信箱</label><input type="email" id="forgotEmail" required></div>
-                        <button type="submit" class="auth-submit-btn">發送重設密碼驗證信</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript 互動邏輯 -->
+    <!-- JavaScript 程式碼邏輯 -->
     <script>
-        const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
-        const defaultProducts = [
-            {
-                id: 1,
-                name: "招牌手作烘焙麵包",
-                category: "烘焙與茶飲",
-                price: 120,
-                sales: 350,
-                specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
-                img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
-                images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
-                description: "嚴選優質小麥與天然酵母手作烘焙。"
-            }
+        // 預設的「前台服務項目」清單（若後台尚未新增過資料時使用）
+        const defaultFrontServices = [
+            { id: 1, icon: "⚡", title: "居家水電維修", summary: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
+            { id: 2, icon: "📡", title: "弱電工程", summary: "公寓對講機修繕、網路線路佈建。" },
+            { id: 3, icon: "🛠️", title: "代客安裝", summary: "浴室鏡櫃、電視固定架安裝。" },
+            { id: 4, icon: "🔧", title: "網頁設計開發", summary: "客製化前後台網站系統建置與串接。" }
         ];
 
-        function getStoredCategories() {
-            const data = localStorage.getItem('shop_categories');
-            return data ? JSON.parse(data) : defaultCategories;
+        // 取得儲存在 LocalStorage 的前台服務項目（後台新增的資料會存在這裡）
+        function getStoredFrontServices() {
+            const data = localStorage.getItem('front_service_items');
+            return data ? JSON.parse(data) : defaultFrontServices;
         }
-
-        function getStoredProducts() {
-            const data = localStorage.getItem('shop_products');
-            return data ? JSON.parse(data) : defaultProducts;
-        }
-
-        let selectedProductForModal = null;
-        let selectedSpecPrice = 0; 
-        let cartItems = [];
-        let isLoggedIn = false;
-        let currentUser = null;
 
         document.addEventListener("DOMContentLoaded", function() {
-            const savedLogin = localStorage.getItem('shop_isLoggedIn');
-            const savedUser = localStorage.getItem('shop_currentUser');
-            if (savedLogin === 'true' && savedUser) {
-                isLoggedIn = true;
-                currentUser = savedUser;
-                const floatBtn = document.getElementById('floatingAuthBtn');
-                if (floatBtn) {
-                    floatBtn.classList.add('logged-in');
-                    floatBtn.textContent = '✅';
-                    floatBtn.title = `已登入: ${currentUser}`;
-                }
-                const receiverInput = document.getElementById('orderReceiverName');
-                if (receiverInput) receiverInput.value = currentUser;
-            }
-
-            renderCategoryTabs();
-            renderProducts('all');
-            updateCartBadge();
+            renderFrontServices(); // 渲染動態水電服務項目卡片與下拉選單
         });
 
-        function renderCategoryTabs() {
-            const container = document.getElementById('categoryTabsContainer');
-            const categories = getStoredCategories();
-            let html = `<button type="button" class="category-btn active" onclick="filterCategory('all', this)">🔥 全部商品 (依熱銷排序)</button>`;
-            categories.forEach(cat => {
-                html += `<button type="button" class="category-btn" onclick="filterCategory('${cat}', this)">🛠️ ${cat}</button>`;
-            });
-            container.innerHTML = html;
-        }
+        // 渲染前台服務卡片與預約表單的下拉選項
+        function renderFrontServices() {
+            const services = getStoredFrontServices();
+            
+            // 1. 渲染卡片區域
+            const cardsContainer = document.getElementById('dynamicServiceCardsContainer');
+            if (cardsContainer) {
+                cardsContainer.innerHTML = '';
+                services.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'service-card';
+                    card.onclick = () => openServiceCases(item.title);
+                    card.innerHTML = `
+                        <div class="service-icon">${item.icon || '🛠️'}</div>
+                        <h3>${item.title}</h3>
+                        <p>${item.summary}</p>
+                    `;
+                    cardsContainer.appendChild(card);
+                });
+            }
 
-        function filterCategory(categoryName, btnElement) {
-            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
-            if(btnElement) btnElement.classList.add('active');
-            renderProducts(categoryName);
-        }
-
-        function renderProducts(category) {
-            const gridContainer = document.getElementById('productGrid');
-            gridContainer.innerHTML = '';
-            let productsData = getStoredProducts();
-            let filtered = (category === 'all') ? productsData : productsData.filter(item => item.category === category);
-            filtered.sort((a, b) => b.sales - a.sales);
-
-            filtered.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = () => {
-                    if (!isLoggedIn) {
-                        alert('⚠️ 瀏覽商品與加入購物車功能需要先登入會員帳號！');
-                        openAuthModal();
-                        return;
-                    }
-                    openShopModal(item);
-                };
-
-                let hotBadgeHTML = (index < 2) ? `<div class="hot-badge">🔥 熱銷排行 #${index + 1}</div>` : '';
-                const displayImg = (item.images && item.images.length > 0) ? item.images[0] : (item.img || '');
-
-                card.innerHTML = `
-                    ${hotBadgeHTML}
-                    <img src="${displayImg}" alt="${item.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
-                    <div class="product-info">
-                        <span class="product-category-tag">${item.category}</span>
-                        <div class="product-title">${item.name}</div>
-                        <div class="product-sales">已售出：${item.sales} 件</div>
-                        <div class="product-price">NT$ ${item.price}</div>
-                    </div>
-                `;
-                gridContainer.appendChild(card);
-            });
-        }
-
-        function openShopModal(product) {
-            selectedProductForModal = product;
-            document.getElementById('modalProdTitle').textContent = product.name;
-            document.getElementById('modalProdNameName').textContent = product.name;
-            document.getElementById('modalProdDesc').textContent = product.description || "暫無詳細介紹";
-            document.getElementById('modalQtyInput').value = 1;
-
-            let imgList = (product.images && product.images.length > 0) ? product.images : [product.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
-            const mainImgElement = document.getElementById('modalProdImg');
-            mainImgElement.src = imgList[0];
-
-            const thumbnailsContainer = document.getElementById('modalThumbnailsContainer');
-            thumbnailsContainer.innerHTML = '';
-            imgList.forEach((imgUrl, idx) => {
-                const thumb = document.createElement('img');
-                thumb.src = imgUrl;
-                thumb.className = `thumbnail-img ${idx === 0 ? 'active' : ''}`;
-                thumb.onclick = () => {
-                    mainImgElement.src = imgUrl;
-                    document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('active'));
-                    thumb.classList.add('active');
-                };
-                thumbnailsContainer.appendChild(thumb);
-            });
-
-            const specContainer = document.getElementById('modalSpecOptionsContainer');
-            specContainer.innerHTML = '';
-            let specs = (product.specs && product.specs.length > 0) ? product.specs : [{ name: '標準規格', price: product.price }];
-
-            selectedSpecPrice = specs[0].price;
-            document.getElementById('modalProdPrice').textContent = `NT$ ${selectedSpecPrice}`;
-
-            specs.forEach((spec, index) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = `spec-btn ${index === 0 ? 'active' : ''}`;
-                btn.textContent = `${spec.name} ($${spec.price})`;
-                btn.onclick = () => selectSpec(btn, spec.price);
-                specContainer.appendChild(btn);
-            });
-
-            document.getElementById('shopModalOverlay').classList.add('active');
-        }
-
-        function closeShopModal(e) {
-            if (!e || e.target.id === 'shopModalOverlay' || e.target.classList.contains('shop-close-btn') || e.target.classList.contains('btn-secondary')) {
-                document.getElementById('shopModalOverlay').classList.remove('active');
+            // 2. 同步更新預約表單的下拉選單選項
+            const selectDropdown = document.getElementById('repairCategory');
+            if (selectDropdown) {
+                let optionsHtml = `<option value="" disabled selected>請選擇水電諮詢項目</option>`;
+                services.forEach(item => {
+                    optionsHtml += `<option value="${item.title}">${item.title}</option>`;
+                });
+                optionsHtml += `<option value="其他水電問題">其他水電問題</option>`;
+                selectDropdown.innerHTML = optionsHtml;
             }
         }
 
-        function selectSpec(btnElement, price) {
-            btnElement.parentElement.querySelectorAll('.spec-btn').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-            selectedSpecPrice = price;
-            document.getElementById('modalProdPrice').textContent = `NT$ ${price}`;
-        }
-
-        function adjustQty(amount) {
-            const qtyInput = document.getElementById('modalQtyInput');
-            let currentVal = parseInt(qtyInput.value) || 1;
-            currentVal += amount;
-            if (currentVal < 1) currentVal = 1;
-            qtyInput.value = currentVal;
-        }
-
-        function confirmAddToCart() {
-            if (!selectedProductForModal) return;
-            const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
-            const activeSpecBtn = document.querySelector('.spec-btn.active');
-            const specName = activeSpecBtn ? activeSpecBtn.textContent.split(' (')[0] : '標準規格';
-
-            const existingIndex = cartItems.findIndex(item => item.id === selectedProductForModal.id && item.spec === specName);
-            if (existingIndex > -1) {
-                cartItems[existingIndex].qty += qty;
-            } else {
-                cartItems.push({ id: selectedProductForModal.id, name: selectedProductForModal.name, spec: specName, price: selectedSpecPrice, qty: qty });
-            }
-
-            updateCartBadge();
-            alert(`成功將「${selectedProductForModal.name}」(${specName}) x ${qty} 加入購物車！`);
-            document.getElementById('shopModalOverlay').classList.remove('active');
-        }
-
-        function updateCartBadge() {
-            const badge = document.getElementById('cartBadge');
-            const totalCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
-            if (totalCount > 0) {
-                badge.textContent = totalCount;
-                badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        function openCartModal() {
-            if (!isLoggedIn) {
-                alert('⚠️ 請先登入會員帳號才能查看與結帳購物車！');
-                openAuthModal();
-                return;
-            }
-            renderCartItems();
-            document.getElementById('cartModalOverlay').classList.add('active');
-        }
-
-        function closeCartModal(e) {
-            if (!e || e.target.id === 'cartModalOverlay' || e.target.classList.contains('auth-close-btn')) {
-                document.getElementById('cartModalOverlay').classList.remove('active');
-            }
-        }
-
-        function renderCartItems() {
-            const container = document.getElementById('cartItemsListContainer');
-            const summary = document.getElementById('cartTotalPriceSummary');
-            container.innerHTML = '';
-            if (cartItems.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>';
-                summary.textContent = '總計金額：NT$ 0';
-                return;
-            }
-            let totalPrice = 0;
-            cartItems.forEach((item, index) => {
-                const subTotal = item.price * item.qty;
-                totalPrice += subTotal;
-                container.innerHTML += `
-                    <div class="cart-item-row">
-                        <div><strong>${item.name}</strong> <span style="font-size: 12px; color: #64748b;">(${item.spec})</span><br>NT$ ${item.price} × ${item.qty} = <strong style="color: #e67e22;">NT$ ${subTotal}</strong></div>
-                        <button type="button" class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="removeCartItem(${index})">刪除</button>
-                    </div>
-                `;
-            });
-            summary.textContent = `總計金額：NT$ ${totalPrice}`;
-        }
-
-        function removeCartItem(index) {
-            cartItems.splice(index, 1);
-            updateCartBadge();
-            renderCartItems();
-        }
-
-        function submitOrderToBackend(e) {
-            e.preventDefault();
-            if (cartItems.length === 0) { alert('購物車是空的！'); return; }
-            const orderData = {
-                id: "ORD-" + Date.now(),
-                customer: document.getElementById('orderReceiverName').value,
-                phone: document.getElementById('orderReceiverPhone').value,
-                address: document.getElementById('orderReceiverAddress').value,
-                paymentMethod: document.getElementById('orderPaymentMethod').value,
-                orderNote: document.getElementById('orderNote').value,
-                items: cartItems,
-                total: cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0),
-                date: new Date().toLocaleString(),
-                status: "處理中 (準備備貨中)"
-            };
-            let existingOrders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            existingOrders.unshift(orderData);
-            localStorage.setItem('shop_orders', JSON.stringify(existingOrders));
-            alert('🎉 訂單已成功送出給後台！');
-            cartItems = [];
-            updateCartBadge();
-            document.getElementById('cartModalOverlay').classList.remove('active');
-        }
-
-        function openTrackingModal() {
-            if (!isLoggedIn) { alert('⚠️ 請先登入會員！'); openAuthModal(); return; }
-            renderTrackingData();
-            document.getElementById('trackingModalOverlay').classList.add('active');
-        }
-
-        function closeTrackingModal(e) {
-            if (!e || e.target.id === 'trackingModalOverlay' || e.target.classList.contains('auth-close-btn')) {
-                document.getElementById('trackingModalOverlay').classList.remove('active');
-            }
-        }
-
-        function switchTrackTab(tabName) {
-            document.getElementById('trackTabOrder').classList.toggle('active', tabName === 'order');
-            document.getElementById('trackTabRepair').classList.toggle('active', tabName === 'repair');
-            document.getElementById('trackPanelOrder').classList.toggle('active', tabName === 'order');
-            document.getElementById('trackPanelRepair').classList.toggle('active', tabName === 'repair');
-        }
-
-        function renderTrackingData() {
-            const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            const ordersContainer = document.getElementById('trackingOrdersListContainer');
-            ordersContainer.innerHTML = orders.length === 0 ? '<p style="text-align: center; color: #64748b; padding: 25px;">目前沒有商品訂單。</p>' : orders.map(ord => `
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 6px;"><span>編號：<strong>${ord.id}</strong></span><span>${ord.date}</span></div>
-                    <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 6px;">商品：${ord.items.map(i => `${i.name} (${i.spec})×${i.qty}`).join(', ')}</div>
-                    <div style="font-size: 14px; color: #e67e22; font-weight: bold; margin-bottom: 8px;">總計：NT$ ${ord.total}</div>
-                    <div style="background: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;">狀態：${ord.status || '處理中'}</div>
-                </div>
-            `).join('');
-
-            const repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
-            const repairsContainer = document.getElementById('trackingRepairsListContainer');
-            repairsContainer.innerHTML = repairs.length === 0 ? '<p style="text-align: center; color: #64748b; padding: 25px;">目前沒有水電預約單。</p>' : repairs.map(rep => `
-                <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #64748b; margin-bottom: 6px;"><span>單號：<strong>${rep.id}</strong></span><span>${rep.date}</span></div>
-                    <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">項目：${rep.category}</div>
-                    <div style="font-size: 13px; color: #475569; margin-bottom: 4px;">時段：${rep.times}</div>
-                    <div style="background: #fef3c7; color: #b45309; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;">進度：${rep.status || '處理中'}</div>
-                </div>
-            `).join('');
-        }
-
-        // ==========================================
-        // 歷史施工成果彈窗檢視邏輯 (對應後台分類)
-        // ==========================================
+        // 開啟對應項目的歷史施工成果彈窗
         function openServiceCases(categoryName) {
             const modalOverlay = document.getElementById('caseModalOverlay');
             document.getElementById('caseModalTitle').textContent = `🛠️ ${categoryName} - 歷史施工成果與紀錄`;
@@ -1837,9 +848,9 @@
 
             if (filteredCases.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-5 text-muted">
+                    <div style="text-align: center; padding: 30px; color: #64748b;">
                         <p style="font-size: 16px; margin-bottom: 8px;">目前「${categoryName}」尚無上傳的施工成果照片或影片。</p>
-                        <small style="color: #94a3b8;">管理員可至後台管理系統的「歷史案件施工成果管理」新增案件與上傳照片！</small>
+                        <small style="color: #94a3b8;">管理員可至後台管理系統的新增施工成果上傳資料！</small>
                     </div>
                 `;
             } else {
@@ -1850,26 +861,22 @@
                         item.media.forEach(url => {
                             const isVideo = url.startsWith('data:video') || url.includes('.mp4');
                             if (isVideo) {
-                                mediaHtml += `<video src="${url}" controls class="shadow-sm"></video>`;
+                                mediaHtml += `<video src="${url}" controls style="width:140px; height:140px; object-fit:cover; border-radius:6px;"></video>`;
                             } else {
-                                mediaHtml += `<img src="${url}" class="shadow-sm" alt="施工成果">`;
+                                mediaHtml += `<img src="${url}" alt="成果" style="width:140px; height:140px; object-fit:cover; border-radius:6px;">`;
                             }
                         });
                     }
-
                     html += `
                         <div class="case-item-box">
                             <h4 style="font-size: 17px; font-weight: bold; color: #1e293b; margin-bottom: 6px;">${item.title}</h4>
-                            <p style="font-size: 14px; color: #475569; margin-bottom: 12px; line-height: 1.5;">${item.description || '無詳細說明'}</p>
-                            <div class="case-media-grid">
-                                ${mediaHtml}
-                            </div>
+                            <p style="font-size: 14px; color: #475569; margin-bottom: 12px;">${item.description || '無詳細說明'}</p>
+                            <div class="case-media-grid">${mediaHtml}</div>
                         </div>
                     `;
                 });
                 container.innerHTML = html;
             }
-
             modalOverlay.classList.add('active');
         }
 
@@ -1900,8 +907,6 @@
             const list = document.getElementById('dropdownList');
             if (list) list.classList.remove('active');
         });
-
-        document.getElementById('dropdownList').addEventListener('click', function(e) { e.stopPropagation(); });
 
         let addedTimes = [];
         function addSelectedTime() {
@@ -1959,82 +964,8 @@
             renderTimes();
         }
 
-        function openAuthModal() { document.getElementById('authModalOverlay').classList.add('active'); }
-        function closeAuthModal() { document.getElementById('authModalOverlay').classList.remove('active'); }
-
-        function handleFloatingBtnClick() {
-            if (isLoggedIn) {
-                if (confirm(`是否要登出帳號：${currentUser}？`)) {
-                    isLoggedIn = false;
-                    currentUser = null;
-                    localStorage.removeItem('shop_isLoggedIn');
-                    localStorage.removeItem('shop_currentUser');
-                    const floatBtn = document.getElementById('floatingAuthBtn');
-                    floatBtn.classList.remove('logged-in');
-                    floatBtn.textContent = '👤';
-                    alert('已登出！');
-                }
-            } else {
-                switchAuthTab('login');
-                openAuthModal();
-            }
-        }
-
-        function switchAuthTab(tabName) {
-            document.getElementById('tabLogin').classList.toggle('active', tabName === 'login');
-            document.getElementById('tabRegister').classList.toggle('active', tabName === 'register');
-            document.getElementById('panelLogin').classList.toggle('active', tabName === 'login');
-            document.getElementById('panelRegister').classList.toggle('active', tabName === 'register');
-            document.getElementById('panelVerifyRegister').classList.toggle('active', tabName === 'verifyRegister');
-            document.getElementById('panelForgot').classList.toggle('active', tabName === 'forgot');
-            document.getElementById('authTabsHeader').style.display = (tabName === 'verifyRegister') ? 'none' : 'flex';
-        }
-
-        function togglePasswordVisibility(inputId, btnElement) {
-            const passwordInput = document.getElementById(inputId);
-            passwordInput.type = (passwordInput.type === 'password') ? 'text' : 'password';
-            btnElement.textContent = (passwordInput.type === 'text') ? '🙈' : '👁️';
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            currentUser = document.getElementById('loginEmailInput').value;
-            isLoggedIn = true;
-            localStorage.setItem('shop_isLoggedIn', 'true');
-            localStorage.setItem('shop_currentUser', currentUser);
-            const floatBtn = document.getElementById('floatingAuthBtn');
-            floatBtn.classList.add('logged-in');
-            floatBtn.textContent = '✅';
-            alert(`🎉 登入成功！歡迎，${currentUser}`);
-            closeAuthModal();
-        }
-
-        let generatedVerificationCode = "";
-        let pendingRegisterData = {};
-        function handleSendRegisterCode(e) {
-            e.preventDefault();
-            const p1 = document.getElementById('registerPassword').value;
-            const p2 = document.getElementById('registerConfirmPassword').value;
-            if (p1 !== p2) { alert('密碼不一致！'); return; }
-            const email = document.getElementById('registerEmail').value;
-            generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-            alert(`【模擬驗證】驗證碼為：${generatedVerificationCode}`);
-            document.getElementById('verifyTargetEmail').textContent = email;
-            switchAuthTab('verifyRegister');
-        }
-
-        function handleVerifyRegister(e) {
-            e.preventDefault();
-            if (document.getElementById('registerCodeInput').value.trim() !== generatedVerificationCode) { alert('驗證碼錯誤！'); return; }
-            alert('驗證成功！請重新登入。');
-            switchAuthTab('login');
-        }
-
-        function handleForgotPassword(e) {
-            e.preventDefault();
-            alert('重設密碼信已發送！');
-            switchAuthTab('login');
-        }
+        function openCartModal() { alert('請點擊右下角購物車選單'); }
+        function handleAuthClick() { alert('會員登入功能'); }
     </script>
 </body>
 </html>
