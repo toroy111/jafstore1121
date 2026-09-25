@@ -1294,8 +1294,55 @@
         </div>
     </footer>
 
+    <!-- 會員登入/註冊 Modal -->
+    <div class="auth-modal-overlay" id="authModalOverlay" onclick="closeAuthModal(event)">
+        <div class="auth-modal" onclick="event.stopPropagation()">
+            <div class="auth-modal-header">
+                <h3 id="authModalTitle">會員登入 / 註冊</h3>
+                <button class="auth-close-btn" onclick="closeAuthModal()">×</button>
+            </div>
+            <div class="auth-modal-body">
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">會員登入</div>
+                    <div class="auth-tab" id="tabRegisterBtn" onclick="switchAuthTab('register')">註冊帳號</div>
+                </div>
+
+                <!-- 登入表單 -->
+                <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
+                    <div class="auth-form-group">
+                        <label>電子信箱 / 帳號</label>
+                        <input type="text" id="loginEmail" required placeholder="請輸入您的信箱">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>密碼</label>
+                        <input type="password" id="loginPassword" required placeholder="請輸入密碼">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">立即登入</button>
+                </form>
+
+                <!-- 註冊表單 -->
+                <form id="registerFormPanel" class="auth-form-panel" onsubmit="handleUserRegister(event)">
+                    <div class="auth-form-group">
+                        <label>姓名</label>
+                        <input type="text" id="regName" required placeholder="請輸入您的姓名">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>電子信箱 (帳號)</label>
+                        <input type="email" id="regEmail" required placeholder="請輸入電子信箱">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>設定密碼</label>
+                        <input type="password" id="regPassword" required placeholder="設定登入密碼">
+                    </div>
+                    <button type="submit" class="auth-submit-btn" style="background-color: #10b981;">註冊新帳號</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- 懸浮按鈕區 -->
     <div class="floating-container">
+        <button type="button" class="floating-btn" onclick="openAuthModal()" title="會員登入狀態" id="floatingUserBtn">👤</button>
         <button type="button" class="floating-btn" onclick="openTrackingModal()" title="追蹤下單商品與水電進度">📦</button>
         <button type="button" class="floating-btn" onclick="openCartModal()" title="檢視購物車">🛒<span class="cart-badge" id="cartBadge">0</span></button>
     </div>
@@ -1320,11 +1367,11 @@
 
     <div class="auth-modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
         <div class="cart-modal" onclick="event.stopPropagation()">
-            <div class="auth-modal-header">
+            <div class="cart-modal-header">
                 <h3>🛒 您的購物車清單與結帳</h3>
                 <button class="auth-close-btn" onclick="closeCartModal()">×</button>
             </div>
-            <div class="auth-modal-body">
+            <div class="cart-modal-body">
                 <div class="cart-items-list" id="cartItemsListContainer">
                     <p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>
                 </div>
@@ -1400,7 +1447,92 @@
             renderServicesCards();
             updateRepairCategorySelect();
             updateCartBadge();
+            checkUserLoginState();
         });
+
+        // 登入狀態檢查與控制
+        function isUserLoggedIn() {
+            return localStorage.getItem('shop_current_user') !== null;
+        }
+
+        function checkUserLoginState() {
+            const userBtn = document.getElementById('floatingUserBtn');
+            if (isUserLoggedIn()) {
+                const user = JSON.parse(localStorage.getItem('shop_current_user'));
+                userBtn.title = `已登入 (${user.name})，點擊可登出`;
+                userBtn.style.backgroundColor = "#10b981";
+            } else {
+                userBtn.title = "會員登入 / 註冊";
+                userBtn.style.backgroundColor = "#0066cc";
+            }
+        }
+
+        function openAuthModal() {
+            if (isUserLoggedIn()) {
+                if (confirm('您目前已登入，請問是否要登出帳號？')) {
+                    localStorage.removeItem('shop_current_user');
+                    checkUserLoginState();
+                    alert('已成功登出帳號！');
+                }
+            } else {
+                document.getElementById('authModalOverlay').classList.add('active');
+            }
+        }
+
+        function closeAuthModal(e) {
+            if (!e || e.target === document.getElementById('authModalOverlay') || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('authModalOverlay').classList.remove('active');
+            }
+        }
+
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                document.getElementById('tabLoginBtn').classList.add('active');
+                document.getElementById('tabRegisterBtn').classList.remove('active');
+                document.getElementById('loginFormPanel').classList.add('active');
+                document.getElementById('registerFormPanel').classList.remove('active');
+            } else {
+                document.getElementById('tabRegisterBtn').classList.add('active');
+                document.getElementById('tabLoginBtn').classList.remove('active');
+                document.getElementById('registerFormPanel').classList.add('active');
+                document.getElementById('loginFormPanel').classList.remove('active');
+            }
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+            let users = JSON.parse(localStorage.getItem('shop_users') || '[]');
+            const found = users.find(u => u.email === email && u.pass === pass);
+            if (found) {
+                localStorage.setItem('shop_current_user', JSON.stringify(found));
+                checkUserLoginState();
+                document.getElementById('authModalOverlay').classList.remove('active');
+                alert(`🎉 歡迎回來，${found.name}！`);
+            } else {
+                alert('❌ 帳號或密碼錯誤，或尚未註冊！');
+            }
+        }
+
+        function handleUserRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPassword').value.trim();
+            let users = JSON.parse(localStorage.getItem('shop_users') || '[]');
+            if (users.some(u => u.email === email)) {
+                alert('❌ 此電子信箱已經註冊過了！');
+                return;
+            }
+            const newUser = { name, email, pass };
+            users.push(newUser);
+            localStorage.setItem('shop_users', JSON.stringify(users));
+            localStorage.setItem('shop_current_user', JSON.stringify(newUser));
+            checkUserLoginState();
+            document.getElementById('authModalOverlay').classList.remove('active');
+            alert('🎉 註冊成功並已自動登入！');
+        }
 
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
@@ -1430,16 +1562,16 @@
             }
 
             if (products.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 40px;">目前此類別尚無上架商品喔！</p>`;
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 30px;">目前此類別尚無商品上架！</p>`;
                 return;
             }
 
-            products.forEach(prod => {
+            products.forEach((prod, index) => {
                 const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
-                const isHot = (prod.sales || 0) >= 200;
+                const isTop = (category === 'all' && index < 3);
                 grid.innerHTML += `
                     <div class="product-card" onclick="openShopModal(${prod.id})">
-                        ${isHot ? '<div class="hot-badge">🔥 熱銷款</div>' : ''}
+                        ${isTop ? '<div class="hot-badge">🔥 熱銷推薦</div>' : ''}
                         <img src="${coverImg}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         <div class="product-info">
                             <span class="product-category-tag">${prod.category}</span>
@@ -1453,56 +1585,51 @@
         }
 
         function openShopModal(productId) {
-            const products = getStoredProducts();
-            selectedProductForModal = products.find(p => p.id === productId);
-            if (!selectedProductForModal) return;
-
-            document.getElementById('modalProdTitle').textContent = selectedProductForModal.name;
-            document.getElementById('modalProdNameName').textContent = selectedProductForModal.name;
-            document.getElementById('modalProdPrice').textContent = `NT$ ${selectedProductForModal.price}`;
-            document.getElementById('modalProdDesc').textContent = selectedProductForModal.description || '暫無詳細說明。';
+            const prod = getStoredProducts().find(p => p.id === productId);
+            if (!prod) return;
+            selectedProductForModal = prod;
+            document.getElementById('modalProdTitle').textContent = prod.name;
+            document.getElementById('modalProdNameName').textContent = prod.name;
+            document.getElementById('modalProdPrice').textContent = `NT$ ${prod.price}`;
+            document.getElementById('modalProdDesc').textContent = prod.description || '暫無詳細說明';
             document.getElementById('modalQtyInput').value = 1;
 
-            const images = (selectedProductForModal.images && selectedProductForModal.images.length > 0) ? selectedProductForModal.images : [selectedProductForModal.img];
+            const images = (prod.images && prod.images.length > 0) ? prod.images : [prod.img];
             document.getElementById('modalProdImg').src = images[0];
 
-            let thumbHtml = '';
+            const thumbContainer = document.getElementById('modalThumbnailsContainer');
+            thumbContainer.innerHTML = '';
             images.forEach((imgUrl, idx) => {
-                thumbHtml += `<img src="${imgUrl}" class="thumbnail-img ${idx === 0 ? 'active' : ''}" onclick="changeModalCover('${imgUrl}', this)">`;
+                thumbContainer.innerHTML += `<img src="${imgUrl}" class="thumbnail-img ${idx === 0 ? 'active' : ''}" onclick="changeModalImage(this, '${imgUrl}')">`;
             });
-            document.getElementById('modalThumbnailsContainer').innerHTML = thumbHtml;
 
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
-            if (selectedProductForModal.specs && selectedProductForModal.specs.length > 0) {
-                selectedSpecItem = selectedProductForModal.specs[0];
-                selectedProductForModal.specs.forEach((spec, idx) => {
-                    specContainer.innerHTML += `<button type="button" class="spec-btn ${idx === 0 ? 'active' : ''}" onclick="selectModalSpec('${spec.name}', ${spec.price}, this)">${spec.name} ($${spec.price})</button>`;
+            if (prod.specs && prod.specs.length > 0) {
+                prod.specs.forEach((spec, idx) => {
+                    specContainer.innerHTML += `<button type="button" class="spec-btn ${idx === 0 ? 'active' : ''}" onclick="selectSpec(this, '${spec.name}', ${spec.price})">${spec.name} (NT$ ${spec.price})</button>`;
                 });
-                document.getElementById('modalProdPrice').textContent = `NT$ ${selectedSpecItem.price}`;
+                selectedSpecItem = prod.specs[0];
+                document.getElementById('modalProdPrice').textContent = `NT$ ${prod.specs[0].price}`;
             } else {
-                selectedSpecItem = { name: "標準規格", price: selectedProductForModal.price };
-                specContainer.innerHTML = `<button type="button" class="spec-btn active">標準規格 ($${selectedProductForModal.price})</button>`;
+                specContainer.innerHTML = '<span style="font-size:13px; color:#64748b;">本商品無特殊規格</span>';
+                selectedSpecItem = { name: '標準規格', price: prod.price };
             }
 
             document.getElementById('shopModalOverlay').classList.add('active');
         }
 
-        function closeShopModal() {
-            document.getElementById('shopModalOverlay').classList.remove('active');
-        }
-
-        function changeModalCover(url, thumbEl) {
+        function changeModalImage(thumbEl, url) {
             document.getElementById('modalProdImg').src = url;
-            document.querySelectorAll('.thumbnail-img').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('active'));
             thumbEl.classList.add('active');
         }
 
-        function selectModalSpec(name, price, btnEl) {
-            selectedSpecItem = { name, price };
-            document.getElementById('modalProdPrice').textContent = `NT$ ${price}`;
+        function selectSpec(btnEl, name, price) {
             document.querySelectorAll('.spec-btn').forEach(b => b.classList.remove('active'));
             btnEl.classList.add('active');
+            selectedSpecItem = { name, price };
+            document.getElementById('modalProdPrice').textContent = `NT$ ${price}`;
         }
 
         function adjustQty(amount) {
@@ -1512,88 +1639,116 @@
             input.value = val;
         }
 
+        function closeShopModal(e) {
+            if (!e || e.target === document.getElementById('shopModalOverlay') || e.target.classList.contains('shop-close-btn') || e.target.classList.contains('btn-secondary')) {
+                document.getElementById('shopModalOverlay').classList.remove('active');
+            }
+        }
+
+        // 核心修改：點選加入購物車時必須先檢查登入狀態
         function confirmAddToCart() {
+            if (!isUserLoggedIn()) {
+                alert('🔒 為了保障您的交易安全與訂單追蹤，請先登入帳號後再加入購物車！');
+                document.getElementById('shopModalOverlay').classList.remove('active');
+                openAuthModal();
+                return;
+            }
+
             if (!selectedProductForModal) return;
             const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
-            const coverImg = (selectedProductForModal.images && selectedProductForModal.images.length > 0) ? selectedProductForModal.images[0] : selectedProductForModal.img;
-
             const cartItem = {
                 id: selectedProductForModal.id,
                 name: selectedProductForModal.name,
                 price: selectedSpecItem.price,
                 spec: selectedSpecItem.name,
                 qty: qty,
-                img: coverImg
+                img: (selectedProductForModal.images && selectedProductForModal.images.length > 0) ? selectedProductForModal.images[0] : selectedProductForModal.img
             };
 
-            cartItems.push(cartItem);
+            const existingIdx = cartItems.findIndex(i => i.id === cartItem.id && i.spec === cartItem.spec);
+            if (existingIdx > -1) {
+                cartItems[existingIdx].qty += qty;
+            } else {
+                cartItems.push(cartItem);
+            }
+
             localStorage.setItem('shop_cart', JSON.stringify(cartItems));
             updateCartBadge();
-            closeShopModal();
-            alert('🛒 成功將商品加入購物車！');
+            document.getElementById('shopModalOverlay').classList.remove('active');
+            alert(`🛒 成功將「${cartItem.name} (${cartItem.spec})」加入購物車！`);
         }
 
         function updateCartBadge() {
             const badge = document.getElementById('cartBadge');
-            if (cartItems.length > 0) {
+            const totalQty = cartItems.reduce((sum, item) => sum + item.qty, 0);
+            if (totalQty > 0) {
+                badge.textContent = totalQty;
                 badge.style.display = 'inline-block';
-                badge.textContent = cartItems.length;
             } else {
                 badge.style.display = 'none';
             }
         }
 
         function openCartModal() {
-            const container = document.getElementById('cartItemsListContainer');
+            const listContainer = document.getElementById('cartItemsListContainer');
             if (cartItems.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！</p>`;
+                listContainer.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">購物車目前是空的喔！快去挑選好物吧～</p>`;
                 document.getElementById('cartTotalPriceSummary').textContent = '總計金額：NT$ 0';
-            } else {
-                let html = '';
-                let total = 0;
-                cartItems.forEach((item, idx) => {
-                    const subtotal = item.price * item.qty;
-                    total += subtotal;
-                    html += `
-                        <div class="cart-item-row">
-                            <div><strong>${item.name}</strong> (${item.spec}) × ${item.qty}</div>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="color: #e67e22; font-weight: bold;">$${subtotal}</span>
-                                <button type="button" class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="removeCartItem(${idx})">刪除</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-                document.getElementById('cartTotalPriceSummary').textContent = `總計金額：NT$ ${total}`;
+                document.getElementById('cartModalOverlay').classList.add('active');
+                return;
             }
+
+            listContainer.innerHTML = '';
+            let total = 0;
+            cartItems.forEach((item, index) => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+                listContainer.innerHTML += `
+                    <div class="cart-item-row">
+                        <div>
+                            <strong>${item.name}</strong><br>
+                            <small style="color: #64748b;">規格: ${item.spec} | NT$ ${item.price} × ${item.qty}</small>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: bold; color: #e67e22;">NT$ ${subtotal}</span>
+                            <button type="button" class="btn btn-danger" style="padding: 2px 8px; font-size: 12px;" onclick="removeCartItem(${index})">刪除</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('cartTotalPriceSummary').textContent = `總計金額：NT$ ${total}`;
             document.getElementById('cartModalOverlay').classList.add('active');
         }
 
-        function closeCartModal() {
-            document.getElementById('cartModalOverlay').classList.remove('active');
-        }
-
-        function removeCartItem(idx) {
-            cartItems.splice(idx, 1);
+        function removeCartItem(index) {
+            cartItems.splice(index, 1);
             localStorage.setItem('shop_cart', JSON.stringify(cartItems));
             updateCartBadge();
             openCartModal();
         }
 
+        function closeCartModal(e) {
+            if (!e || e.target === document.getElementById('cartModalOverlay') || e.target.classList.contains('shop-close-btn')) {
+                document.getElementById('cartModalOverlay').classList.remove('active');
+            }
+        }
+
         function submitOrderToBackend(e) {
             e.preventDefault();
-            if (cartItems.length === 0) { alert('購物車是空的！'); return; }
-
+            if (cartItems.length === 0) {
+                alert('購物車是空的！');
+                return;
+            }
             const name = document.getElementById('orderReceiverName').value.trim();
             const phone = document.getElementById('orderReceiverPhone').value.trim();
             const address = document.getElementById('orderReceiverAddress').value.trim();
             const payment = document.getElementById('orderPaymentMethod').value;
             const note = document.getElementById('orderNote').value.trim();
+            const total = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-            let total = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const newOrder = {
-                id: 'ORD-' + Date.now().toString().slice(-6),
+                id: 'ORD' + Date.now().toString().slice(-6),
                 customer: name,
                 phone: phone,
                 address: address,
@@ -1612,7 +1767,7 @@
             cartItems = [];
             localStorage.removeItem('shop_cart');
             updateCartBadge();
-            closeCartModal();
+            document.getElementById('cartModalOverlay').classList.remove('active');
             alert(`🎉 訂單已成功送出！您的訂單編號為：${newOrder.id}`);
         }
 
@@ -1621,21 +1776,21 @@
             const btn = document.getElementById('toggleBtn');
             section.classList.toggle('show');
             if (section.classList.contains('show')) {
-                btn.textContent = '關閉水電弱電工程與預選單';
+                btn.textContent = "收起水電弱電工程與預選單";
                 section.scrollIntoView({ behavior: 'smooth' });
             } else {
-                btn.textContent = '展開水電弱電工程與預選單';
+                btn.textContent = "展開水電弱電工程與預選單";
             }
         }
 
         function renderServicesCards() {
-            const container = document.getElementById('servicesGridContainer');
+            const grid = document.getElementById('servicesGridContainer');
             const services = getStoredServices();
-            container.innerHTML = '';
+            grid.innerHTML = '';
             services.forEach(s => {
-                container.innerHTML += `
-                    <div class="service-card" onclick="openServiceCases('${s.name}')">
-                        <div class="service-icon"><i class="${s.icon}"></i></div>
+                grid.innerHTML += `
+                    <div class="service-card" onclick="openCaseModalForService('${s.name}')">
+                        <div class="service-icon"><i class="${s.icon}" style="color: #0066cc;"></i></div>
                         <h3>${s.name}</h3>
                         <p>${s.description}</p>
                     </div>
@@ -1643,46 +1798,52 @@
             });
         }
 
-        function openServiceCases(categoryName) {
-            const cases = getStoredHistoryCases().filter(c => c.category === categoryName);
-            const container = document.getElementById('caseModalBodyContainer');
-            document.getElementById('caseModalTitle').textContent = `${categoryName} - 施工成果藝廊`;
+        function updateRepairCategorySelect() {
+            const select = document.getElementById('repairCategory');
+            select.innerHTML = '<option value="" disabled selected>請選擇水電諮詢項目</option>';
+            getStoredServices().forEach(s => {
+                select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+            });
+        }
 
-            if (cases.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 30px;">目前尚無此分類的施工成果紀錄！</p>`;
+        function openCaseModalForService(categoryName) {
+            const allCases = getStoredHistoryCases();
+            const filtered = allCases.filter(c => c.category === categoryName);
+            document.getElementById('caseModalTitle').textContent = `🛠️ 「${categoryName}」施工成果與紀錄`;
+            const bodyContainer = document.getElementById('caseModalBodyContainer');
+            bodyContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                bodyContainer.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無此分類的歷史施工成果照片！</p>`;
             } else {
-                let html = '';
-                cases.forEach(item => {
+                filtered.forEach(c => {
                     let mediaHtml = '';
-                    if (item.media && item.media.length > 0) {
-                        item.media.forEach(url => {
+                    if (c.media && c.media.length > 0) {
+                        c.media.forEach(url => {
                             const isVideo = url.startsWith('data:video') || url.includes('.mp4');
-                            mediaHtml += isVideo ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
+                            if (isVideo) {
+                                mediaHtml += `<video src="${url}" controls></video>`;
+                            } else {
+                                mediaHtml += `<img src="${url}">`;
+                            }
                         });
                     }
-                    html += `
+                    bodyContainer.innerHTML += `
                         <div class="case-item-box">
-                            <h4 style="color: #0066cc; margin-bottom: 8px;">${item.title}</h4>
-                            <p style="font-size: 14px; color: #475569; margin-bottom: 10px;">${item.description || ''}</p>
+                            <h4 style="color: #1e293b; margin-bottom: 8px;">${c.title}</h4>
+                            <p style="font-size: 14px; color: #475569; margin-bottom: 10px;">${c.description || ''}</p>
                             <div class="case-media-grid">${mediaHtml}</div>
                         </div>
                     `;
                 });
-                container.innerHTML = html;
             }
             document.getElementById('caseModalOverlay').classList.add('active');
         }
 
-        function closeCaseModal() {
-            document.getElementById('caseModalOverlay').classList.remove('active');
-        }
-
-        function updateRepairCategorySelect() {
-            const select = document.getElementById('repairCategory');
-            select.innerHTML = `<option value="" disabled selected>請選擇水電諮詢項目</option>`;
-            getStoredServices().forEach(s => {
-                select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
-            });
+        function closeCaseModal(e) {
+            if (!e || e.target === document.getElementById('caseModalOverlay') || e.target.classList.contains('shop-close-btn')) {
+                document.getElementById('caseModalOverlay').classList.remove('active');
+            }
         }
 
         function toggleDropdown(e) {
@@ -1690,18 +1851,27 @@
             document.getElementById('dropdownList').classList.toggle('active');
         }
 
+        window.addEventListener('click', function() {
+            const list = document.getElementById('dropdownList');
+            if (list) list.classList.remove('active');
+        });
+
+        document.getElementById('dropdownList').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
         function addSelectedTime() {
             const dayRadio = document.querySelector('input[name="dayRadio"]:checked');
             const slotRadio = document.querySelector('input[name="slotRadio"]:checked');
 
             if (!dayRadio || !slotRadio) {
-                alert('請同時選擇星期與時段！');
+                alert('請同時勾選星期與時段！');
                 return;
             }
 
             const timeStr = `${dayRadio.value} ${slotRadio.value}`;
             if (selectedTimesList.includes(timeStr)) {
-                alert('這個時段已經加入過了！');
+                alert('這個時段已經加入過了喔！');
                 return;
             }
 
@@ -1710,93 +1880,75 @@
             document.getElementById('dropdownList').classList.remove('active');
         }
 
+        function removeSelectedTime(index) {
+            selectedTimesList.splice(index, 1);
+            renderSelectedTimesTags();
+        }
+
         function renderSelectedTimesTags() {
             const container = document.getElementById('selectedTimesContainer');
-            const hiddenInput = document.getElementById('finalTimesInput');
-
+            const finalInput = document.getElementById('finalTimesInput');
             if (selectedTimesList.length === 0) {
                 container.innerHTML = `<span style="font-size: 13px; color: #64748b;" id="emptyTimeTip">尚未新增時段（請點上方選單新增）</span>`;
-                hiddenInput.value = '';
+                finalInput.value = '';
                 return;
             }
 
-            let html = '';
-            selectedTimesList.forEach((t, idx) => {
-                html += `
+            container.innerHTML = '';
+            selectedTimesList.forEach((time, index) => {
+                container.innerHTML += `
                     <div class="time-tag">
-                        <span>${t}</span>
-                        <span class="remove-btn" onclick="removeTimeTag(${idx})">×</span>
+                        <span>${time}</span>
+                        <span class="remove-btn" onclick="removeSelectedTime(${index})">×</span>
                     </div>
                 `;
             });
-            container.innerHTML = html;
-            hiddenInput.value = selectedTimesList.join(', ');
-        }
-
-        function removeTimeTag(idx) {
-            selectedTimesList.splice(idx, 1);
-            renderSelectedTimesTags();
+            finalInput.value = selectedTimesList.join('、');
         }
 
         function submitRepairConsultation(e) {
             e.preventDefault();
-            if (selectedTimesList.length === 0) { alert('請至少新增一個方便的預約時段！'); return; }
-
+            if (selectedTimesList.length === 0) {
+                alert('請至少新增一個方便的預約時段！');
+                return;
+            }
             const name = document.getElementById('repairName').value.trim();
             const phone = document.getElementById('repairPhone').value.trim();
             const category = document.getElementById('repairCategory').value;
             const desc = document.getElementById('repairDesc').value.trim();
-            const times = selectedTimesList.join(', ');
+            const times = selectedTimesList.join('、');
 
             const newRepair = {
-                id: 'REP-' + Date.now().toString().slice(-6),
-                name, phone, category, times, desc,
+                id: 'REP' + Date.now().toString().slice(-6),
+                name, phone, category, desc, times,
                 date: new Date().toLocaleString(),
-                status: "處理中"
+                status: '處理中'
             };
 
             let repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
             repairs.unshift(newRepair);
             localStorage.setItem('shop_repairs', JSON.stringify(repairs));
 
-            alert(`🎉 水電預約諮詢單已成功送出！單號：${newRepair.id}`);
+            alert(`🎉 水電預約諮詢已送出！您的諮詢單號為：${newRepair.id}`);
             e.target.reset();
             selectedTimesList = [];
             renderSelectedTimesTags();
         }
 
         function openTrackingModal() {
-            const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            const repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
-
-            let orderHtml = orders.length === 0 ? `<p style="text-align:center; color:#64748b; padding:20px;">尚無商品訂單記錄</p>` : orders.map(o => `
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:12px; margin-bottom:10px;">
-                    <div><strong>訂單編號：</strong>${o.id}</div>
-                    <div><strong>下單時間：</strong>${o.date}</div>
-                    <div><strong>總金額：</strong>$${o.total}</div>
-                    <div><strong>目前狀態：</strong><span style="color:#0066cc; font-weight:bold;">${o.status}</span></div>
-                </div>
-            `).join('');
-
-            let repairHtml = repairs.length === 0 ? `<p style="text-align:center; color:#64748b; padding:20px;">尚無水電預約諮詢記錄</p>` : repairs.map(r => `
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:12px; margin-bottom:10px;">
-                    <div><strong>諮詢單號：</strong>${r.id}</div>
-                    <div><strong>項目：</strong>${r.category} (${r.times})</div>
-                    <div><strong>處理狀態：</strong><span style="color:#e67e22; font-weight:bold;">${r.status}</span></div>
-                </div>
-            `).join('');
-
-            document.getElementById('trackingOrdersListContainer').innerHTML = orderHtml;
-            document.getElementById('trackingRepairsListContainer').innerHTML = repairHtml;
+            renderTrackingOrders();
+            renderTrackingRepairs();
             document.getElementById('trackingModalOverlay').classList.add('active');
         }
 
-        function closeTrackingModal() {
-            document.getElementById('trackingModalOverlay').classList.remove('active');
+        function closeTrackingModal(e) {
+            if (!e || e.target === document.getElementById('trackingModalOverlay') || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('trackingModalOverlay').classList.remove('active');
+            }
         }
 
-        function switchTrackTab(type) {
-            if (type === 'order') {
+        function switchTrackTab(tab) {
+            if (tab === 'order') {
                 document.getElementById('trackTabOrder').classList.add('active');
                 document.getElementById('trackTabRepair').classList.remove('active');
                 document.getElementById('trackPanelOrder').classList.add('active');
@@ -1809,12 +1961,49 @@
             }
         }
 
-        window.onclick = function(event) {
-            if (!event.target.closest('.custom-dropdown')) {
-                const list = document.getElementById('dropdownList');
-                if (list) list.classList.remove('active');
+        function renderTrackingOrders() {
+            const container = document.getElementById('trackingOrdersListContainer');
+            const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+            if (orders.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無商品下單記錄！</p>`;
+                return;
             }
-        };
+            container.innerHTML = '';
+            orders.forEach(ord => {
+                container.innerHTML += `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <strong>訂單編號: ${ord.id}</strong>
+                            <span class="badge" style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${ord.status}</span>
+                        </div>
+                        <p style="font-size:13px; color:#475569;">收件人: ${ord.customer} (${ord.phone}) | 總金額: NT$ ${ord.total}</p>
+                        <p style="font-size:12px; color:#64748b;">下單時間: ${ord.date}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function renderTrackingRepairs() {
+            const container = document.getElementById('trackingRepairsListContainer');
+            const repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
+            if (repairs.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無水電預約記錄！</p>`;
+                return;
+            }
+            container.innerHTML = '';
+            repairs.forEach(rep => {
+                container.innerHTML += `
+                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <strong>諮詢單號: ${rep.id} (${rep.category})</strong>
+                            <span class="badge" style="background:#f59e0b; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${rep.status || '處理中'}</span>
+                        </div>
+                        <p style="font-size:13px; color:#475569;">預約時段: ${rep.times}</p>
+                        <p style="font-size:12px; color:#64748b;">申請時間: ${rep.date}</p>
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
