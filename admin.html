@@ -177,7 +177,6 @@
                             <i class="fa-solid fa-plus me-1"></i>新增服務項目
                         </button>
                     </div>
-                    <p class="text-muted small mb-3">您在此新增或編輯的服務項目，將直接呈現於前台首頁頂部的服務卡片區域供客戶點擊預覽。</p>
                     <div class="table-responsive p-2">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
@@ -200,7 +199,6 @@
                             <i class="fa-solid fa-plus me-1"></i>新增施工成果
                         </button>
                     </div>
-                    <p class="text-muted small mb-3">在此上傳的施工照片與影片，將自動同步顯示在對應的前台服務項目卡片中供客戶預覽！</p>
                     <div class="table-responsive p-2">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
@@ -243,7 +241,7 @@
 
                 <div class="card mb-4 shadow-sm border-warning">
                     <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-clock-rotate-left me-2"></i>尚未完成的訂單 (處理中 / 備貨中 / 待出貨)</span>
+                        <span><i class="fa-solid fa-clock-rotate-left me-2"></i>尚未完成的訂單</span>
                         <span class="badge bg-dark" id="pendingOrdersCountBadge">0</span>
                     </div>
                     <div class="table-responsive p-2 mb-0">
@@ -315,7 +313,7 @@
     </main>
 </div>
 
-<!-- Modal 視窗群組 -->
+<!-- Modals -->
 <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -336,7 +334,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">服務項目簡介摘要</label>
-                        <textarea class="form-control" id="serviceDesc" rows="3" placeholder="例如：燈具更換、插座線路重拉..."></textarea>
+                        <textarea class="form-control" id="serviceDesc" rows="3"></textarea>
                     </div>
                 </form>
             </div>
@@ -360,7 +358,7 @@
                     <input type="hidden" id="historyEditId">
                     <div class="mb-3">
                         <label class="form-label fw-bold">案件標題</label>
-                        <input type="text" class="form-control" id="historyTitle" required placeholder="例如：對講機老舊線路檢修">
+                        <input type="text" class="form-control" id="historyTitle" required>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -375,7 +373,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">施工說明摘要與細節</label>
-                        <textarea class="form-control" id="historyDesc" rows="4" placeholder="請描述施工過程..."></textarea>
+                        <textarea class="form-control" id="historyDesc" rows="4"></textarea>
                     </div>
                 </form>
             </div>
@@ -492,7 +490,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
     const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
     const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
@@ -613,8 +610,7 @@
         document.getElementById('serviceEditId').value = '';
         if (id) {
             document.getElementById('serviceModalTitle').textContent = '編輯服務項目';
-            const services = getStoredServices();
-            const s = services.find(x => x.id === id);
+            const s = getStoredServices().find(x => x.id === id);
             if (s) {
                 document.getElementById('serviceEditId').value = s.id;
                 document.getElementById('serviceName').value = s.name;
@@ -662,15 +658,20 @@
     function updateHistoryCategorySelectOptions() {
         const select = document.getElementById('historyCategory');
         if (!select) return;
-        const services = getStoredServices();
         select.innerHTML = '';
-        services.forEach(s => { select.innerHTML += `<option value="${s.name}">${s.name}</option>`; });
+        getStoredServices().forEach(s => { select.innerHTML += `<option value="${s.name}">${s.name}</option>`; });
     }
 
     function getStoredHistoryCases() {
         const data = localStorage.getItem('shop_history_cases');
         return data ? JSON.parse(data) : [
-            { id: 1, title: "公寓對講機老舊線路全面檢修與更新", category: "弱電工程", media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"], description: "針對老舊公寓進行對講機主幹道線路測試與更換。" }
+            {
+                id: 1,
+                title: "公寓對講機老舊線路全面檢修與更新",
+                category: "弱電工程",
+                media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"],
+                description: "針對老舊公寓進行對講機主幹道線路測試與更換。"
+            }
         ];
     }
     function saveStoredHistoryCases(cases) { localStorage.setItem('shop_history_cases', JSON.stringify(cases)); }
@@ -710,8 +711,7 @@
 
         if (id) {
             document.getElementById('historyModalTitle').textContent = '編輯歷史施工成果';
-            const cases = getStoredHistoryCases();
-            const c = cases.find(x => x.id === id);
+            const c = getStoredHistoryCases().find(x => x.id === id);
             if (c) {
                 document.getElementById('historyEditId').value = c.id;
                 document.getElementById('historyTitle').value = c.title;
@@ -782,9 +782,7 @@
 
     function deleteHistoryCase(id) {
         if (confirm('確定要刪除這筆施工成果嗎？')) {
-            let cases = getStoredHistoryCases();
-            cases = cases.filter(x => x.id !== id);
-            saveStoredHistoryCases(cases);
+            saveStoredHistoryCases(getStoredHistoryCases().filter(x => x.id !== id));
             renderAdminHistoryTable();
         }
     }
@@ -803,9 +801,8 @@
 
     function renderAdminCategoryTabs() {
         const container = document.getElementById('adminCategoryTabsContainer');
-        const categories = getStoredCategories();
         let html = `<button type="button" class="admin-cat-btn ${currentAdminCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all', this)">🔥 全部商品</button>`;
-        categories.forEach(cat => {
+        getStoredCategories().forEach(cat => {
             html += `<button type="button" class="admin-cat-btn ${currentAdminCategory === cat ? 'active' : ''}" onclick="filterAdminCategory('${cat}', this)">🛠️ ${cat}</button>`;
         });
         container.innerHTML = html;
@@ -828,6 +825,7 @@
             tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">此類別目前尚無商品！</td></tr>`;
             return;
         }
+
         products.forEach(prod => {
             const specsHtml = (prod.specs && prod.specs.length > 0) ? prod.specs.map(s => `<span class="badge bg-secondary me-1">${s.name} ($${s.price})</span>`).join('') : '<span class="text-muted small">無特殊規格</span>';
             const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
@@ -850,10 +848,9 @@
 
     function updateCategorySelectOptions() {
         const select = document.getElementById('prodCategory');
-        if(!select) return;
-        const categories = getStoredCategories();
+        if (!select) return;
         select.innerHTML = '';
-        categories.forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
+        getStoredCategories().forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
     }
 
     const categoryModalElement = document.getElementById('categoryModal');
@@ -863,9 +860,8 @@
 
     function renderCategoryListGroup() {
         const listGroup = document.getElementById('categoryListGroup');
-        const categories = getStoredCategories();
         listGroup.innerHTML = '';
-        categories.forEach((cat, index) => {
+        getStoredCategories().forEach((cat, index) => {
             listGroup.innerHTML += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${cat}</span>
@@ -954,8 +950,7 @@
     }
 
     function openOrderDetailModal(orderId) {
-        const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-        const ord = orders.find(o => o.id === orderId);
+        const ord = JSON.parse(localStorage.getItem('shop_orders') || '[]').find(o => o.id === orderId);
         if (!ord) return;
         document.getElementById('orderDetailModalBody').innerHTML = `
             <p><strong>編號：</strong>${ord.id}</p>
@@ -970,8 +965,7 @@
 
     function deleteOrder(orderId) {
         if (confirm('確定刪除訂單？')) {
-            let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            orders = orders.filter(o => o.id !== orderId);
+            let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]').filter(o => o.id !== orderId);
             localStorage.setItem('shop_orders', JSON.stringify(orders));
             renderAdminOrders();
         }
@@ -1125,8 +1119,7 @@
 
     function deleteProduct(id) {
         if (confirm('確定刪除商品？')) {
-            let products = getStoredProducts().filter(p => p.id !== id);
-            saveStoredProducts(products);
+            saveStoredProducts(getStoredProducts().filter(p => p.id !== id));
             renderAdminProducts(currentAdminCategory);
         }
     }
