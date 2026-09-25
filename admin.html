@@ -121,7 +121,7 @@
                     <i class="fa-solid fa-boxes-stacked me-2"></i>商品與類別管理
                 </button>
             </li>
-            <!-- 新增：歷史案件施工成果管理分頁按鈕 -->
+            <!-- 歷史施工成果管理分頁按鈕 -->
             <li class="nav-item mb-1" role="presentation">
                 <button class="nav-link w-100 text-start" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
                     <i class="fa-solid fa-images me-2"></i>歷史施工成果管理
@@ -180,7 +180,7 @@
                 </div>
             </div>
 
-            <!-- 歷史案件施工成果管理 (新增的面板) -->
+            <!-- 歷史案件施工成果管理 (與前台三個區塊同步) -->
             <div class="tab-pane fade" id="history" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fa-solid fa-images me-2 text-success"></i>歷史案件施工成果管理 (照片/影片)</h2>
@@ -188,14 +188,14 @@
                         <i class="fa-solid fa-plus me-1"></i>新增施工成果
                     </button>
                 </div>
-                <p class="text-muted small">在此上傳的施工照片與影片，將自動同步顯示在對應的前台服務項目卡片（居家水電維修、弱電工程、代客安裝）中供客戶預覽！</p>
+                <p class="text-muted small">在此新增、編輯或刪除的施工照片與影片，將自動同步儲存並顯示於前台的「居家水電維修」、「弱電工程」、「代客安裝」這三個服務區塊中供客戶點擊預覽！</p>
                 <div class="table-responsive p-3">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>預覽封面</th>
                                 <th>案件標題</th>
-                                <th>服務分類</th>
+                                <th>對應服務分類</th>
                                 <th>媒體數量</th>
                                 <th>施工說明摘要</th>
                                 <th>操作</th>
@@ -570,7 +570,7 @@
     function saveStoredProducts(prods) { localStorage.setItem('shop_products', JSON.stringify(prods)); }
 
     // ==========================================
-    // 歷史施工成果管理邏輯 (新增)
+    // 歷史施工成果管理邏輯 (與前台三個區塊完全同步)
     // ==========================================
     function getStoredHistoryCases() {
         const data = localStorage.getItem('shop_history_cases');
@@ -699,7 +699,7 @@
         saveStoredHistoryCases(cases);
         bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
         renderAdminHistoryTable();
-        alert('🎉 施工成果儲存成功！');
+        alert('🎉 施工成果儲存成功，已同步至前台服務區塊！');
     }
 
     function deleteHistoryCase(id) {
@@ -708,6 +708,7 @@
             cases = cases.filter(x => x.id !== id);
             saveStoredHistoryCases(cases);
             renderAdminHistoryTable();
+            alert('🗑️ 施工成果已刪除，前台畫面已同步更新！');
         }
     }
 
@@ -824,7 +825,6 @@
         }
     }
 
-    // 訂單管理與其他保持完整
     function renderAdminOrders() {
         const pendingTbody = document.getElementById('pendingOrderTableBody');
         const completedTbody = document.getElementById('completedOrderTableBody');
