@@ -10,6 +10,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 圖示庫 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         body { background-color: #f8f9fa; }
         .sidebar { 
@@ -489,29 +494,45 @@
     </div>
 </div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const firebaseConfig = {
-    apiKey: "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE",
-    authDomain: "jafstore1121.firebaseapp.com",
-    projectId: "jafstore1121",
-    storageBucket: "jafstore1121.appspot.com", // ⬅️ 若原本是 .firebasestorage.app，可試著改回 .appspot.com
-    messagingSenderId: "273721257948",
-    appId: "1:273721257948:web:6b3dc62a8f6989bfbf2919"
+    // ==========================================
+    // 1. Firebase 初始化設定 (請填入你的 Firebase 專案設定)
+    // ==========================================
+    const firebaseConfig = { 
+  apiKey : "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE" , 
+  authDomain : "jafstore1121.firebaseapp.com" , 
+  databaseURL : "https://jafstore1121-default-rtdb.firebaseio.com" , 
+  projectId : "jafstore1121" , 
+  storageBucket : "jafstore1121.firebasestorage.app" , 
+  messagingSenderId : "273721257948" , 
+  appId : "1:273721257948:web:6b3dc62a8f6989bfbf2919" , 
+  measurementId : "G-EGS8R6B6KE" 
 };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // 初始化 Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
 
+    // ==========================================
+    // 2. 預設資料與快取變數
+    // ==========================================
     const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
     const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
-    const defaultServices = [
-        { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
-        { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
-        { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
+    const defaultProducts = [
+        {
+            id: 1,
+            name: "招牌手作烘焙麵包",
+            category: "烘焙與茶飲",
+            price: 120,
+            sales: 350,
+            specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
+            img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
+            images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
+            description: "嚴選優質小麥與天然酵母手作烘焙。"
+        }
     ];
 
     let currentAdminCategory = 'all';
@@ -519,14 +540,126 @@
     let currentEditingImages = []; 
     let currentEditingHistoryMedia = [];
 
-    let memoryProducts = [];
-    let memoryCategories = [];
-    let memoryOrderStatuses = [];
-    let memoryServices = [];
-    let memoryHistoryCases = [];
-    let memoryOrders = [];
-    let memoryRepairs = [];
+    // 記憶體中同步的 Firebase 資料庫快取
+    let dbCache = {
+        categories: [],
+        order_statuses: [],
+        products: [],
+        services: [],
+        history_cases: [],
+        orders: [],
+        repairs: []
+    };
 
+    // ==========================================
+    // 3. Firebase 即時監聽與資料同步模組
+    // ==========================================
+    function initFirebaseListeners() {
+        // 監聽類別
+        db.ref('shop_categories').on('value', (snapshot) => {
+            const val = snapshot.val();
+            dbCache.categories = val ? (Array.isArray(val) ? val : Object.values(val)) : defaultCategories;
+            if(!val) db.ref('shop_categories').set(defaultCategories);
+            renderAdminCategoryTabs();
+            updateCategorySelectOptions();
+            if(document.getElementById('categoryModal').classList.contains('show')) renderCategoryListGroup();
+        });
+
+        // 監聽訂單狀態選項
+        db.ref('shop_order_statuses').on('value', (snapshot) => {
+            const val = snapshot.val();
+            dbCache.order_statuses = val ? (Array.isArray(val) ? val : Object.values(val)) : defaultOrderStatuses;
+            if(!val) db.ref('shop_order_statuses').set(defaultOrderStatuses);
+            if(document.getElementById('orderStatusSettingModal').classList.contains('show')) renderOrderStatusListGroup();
+        });
+
+        // 監聽商品
+        db.ref('shop_products').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+                dbCache.products = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+            } else {
+                dbCache.products = defaultProducts;
+                db.ref('shop_products').set(defaultProducts);
+            }
+            renderAdminProducts(currentAdminCategory);
+        });
+
+        // 監聽服務項目
+        db.ref('shop_services').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+                dbCache.services = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+            } else {
+                dbCache.services = [
+                    { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
+                    { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
+                    { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
+                ];
+                db.ref('shop_services').set(dbCache.services);
+            }
+            renderAdminServicesTable();
+            updateHistoryCategorySelectOptions();
+        });
+
+        // 監聽歷史施工成果
+        db.ref('shop_history_cases').on('value', (snapshot) => {
+            const val = snapshot.val();
+            dbCache.history_cases = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [
+                {
+                    id: 1,
+                    title: "公寓對講機老舊線路全面檢修與更新",
+                    category: "弱電工程",
+                    media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"],
+                    description: "針對老舊公寓進行對講機主幹道線路測試與更換。"
+                }
+            ];
+            renderAdminHistoryTable();
+        });
+
+        // 監聽訂單
+        db.ref('shop_orders').on('value', (snapshot) => {
+            const val = snapshot.val();
+            dbCache.orders = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
+            renderAdminOrders();
+        });
+
+        // 監聽維修諮詢
+        db.ref('shop_repairs').on('value', (snapshot) => {
+            const val = snapshot.val();
+            dbCache.repairs = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
+            renderAdminRepairs();
+        });
+    }
+
+    // 資料存取相容函式（維持原函式名稱與結構，改與 Firebase 同步）
+    function getStoredCategories() { return dbCache.categories.length ? dbCache.categories : defaultCategories; }
+    function saveStoredCategories(cats) { db.ref('shop_categories').set(cats); }
+
+    function getStoredOrderStatuses() { return dbCache.order_statuses.length ? dbCache.order_statuses : defaultOrderStatuses; }
+    function saveStoredOrderStatuses(statuses) { db.ref('shop_order_statuses').set(statuses); }
+
+    function getStoredProducts() { 
+        if(!dbCache.products.length) return defaultProducts;
+        return dbCache.products.map(p => ({
+            ...p,
+            images: (p.images && p.images.length > 0) ? p.images : [p.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80']
+        }));
+    }
+    function saveStoredProducts(prods) { db.ref('shop_products').set(prods); }
+
+    function getStoredServices() { return dbCache.services; }
+    function saveStoredServices(services) { 
+        db.ref('shop_services').set(services); 
+        updateHistoryCategorySelectOptions();
+    }
+
+    function getStoredHistoryCases() { return dbCache.history_cases; }
+    function saveStoredHistoryCases(cases) { db.ref('shop_history_cases').set(cases); }
+
+    // ==========================================
+    // 4. 管理員登入控制
+    // ==========================================
     function checkAdminLoginState() {
         const isLogged = sessionStorage.getItem('admin_logged_in');
         if (isLogged === 'true') {
@@ -560,107 +693,19 @@
         }
     }
 
-    async function initFirestoreData() {
-        try {
-            const catDoc = await db.collection('settings').doc('categories').get();
-            if (catDoc.exists) {
-                memoryCategories = catDoc.data().list || defaultCategories;
-            } else {
-                memoryCategories = defaultCategories;
-                await db.collection('settings').doc('categories').set({ list: defaultCategories });
-            }
-
-            const statusDoc = await db.collection('settings').doc('order_statuses').get();
-            if (statusDoc.exists) {
-                memoryOrderStatuses = statusDoc.data().list || defaultOrderStatuses;
-            } else {
-                memoryOrderStatuses = defaultOrderStatuses;
-                await db.collection('settings').doc('order_statuses').set({ list: defaultOrderStatuses });
-            }
-
-            const prodSnap = await db.collection('products').get();
-            if (prodSnap.empty) {
-                memoryProducts = [
-                    {
-                        id: 1,
-                        name: "招牌手作烘焙麵包",
-                        category: "烘焙與茶飲",
-                        price: 120,
-                        sales: 350,
-                        specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
-                        img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
-                        images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
-                        description: "嚴選優質小麥與天然酵母手作烘焙。"
-                    }
-                ];
-                for (let p of memoryProducts) {
-                    await db.collection('products').doc(String(p.id)).set(p);
-                }
-            } else {
-                memoryProducts = prodSnap.docs.map(doc => doc.data());
-            }
-
-            const servSnap = await db.collection('services').get();
-            if (servSnap.empty) {
-                memoryServices = defaultServices;
-                for (let s of memoryServices) {
-                    await db.collection('services').doc(String(s.id)).set(s);
-                }
-            } else {
-                memoryServices = servSnap.docs.map(doc => doc.data());
-            }
-
-            const histSnap = await db.collection('history_cases').get();
-            if (histSnap.empty) {
-                memoryHistoryCases = [
-                    {
-                        id: 1,
-                        title: "公寓對講機老舊線路全面檢修與更新",
-                        category: "弱電工程",
-                        media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"],
-                        description: "針對老舊公寓進行對講機主幹道線路測試與更換。"
-                    }
-                ];
-                for (let h of memoryHistoryCases) {
-                    await db.collection('history_cases').doc(String(h.id)).set(h);
-                }
-            } else {
-                memoryHistoryCases = histSnap.docs.map(doc => doc.data());
-            }
-
-            const orderSnap = await db.collection('orders').get();
-            memoryOrders = orderSnap.docs.map(doc => doc.data());
-
-            const repairSnap = await db.collection('repairs').get();
-            memoryRepairs = repairSnap.docs.map(doc => doc.data());
-
-            refreshUI();
-        } catch (error) {
-            console.error("Firebase 初始化失敗，請檢查網路或設定: ", error);
-            alert("❌ 無法連線至 Firebase 資料庫，請確認設定是否正確！");
-        }
-    }
-
-    function refreshUI() {
-        renderAdminServicesTable();
-        renderAdminHistoryTable();
-        renderAdminCategoryTabs();
-        renderAdminProducts('all');
-        renderAdminOrders();
-        renderAdminRepairs();
-        updateCategorySelectOptions();
-        updateHistoryCategorySelectOptions();
-        renderOrderStatusListGroup();
-    }
-
+    // ==========================================
+    // 5. 畫面渲染與互動邏輯
+    // ==========================================
     function renderAdminServicesTable() {
+        const services = getStoredServices();
         const tbody = document.getElementById('adminServiceTableBody');
+        if(!tbody) return;
         tbody.innerHTML = '';
-        if (memoryServices.length === 0) {
+        if (services.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">目前尚無服務項目！</td></tr>`;
             return;
         }
-        memoryServices.forEach(item => {
+        services.forEach(item => {
             tbody.innerHTML += `
                 <tr>
                     <td><i class="${item.icon} fa-lg text-primary"></i></td>
@@ -681,7 +726,7 @@
         document.getElementById('serviceEditId').value = '';
         if (id) {
             document.getElementById('serviceModalTitle').textContent = '編輯服務項目';
-            const s = memoryServices.find(x => x.id === id);
+            const s = getStoredServices().find(x => x.id === id);
             if (s) {
                 document.getElementById('serviceEditId').value = s.id;
                 document.getElementById('serviceName').value = s.name;
@@ -695,35 +740,34 @@
         modal.show();
     }
 
-    async function saveServiceItem() {
+    function saveServiceItem() {
         const editId = document.getElementById('serviceEditId').value;
         const name = document.getElementById('serviceName').value.trim();
         const icon = document.getElementById('serviceIcon').value.trim();
         const description = document.getElementById('serviceDesc').value.trim();
         if (!name) { alert('請填寫服務名稱！'); return; }
 
+        let services = getStoredServices();
         const data = { id: editId ? parseInt(editId) : Date.now(), name, icon: icon || 'fa-solid fa-wrench', description };
         if (editId) {
-            const idx = memoryServices.findIndex(x => x.id === parseInt(editId));
-            if (idx > -1) memoryServices[idx] = data;
+            const idx = services.findIndex(x => x.id === parseInt(editId));
+            if (idx > -1) services[idx] = data;
         } else {
-            memoryServices.push(data);
+            services.push(data);
         }
-
-        await db.collection('services').doc(String(data.id)).set(data);
+        saveStoredServices(services);
         bootstrap.Modal.getInstance(document.getElementById('serviceModal')).hide();
         renderAdminServicesTable();
-        updateHistoryCategorySelectOptions();
         alert('🎉 服務項目儲存成功！');
     }
 
-    async function deleteServiceItem(id) {
-        if (memoryServices.length <= 1) { alert('至少需要保留一個服務項目！'); return; }
+    function deleteServiceItem(id) {
+        let services = getStoredServices();
+        if (services.length <= 1) { alert('至少需要保留一個服務項目！'); return; }
         if (confirm('確定要刪除這個服務項目嗎？')) {
-            memoryServices = memoryServices.filter(x => x.id !== id);
-            await db.collection('services').doc(String(id)).delete();
+            services = services.filter(x => x.id !== id);
+            saveStoredServices(services);
             renderAdminServicesTable();
-            updateHistoryCategorySelectOptions();
         }
     }
 
@@ -731,17 +775,19 @@
         const select = document.getElementById('historyCategory');
         if (!select) return;
         select.innerHTML = '';
-        memoryServices.forEach(s => { select.innerHTML += `<option value="${s.name}">${s.name}</option>`; });
+        getStoredServices().forEach(s => { select.innerHTML += `<option value="${s.name}">${s.name}</option>`; });
     }
 
     function renderAdminHistoryTable() {
+        const cases = getStoredHistoryCases();
         const tbody = document.getElementById('adminHistoryTableBody');
+        if(!tbody) return;
         tbody.innerHTML = '';
-        if (memoryHistoryCases.length === 0) {
+        if (cases.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">目前尚無歷史施工成果記錄！</td></tr>`;
             return;
         }
-        memoryHistoryCases.forEach(item => {
+        cases.forEach(item => {
             const cover = (item.media && item.media.length > 0) ? item.media[0] : '';
             tbody.innerHTML += `
                 <tr>
@@ -768,7 +814,7 @@
 
         if (id) {
             document.getElementById('historyModalTitle').textContent = '編輯歷史施工成果';
-            const c = memoryHistoryCases.find(x => x.id === id);
+            const c = getStoredHistoryCases().find(x => x.id === id);
             if (c) {
                 document.getElementById('historyEditId').value = c.id;
                 document.getElementById('historyTitle').value = c.title;
@@ -803,6 +849,7 @@
 
     function renderHistoryMediaPreview() {
         const container = document.getElementById('historyMediaPreviewContainer');
+        if(!container) return;
         container.innerHTML = '';
         currentEditingHistoryMedia.forEach((url, idx) => {
             const isVideo = url.startsWith('data:video') || url.includes('.mp4');
@@ -816,44 +863,44 @@
         });
     }
 
-    async function saveHistoryCase() {
+    function saveHistoryCase() {
         const editId = document.getElementById('historyEditId').value;
         const title = document.getElementById('historyTitle').value.trim();
         const category = document.getElementById('historyCategory').value;
         const description = document.getElementById('historyDesc').value.trim();
         if (!title) { alert('請填寫案件標題！'); return; }
 
+        let cases = getStoredHistoryCases();
         const data = { id: editId ? parseInt(editId) : Date.now(), title, category, media: currentEditingHistoryMedia, description };
         if (editId) {
-            const idx = memoryHistoryCases.findIndex(x => x.id === parseInt(editId));
-            if (idx > -1) memoryHistoryCases[idx] = data;
+            const idx = cases.findIndex(x => x.id === parseInt(editId));
+            if (idx > -1) cases[idx] = data;
         } else {
-            memoryHistoryCases.unshift(data);
+            cases.unshift(data);
         }
-
-        await db.collection('history_cases').doc(String(data.id)).set(data);
+        saveStoredHistoryCases(cases);
         bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
         renderAdminHistoryTable();
         alert('🎉 施工成果儲存成功！');
     }
 
-    async function deleteHistoryCase(id) {
+    function deleteHistoryCase(id) {
         if (confirm('確定要刪除這筆施工成果嗎？')) {
-            memoryHistoryCases = memoryHistoryCases.filter(x => x.id !== id);
-            await db.collection('history_cases').doc(String(id)).delete();
+            saveStoredHistoryCases(getStoredHistoryCases().filter(x => x.id !== id));
             renderAdminHistoryTable();
         }
     }
 
     document.addEventListener("DOMContentLoaded", function() {
         checkAdminLoginState();
-        initFirestoreData();
+        initFirebaseListeners(); // 啟動 Firebase 監聽
     });
 
     function renderAdminCategoryTabs() {
         const container = document.getElementById('adminCategoryTabsContainer');
+        if(!container) return;
         let html = `<button type="button" class="admin-cat-btn ${currentAdminCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all', this)">🔥 全部商品</button>`;
-        memoryCategories.forEach(cat => {
+        getStoredCategories().forEach(cat => {
             html += `<button type="button" class="admin-cat-btn ${currentAdminCategory === cat ? 'active' : ''}" onclick="filterAdminCategory('${cat}', this)">🛠️ ${cat}</button>`;
         });
         container.innerHTML = html;
@@ -867,8 +914,9 @@
     }
 
     function renderAdminProducts(category = currentAdminCategory) {
-        let products = memoryProducts;
+        let products = getStoredProducts();
         const tbody = document.getElementById('adminProductTableBody');
+        if(!tbody) return;
         tbody.innerHTML = '';
         if (category !== 'all') products = products.filter(p => p.category === category);
 
@@ -901,7 +949,7 @@
         const select = document.getElementById('prodCategory');
         if (!select) return;
         select.innerHTML = '';
-        memoryCategories.forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
+        getStoredCategories().forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
     }
 
     const categoryModalElement = document.getElementById('categoryModal');
@@ -911,8 +959,9 @@
 
     function renderCategoryListGroup() {
         const listGroup = document.getElementById('categoryListGroup');
+        if(!listGroup) return;
         listGroup.innerHTML = '';
-        memoryCategories.forEach((cat, index) => {
+        getStoredCategories().forEach((cat, index) => {
             listGroup.innerHTML += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${cat}</span>
@@ -922,13 +971,14 @@
         });
     }
 
-    async function addCategory() {
+    function addCategory() {
         const input = document.getElementById('newCategoryName');
         const name = input.value.trim();
         if (!name) return;
-        if (memoryCategories.includes(name)) { alert('已存在！'); return; }
-        memoryCategories.push(name);
-        await db.collection('settings').doc('categories').set({ list: memoryCategories });
+        let categories = getStoredCategories();
+        if (categories.includes(name)) { alert('已存在！'); return; }
+        categories.push(name);
+        saveStoredCategories(categories);
         input.value = '';
         renderCategoryListGroup();
         renderAdminCategoryTabs();
@@ -936,11 +986,12 @@
         renderAdminProducts(currentAdminCategory);
     }
 
-    async function deleteCategory(index) {
-        if (memoryCategories.length <= 1) { alert('至少保留一個！'); return; }
+    function deleteCategory(index) {
+        let categories = getStoredCategories();
+        if (categories.length <= 1) { alert('至少保留一個！'); return; }
         if (confirm('確定刪除？')) {
-            memoryCategories.splice(index, 1);
-            await db.collection('settings').doc('categories').set({ list: memoryCategories });
+            categories.splice(index, 1);
+            saveStoredCategories(categories);
             renderCategoryListGroup();
             renderAdminCategoryTabs();
             updateCategorySelectOptions();
@@ -948,11 +999,16 @@
         }
     }
 
+    const orderStatusModalElement = document.getElementById('orderStatusSettingModal');
+    if (orderStatusModalElement) {
+        orderStatusModalElement.addEventListener('show.bs.modal', function () { renderOrderStatusListGroup(); });
+    }
+
     function renderOrderStatusListGroup() {
         const listGroup = document.getElementById('orderStatusListGroup');
-        if (!listGroup) return;
+        if(!listGroup) return;
         listGroup.innerHTML = '';
-        memoryOrderStatuses.forEach((st, index) => {
+        getStoredOrderStatuses().forEach((st, index) => {
             listGroup.innerHTML += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>${st}</span>
@@ -962,23 +1018,25 @@
         });
     }
 
-    async function addNewOrderStatus() {
+    function addNewOrderStatus() {
         const input = document.getElementById('newOrderStatusInput');
         const name = input.value.trim();
         if (!name) return;
-        if (memoryOrderStatuses.includes(name)) { alert('狀態已存在！'); return; }
-        memoryOrderStatuses.push(name);
-        await db.collection('settings').doc('order_statuses').set({ list: memoryOrderStatuses });
+        let statuses = getStoredOrderStatuses();
+        if (statuses.includes(name)) { alert('已存在！'); return; }
+        statuses.push(name);
+        saveStoredOrderStatuses(statuses);
         input.value = '';
         renderOrderStatusListGroup();
         renderAdminOrders();
     }
 
-    async function deleteOrderStatus(index) {
-        if (memoryOrderStatuses.length <= 1) { alert('至少保留一個狀態！'); return; }
-        if (confirm('確定刪除此狀態？')) {
-            memoryOrderStatuses.splice(index, 1);
-            await db.collection('settings').doc('order_statuses').set({ list: memoryOrderStatuses });
+    function deleteOrderStatus(index) {
+        let statuses = getStoredOrderStatuses();
+        if (statuses.length <= 1) { alert('至少保留一個！'); return; }
+        if (confirm('確定刪除此狀態選項？')) {
+            statuses.splice(index, 1);
+            saveStoredOrderStatuses(statuses);
             renderOrderStatusListGroup();
             renderAdminOrders();
         }
@@ -987,8 +1045,10 @@
     function renderAdminOrders() {
         const pendingTbody = document.getElementById('pendingOrderTableBody');
         const completedTbody = document.getElementById('completedOrderTableBody');
-        const orders = memoryOrders;
-        const statuses = memoryOrderStatuses;
+        if(!pendingTbody || !completedTbody) return;
+
+        const orders = dbCache.orders;
+        const statuses = getStoredOrderStatuses();
         
         document.getElementById('totalOrdersCount').textContent = orders.length;
         let totalAmount = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
@@ -1035,7 +1095,7 @@
     }
 
     function openOrderDetailModal(orderId) {
-        const ord = memoryOrders.find(o => o.id === orderId);
+        const ord = dbCache.orders.find(o => o.id === orderId);
         if (!ord) return;
         document.getElementById('orderDetailModalBody').innerHTML = `
             <p><strong>編號：</strong>${ord.id}</p>
@@ -1048,39 +1108,36 @@
         new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
     }
 
-    async function deleteOrder(orderId) {
+    function deleteOrder(orderId) {
         if (confirm('確定刪除訂單？')) {
-            memoryOrders = memoryOrders.filter(o => o.id !== orderId);
-            await db.collection('orders').doc(String(orderId)).delete();
-            renderAdminOrders();
+            let orders = dbCache.orders.filter(o => o.id !== orderId);
+            db.ref('shop_orders').set(orders);
         }
     }
 
-    async function updateOrderStatus(orderId, newStatus) {
-        const idx = memoryOrders.findIndex(o => o.id === orderId);
+    function updateOrderStatus(orderId, newStatus) {
+        let orders = dbCache.orders;
+        const idx = orders.findIndex(o => o.id === orderId);
         if (idx > -1) {
-            memoryOrders[idx].status = newStatus;
-            await db.collection('orders').doc(String(orderId)).update({ status: newStatus });
-            renderAdminOrders();
+            orders[idx].status = newStatus;
+            db.ref('shop_orders').set(orders);
         }
     }
 
-    async function completeOrderAndCount(orderId) {
-        const ord = memoryOrders.find(o => o.id === orderId);
+    function completeOrderAndCount(orderId) {
+        let orders = dbCache.orders;
+        let products = getStoredProducts();
+        const ord = orders.find(o => o.id === orderId);
         if (!ord || ord.status.includes('已完成')) return;
 
         if (confirm(`確定將訂單 ${orderId} 標記為完成並自動增加商品銷量？`)) {
             ord.items.forEach(item => {
-                const p = memoryProducts.find(prod => prod.id === item.id);
-                if (p) {
-                    p.sales = (p.sales || 0) + item.qty;
-                    db.collection('products').doc(String(p.id)).update({ sales: p.sales });
-                }
+                const p = products.find(prod => prod.id === item.id);
+                if (p) p.sales = (p.sales || 0) + item.qty;
             });
             ord.status = "✅ 已完成";
-            await db.collection('orders').doc(String(orderId)).update({ status: ord.status });
-            renderAdminOrders();
-            renderAdminProducts(currentAdminCategory);
+            db.ref('shop_orders').set(orders);
+            saveStoredProducts(products);
             alert('🎉 訂單完成並已成功累加熱銷銷量！');
         }
     }
@@ -1095,7 +1152,7 @@
 
         if (productId) {
             document.getElementById('productModalTitle').textContent = '編輯商品';
-            const prod = memoryProducts.find(p => p.id === productId);
+            const prod = getStoredProducts().find(p => p.id === productId);
             if (prod) {
                 document.getElementById('prodEditId').value = prod.id;
                 document.getElementById('prodName').value = prod.name;
@@ -1130,6 +1187,7 @@
 
     function renderSpecsContainer() {
         const container = document.getElementById('specsContainer');
+        if(!container) return;
         container.innerHTML = currentEditingSpecs.length === 0 ? '<span class="text-muted small">尚未新增特殊規格</span>' : '';
         currentEditingSpecs.forEach((spec, index) => {
             container.innerHTML += `<span class="badge bg-primary p-2 d-flex align-items-center gap-2">${spec.name} ($${spec.price}) <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="removeSpecOption(${index})"></i></span>`;
@@ -1157,6 +1215,7 @@
 
     function renderImagePreviewContainer() {
         const container = document.getElementById('imagePreviewContainer');
+        if(!container) return;
         container.innerHTML = '';
         currentEditingImages.forEach((imgUrl, index) => {
             container.innerHTML += `
@@ -1169,13 +1228,14 @@
         });
     }
 
-    async function saveProduct() {
+    function saveProduct() {
         const editId = document.getElementById('prodEditId').value;
         const name = document.getElementById('prodName').value.trim();
         const category = document.getElementById('prodCategory').value;
         const price = parseInt(document.getElementById('prodPrice').value);
         if (!name || isNaN(price)) { alert('請填寫商品名稱與價格！'); return; }
 
+        let products = getStoredProducts();
         const productData = {
             id: editId ? parseInt(editId) : Date.now(),
             name,
@@ -1189,30 +1249,29 @@
         };
 
         if (editId) {
-            const index = memoryProducts.findIndex(p => p.id === parseInt(editId));
-            if (index > -1) memoryProducts[index] = productData;
+            const index = products.findIndex(p => p.id === parseInt(editId));
+            if (index > -1) products[index] = productData;
         } else {
-            memoryProducts.unshift(productData);
+            products.unshift(productData);
         }
 
-        await db.collection('products').doc(String(productData.id)).set(productData);
+        saveStoredProducts(products);
         bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-        renderAdminProducts(currentAdminCategory);
         alert('商品儲存成功！');
     }
 
-    async function deleteProduct(id) {
+    function deleteProduct(id) {
         if (confirm('確定刪除商品？')) {
-            memoryProducts = memoryProducts.filter(p => p.id !== id);
-            await db.collection('products').doc(String(id)).delete();
-            renderAdminProducts(currentAdminCategory);
+            saveStoredProducts(getStoredProducts().filter(p => p.id !== id));
         }
     }
 
     function renderAdminRepairs() {
         const tbody = document.getElementById('repairTableBody');
-        tbody.innerHTML = memoryRepairs.length === 0 ? `<tr><td colspan="8" class="text-center text-muted py-4">目前尚無預約諮詢記錄！</td></tr>` : '';
-        memoryRepairs.forEach(rep => {
+        if(!tbody) return;
+        const repairs = dbCache.repairs;
+        tbody.innerHTML = repairs.length === 0 ? `<tr><td colspan="8" class="text-center text-muted py-4">目前尚無預約諮詢記錄！</td></tr>` : '';
+        repairs.forEach(rep => {
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${rep.id}</strong></td>
@@ -1228,12 +1287,12 @@
         });
     }
 
-    async function updateRepairStatus(id) {
-        const idx = memoryRepairs.findIndex(r => r.id === id);
+    function updateRepairStatus(id) {
+        let repairs = dbCache.repairs;
+        const idx = repairs.findIndex(r => r.id === id);
         if (idx > -1) {
-            memoryRepairs[idx].status = "✅ 已完工 (結案)";
-            await db.collection('repairs').doc(String(id)).update({ status: memoryRepairs[idx].status });
-            renderAdminRepairs();
+            repairs[idx].status = "✅ 已完工 (結案)";
+            db.ref('shop_repairs').set(repairs);
             alert('預約單狀態已更新為已完工！');
         }
     }
