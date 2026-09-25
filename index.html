@@ -16,6 +16,11 @@
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
 
+    <!-- 引入 Firebase App 與 Firestore SDK (Compat 版本) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
     <style>
         /* ==========================================
            1. 全域樣式設定 (Global Styles)
@@ -1311,7 +1316,7 @@
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
                         <label>電子信箱 / 帳號</label>
-                        <input type="text" id="loginEmail" required placeholder="請輸入您的信箱">
+                        <input type="email" id="loginEmail" required placeholder="請輸入您的信箱">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1391,88 +1396,110 @@
     </div>
 
     <script>
-        const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
-        const defaultProducts = [
-            {
-                id: 1,
-                name: "招牌手作烘焙麵包",
-                category: "烘焙與茶飲",
-                price: 120,
-                sales: 350,
-                specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
-                img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
-                images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
-                description: "嚴選優質小麥與天然酵母手作烘焙。"
-            }
-        ];
+        /* ==========================================
+           FIREBASE 初始化與設定 (請替換為你的專案設定)
+           ========================================== */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE",
+  authDomain: "jafstore1121.firebaseapp.com",
+  projectId: "jafstore1121",
+  storageBucket: "jafstore1121.firebasestorage.app",
+  messagingSenderId: "273721257948",
+  appId: "1:273721257948:web:6b3dc62a8f6989bfbf2919",
+  measurementId: "G-EGS8R6B6KE"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let currentActiveCategory = 'all';
         let selectedProductForModal = null;
         let selectedSpecItem = null;
         let cartItems = JSON.parse(localStorage.getItem('shop_cart') || '[]');
         let selectedTimesList = [];
-
-        function getStoredCategories() {
-            const data = localStorage.getItem('shop_categories');
-            return data ? JSON.parse(data) : defaultCategories;
-        }
-
-        function getStoredProducts() {
-            const data = localStorage.getItem('shop_products');
-            if (!data) return defaultProducts;
-            let products = JSON.parse(data);
-            return products.map(p => ({
-                ...p,
-                images: (p.images && p.images.length > 0) ? p.images : [p.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80']
-            }));
-        }
-
-        function getStoredServices() {
-            const data = localStorage.getItem('shop_services');
-            return data ? JSON.parse(data) : [
-                { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
-                { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
-                { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
-            ];
-        }
-
-        function getStoredHistoryCases() {
-            const data = localStorage.getItem('shop_history_cases');
-            return data ? JSON.parse(data) : [];
-        }
+        let categoriesData = ["烘焙與茶飲", "生活用品", "水電五金"];
+        let productsData = [];
+        let servicesData = [
+            { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
+            { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
+            { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
+        ];
+        let historyCasesData = [];
 
         document.addEventListener("DOMContentLoaded", function() {
-            renderCategoryTabs();
-            renderProducts('all');
-            renderServicesCards();
-            updateRepairCategorySelect();
+            initFirebaseSync();
             updateCartBadge();
-            checkUserLoginState();
+            
+            // 監聽 Firebase Auth 登入狀態變化
+            auth.onAuthStateChanged((user) => {
+                const userBtn = document.getElementById('floatingUserBtn');
+                if (user) {
+                    userBtn.title = `已登入 (${user.email})，點擊可登出`;
+                    userBtn.style.backgroundColor = "#10b981";
+                } else {
+                    userBtn.title = "會員登入 / 註冊";
+                    userBtn.style.backgroundColor = "#0066cc";
+                }
+            });
         });
 
-        // 登入狀態檢查與控制
-        function isUserLoggedIn() {
-            return localStorage.getItem('shop_current_user') !== null;
+        // 從 Firestore 即時同步資料
+        function initFirebaseSync() {
+            // 1. 同步商品資料
+            db.collection("products").onSnapshot((snapshot) => {
+                productsData = [];
+                snapshot.forEach((doc) => {
+                    productsData.push({ id: doc.id, ...doc.data() });
+                });
+                if(productsData.length === 0) {
+                    // 若資料庫為空，寫入預設商品
+                    seedDefaultData();
+                } else {
+                    renderCategoryTabs();
+                    renderProducts(currentActiveCategory);
+                }
+            });
+
+            // 2. 同步服務項目與歷史案例
+            db.collection("services").onSnapshot((snapshot) => {
+                if(!snapshot.empty) {
+                    servicesData = [];
+                    snapshot.forEach((doc) => { servicesData.push(doc.data()); });
+                }
+                renderServicesCards();
+                updateRepairCategorySelect();
+            });
+
+            db.collection("history_cases").onSnapshot((snapshot) => {
+                historyCasesData = [];
+                snapshot.forEach((doc) => { historyCasesData.push(doc.data()); });
+            });
         }
 
-        function checkUserLoginState() {
-            const userBtn = document.getElementById('floatingUserBtn');
-            if (isUserLoggedIn()) {
-                const user = JSON.parse(localStorage.getItem('shop_current_user'));
-                userBtn.title = `已登入 (${user.name})，點擊可登出`;
-                userBtn.style.backgroundColor = "#10b981";
-            } else {
-                userBtn.title = "會員登入 / 註冊";
-                userBtn.style.backgroundColor = "#0066cc";
-            }
+        // 寫入預設範例資料到 Firestore (僅在資料庫完全沒資料時執行)
+        function seedDefaultData() {
+            const defaultProd = {
+                name: "招牌手作烘焙麵包",
+                category: "烘焙與茶飲",
+                price: 120,
+                sales: 350,
+                specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
+                images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
+                description: "嚴選優質小麥與天然酵母手作烘焙。"
+            };
+            db.collection("products").add(defaultProd);
         }
 
+        // 會員登入 / 註冊與控制
         function openAuthModal() {
-            if (isUserLoggedIn()) {
-                if (confirm('您目前已登入，請問是否要登出帳號？')) {
-                    localStorage.removeItem('shop_current_user');
-                    checkUserLoginState();
-                    alert('已成功登出帳號！');
+            const user = auth.currentUser;
+            if (user) {
+                if (confirm(`您目前已登入 (${user.email})，請問是否要登出帳號？`)) {
+                    auth.signOut().then(() => {
+                        alert('已成功登出帳號！');
+                    });
                 }
             } else {
                 document.getElementById('authModalOverlay').classList.add('active');
@@ -1499,45 +1526,49 @@
             }
         }
 
+        // Firebase 登入處理
         function handleUserLogin(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
-            let users = JSON.parse(localStorage.getItem('shop_users') || '[]');
-            const found = users.find(u => u.email === email && u.pass === pass);
-            if (found) {
-                localStorage.setItem('shop_current_user', JSON.stringify(found));
-                checkUserLoginState();
-                document.getElementById('authModalOverlay').classList.remove('active');
-                alert(`🎉 歡迎回來，${found.name}！`);
-            } else {
-                alert('❌ 帳號或密碼錯誤，或尚未註冊！');
-            }
+            
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    document.getElementById('authModalOverlay').classList.remove('active');
+                    alert(`🎉 歡迎回來，${userCredential.user.email}！`);
+                })
+                .catch((error) => {
+                    alert('❌ 登入失敗：' + error.message);
+                });
         }
 
+        // Firebase 註冊處理
         function handleUserRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPassword').value.trim();
-            let users = JSON.parse(localStorage.getItem('shop_users') || '[]');
-            if (users.some(u => u.email === email)) {
-                alert('❌ 此電子信箱已經註冊過了！');
-                return;
-            }
-            const newUser = { name, email, pass };
-            users.push(newUser);
-            localStorage.setItem('shop_users', JSON.stringify(users));
-            localStorage.setItem('shop_current_user', JSON.stringify(newUser));
-            checkUserLoginState();
-            document.getElementById('authModalOverlay').classList.remove('active');
-            alert('🎉 註冊成功並已自動登入！');
+
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // 同時將使用者名稱存入 Firestore 的 users 集合
+                    db.collection("users").doc(userCredential.user.uid).set({
+                        name: name,
+                        email: email,
+                        createdAt: new Date().toISOString()
+                    });
+                    document.getElementById('authModalOverlay').classList.remove('active');
+                    alert('🎉 註冊成功並已自動登入！');
+                })
+                .catch((error) => {
+                    alert('❌ 註冊失敗：' + error.message);
+                });
         }
 
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
             let html = `<button type="button" class="category-btn ${currentActiveCategory === 'all' ? 'active' : ''}" onclick="filterCategory('all', this)">🔥 全部商品 (依熱銷排序)</button>`;
-            getStoredCategories().forEach(cat => {
+            categoriesData.forEach(cat => {
                 html += `<button type="button" class="category-btn ${currentActiveCategory === cat ? 'active' : ''}" onclick="filterCategory('${cat}', this)">🛠️ ${cat}</button>`;
             });
             container.innerHTML = html;
@@ -1551,7 +1582,7 @@
         }
 
         function renderProducts(category) {
-            let products = getStoredProducts();
+            let products = [...productsData];
             const grid = document.getElementById('productGrid');
             grid.innerHTML = '';
             
@@ -1570,7 +1601,7 @@
                 const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
                 const isTop = (category === 'all' && index < 3);
                 grid.innerHTML += `
-                    <div class="product-card" onclick="openShopModal(${prod.id})">
+                    <div class="product-card" onclick="openShopModal('${prod.id}')">
                         ${isTop ? '<div class="hot-badge">🔥 熱銷推薦</div>' : ''}
                         <img src="${coverImg}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         <div class="product-info">
@@ -1585,7 +1616,7 @@
         }
 
         function openShopModal(productId) {
-            const prod = getStoredProducts().find(p => p.id === productId);
+            const prod = productsData.find(p => p.id === productId);
             if (!prod) return;
             selectedProductForModal = prod;
             document.getElementById('modalProdTitle').textContent = prod.name;
@@ -1645,9 +1676,9 @@
             }
         }
 
-        // 核心修改：點選加入購物車時必須先檢查登入狀態
         function confirmAddToCart() {
-            if (!isUserLoggedIn()) {
+            const user = auth.currentUser;
+            if (!user) {
                 alert('🔒 為了保障您的交易安全與訂單追蹤，請先登入帳號後再加入購物車！');
                 document.getElementById('shopModalOverlay').classList.remove('active');
                 openAuthModal();
@@ -1734,8 +1765,15 @@
             }
         }
 
+        // 訂單寫入 Firebase Firestore
         function submitOrderToBackend(e) {
             e.preventDefault();
+            const user = auth.currentUser;
+            if(!user) {
+                alert('請先登入會員才能送出訂單！');
+                openAuthModal();
+                return;
+            }
             if (cartItems.length === 0) {
                 alert('購物車是空的！');
                 return;
@@ -1748,7 +1786,8 @@
             const total = cartItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
             const newOrder = {
-                id: 'ORD' + Date.now().toString().slice(-6),
+                orderId: 'ORD' + Date.now().toString().slice(-6),
+                userId: user.uid,
                 customer: name,
                 phone: phone,
                 address: address,
@@ -1760,15 +1799,17 @@
                 status: "處理中 (準備備貨中)"
             };
 
-            let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            orders.unshift(newOrder);
-            localStorage.setItem('shop_orders', JSON.stringify(orders));
-
-            cartItems = [];
-            localStorage.removeItem('shop_cart');
-            updateCartBadge();
-            document.getElementById('cartModalOverlay').classList.remove('active');
-            alert(`🎉 訂單已成功送出！您的訂單編號為：${newOrder.id}`);
+            db.collection("orders").add(newOrder)
+                .then(() => {
+                    cartItems = [];
+                    localStorage.removeItem('shop_cart');
+                    updateCartBadge();
+                    document.getElementById('cartModalOverlay').classList.remove('active');
+                    alert(`🎉 訂單已成功送出！您的訂單編號為：${newOrder.orderId}`);
+                })
+                .catch((error) => {
+                    alert('❌ 送出訂單失敗：' + error.message);
+                });
         }
 
         function toggleWaterElectric() {
@@ -1785,9 +1826,8 @@
 
         function renderServicesCards() {
             const grid = document.getElementById('servicesGridContainer');
-            const services = getStoredServices();
             grid.innerHTML = '';
-            services.forEach(s => {
+            servicesData.forEach(s => {
                 grid.innerHTML += `
                     <div class="service-card" onclick="openCaseModalForService('${s.name}')">
                         <div class="service-icon"><i class="${s.icon}" style="color: #0066cc;"></i></div>
@@ -1801,14 +1841,13 @@
         function updateRepairCategorySelect() {
             const select = document.getElementById('repairCategory');
             select.innerHTML = '<option value="" disabled selected>請選擇水電諮詢項目</option>';
-            getStoredServices().forEach(s => {
+            servicesData.forEach(s => {
                 select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
             });
         }
 
         function openCaseModalForService(categoryName) {
-            const allCases = getStoredHistoryCases();
-            const filtered = allCases.filter(c => c.category === categoryName);
+            const filtered = historyCasesData.filter(c => c.category === categoryName);
             document.getElementById('caseModalTitle').textContent = `🛠️ 「${categoryName}」施工成果與紀錄`;
             const bodyContainer = document.getElementById('caseModalBodyContainer');
             bodyContainer.innerHTML = '';
@@ -1820,12 +1859,7 @@
                     let mediaHtml = '';
                     if (c.media && c.media.length > 0) {
                         c.media.forEach(url => {
-                            const isVideo = url.startsWith('data:video') || url.includes('.mp4');
-                            if (isVideo) {
-                                mediaHtml += `<video src="${url}" controls></video>`;
-                            } else {
-                                mediaHtml += `<img src="${url}">`;
-                            }
+                            mediaHtml += `<img src="${url}">`;
                         });
                     }
                     bodyContainer.innerHTML += `
@@ -1906,8 +1940,10 @@
             finalInput.value = selectedTimesList.join('、');
         }
 
+        // 水電預約諮詢寫入 Firebase Firestore
         function submitRepairConsultation(e) {
             e.preventDefault();
+            const user = auth.currentUser;
             if (selectedTimesList.length === 0) {
                 alert('請至少新增一個方便的預約時段！');
                 return;
@@ -1919,23 +1955,32 @@
             const times = selectedTimesList.join('、');
 
             const newRepair = {
-                id: 'REP' + Date.now().toString().slice(-6),
+                repairId: 'REP' + Date.now().toString().slice(-6),
+                userId: user ? user.uid : 'guest',
                 name, phone, category, desc, times,
                 date: new Date().toLocaleString(),
                 status: '處理中'
             };
 
-            let repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
-            repairs.unshift(newRepair);
-            localStorage.setItem('shop_repairs', JSON.stringify(repairs));
-
-            alert(`🎉 水電預約諮詢已送出！您的諮詢單號為：${newRepair.id}`);
-            e.target.reset();
-            selectedTimesList = [];
-            renderSelectedTimesTags();
+            db.collection("repairs").add(newRepair)
+                .then(() => {
+                    alert(`🎉 水電預約諮詢已送出！您的諮詢單號為：${newRepair.repairId}`);
+                    e.target.reset();
+                    selectedTimesList = [];
+                    renderSelectedTimesTags();
+                })
+                .catch((error) => {
+                    alert('❌ 送出預約失敗：' + error.message);
+                });
         }
 
         function openTrackingModal() {
+            const user = auth.currentUser;
+            if(!user) {
+                alert('請先登入會員以查看您的下單與水電進度！');
+                openAuthModal();
+                return;
+            }
             renderTrackingOrders();
             renderTrackingRepairs();
             document.getElementById('trackingModalOverlay').classList.add('active');
@@ -1961,48 +2006,58 @@
             }
         }
 
+        // 從 Firestore 讀取當前登入使用者的訂單記錄
         function renderTrackingOrders() {
+            const user = auth.currentUser;
             const container = document.getElementById('trackingOrdersListContainer');
-            const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-            if (orders.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無商品下單記錄！</p>`;
-                return;
-            }
-            container.innerHTML = '';
-            orders.forEach(ord => {
-                container.innerHTML += `
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <strong>訂單編號: ${ord.id}</strong>
-                            <span class="badge" style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${ord.status}</span>
-                        </div>
-                        <p style="font-size:13px; color:#475569;">收件人: ${ord.customer} (${ord.phone}) | 總金額: NT$ ${ord.total}</p>
-                        <p style="font-size:12px; color:#64748b;">下單時間: ${ord.date}</p>
-                    </div>
-                `;
-            });
+            db.collection("orders").where("userId", "==", user.uid).get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無商品下單記錄！</p>`;
+                        return;
+                    }
+                    container.innerHTML = '';
+                    snapshot.forEach((doc) => {
+                        const ord = doc.data();
+                        container.innerHTML += `
+                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                    <strong>訂單編號: ${ord.orderId}</strong>
+                                    <span class="badge" style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${ord.status}</span>
+                                </div>
+                                <p style="font-size:13px; color:#475569;">收件人: ${ord.customer} (${ord.phone}) | 總金額: NT$ ${ord.total}</p>
+                                <p style="font-size:12px; color:#64748b;">下單時間: ${ord.date}</p>
+                            </div>
+                        `;
+                    });
+                });
         }
 
+        // 從 Firestore 讀取當前登入使用者的水電預約記錄
         function renderTrackingRepairs() {
+            const user = auth.currentUser;
             const container = document.getElementById('trackingRepairsListContainer');
-            const repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
-            if (repairs.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無水電預約記錄！</p>`;
-                return;
-            }
-            container.innerHTML = '';
-            repairs.forEach(rep => {
-                container.innerHTML += `
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                            <strong>諮詢單號: ${rep.id} (${rep.category})</strong>
-                            <span class="badge" style="background:#f59e0b; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${rep.status || '處理中'}</span>
-                        </div>
-                        <p style="font-size:13px; color:#475569;">預約時段: ${rep.times}</p>
-                        <p style="font-size:12px; color:#64748b;">申請時間: ${rep.date}</p>
-                    </div>
-                `;
-            });
+            db.collection("repairs").where("userId", "==", user.uid).get()
+                .then((snapshot) => {
+                    if (snapshot.empty) {
+                        container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無水電預約記錄！</p>`;
+                        return;
+                    }
+                    container.innerHTML = '';
+                    snapshot.forEach((doc) => {
+                        const rep = doc.data();
+                        container.innerHTML += `
+                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                    <strong>諮詢單號: ${rep.repairId} (${rep.category})</strong>
+                                    <span class="badge" style="background:#f59e0b; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${rep.status || '處理中'}</span>
+                                </div>
+                                <p style="font-size:13px; color:#475569;">預約時段: ${rep.times}</p>
+                                <p style="font-size:12px; color:#64748b;">申請時間: ${rep.date}</p>
+                            </div>
+                        `;
+                    });
+                });
         }
     </script>
 </body>
