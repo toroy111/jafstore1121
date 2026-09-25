@@ -495,14 +495,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const firebaseConfig = {
-    apiKey: "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE",
-    authDomain: "jafstore1121.firebaseapp.com",
-    projectId: "jafstore1121",
-    storageBucket: "jafstore1121.firebasestorage.app",
-    messagingSenderId: "273721257948",
-    appId: "1:273721257948:web:6b3dc62a8f6989bfbf2919",
-    measurementId: "G-EGS8R6B6KE"
-};
+        apiKey: "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE",
+        authDomain: "jafstore1121.firebaseapp.com",
+        projectId: "jafstore1121",
+        storageBucket: "jafstore1121.firebasestorage.app",
+        messagingSenderId: "273721257948",
+        appId: "1:273721257948:web:6b3dc62a8f6989bfbf2919",
+        measurementId: "G-EGS8R6B6KE"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
@@ -561,10 +561,8 @@
         }
     }
 
-    // --- Firestore 資料同步與讀寫函式 ---
     async function initFirestoreData() {
         try {
-            // 1. Categories
             const catDoc = await db.collection('settings').doc('categories').get();
             if (catDoc.exists) {
                 memoryCategories = catDoc.data().list || defaultCategories;
@@ -573,7 +571,6 @@
                 await db.collection('settings').doc('categories').set({ list: defaultCategories });
             }
 
-            // 2. Order Statuses
             const statusDoc = await db.collection('settings').doc('order_statuses').get();
             if (statusDoc.exists) {
                 memoryOrderStatuses = statusDoc.data().list || defaultOrderStatuses;
@@ -582,7 +579,6 @@
                 await db.collection('settings').doc('order_statuses').set({ list: defaultOrderStatuses });
             }
 
-            // 3. Products
             const prodSnap = await db.collection('products').get();
             if (prodSnap.empty) {
                 memoryProducts = [
@@ -605,7 +601,6 @@
                 memoryProducts = prodSnap.docs.map(doc => doc.data());
             }
 
-            // 4. Services
             const servSnap = await db.collection('services').get();
             if (servSnap.empty) {
                 memoryServices = defaultServices;
@@ -616,7 +611,6 @@
                 memoryServices = servSnap.docs.map(doc => doc.data());
             }
 
-            // 5. History Cases
             const histSnap = await db.collection('history_cases').get();
             if (histSnap.empty) {
                 memoryHistoryCases = [
@@ -635,18 +629,16 @@
                 memoryHistoryCases = histSnap.docs.map(doc => doc.data());
             }
 
-            // 6. Orders
             const orderSnap = await db.collection('orders').get();
             memoryOrders = orderSnap.docs.map(doc => doc.data());
 
-            // 7. Repairs
             const repairSnap = await db.collection('repairs').get();
             memoryRepairs = repairSnap.docs.map(doc => doc.data());
 
             refreshUI();
         } catch (error) {
-            console.error("Firebase 初始化失敗細節: ", error);
-            alert("❌ 無法連線至 Firebase 資料庫，請確認設定是否正確！\n(提示：請檢查 Firestore 規則是否允許讀寫，或網域是否已在 Firebase 授權)");
+            console.error("Firebase 初始化失敗，請檢查網路或設定: ", error);
+            alert("❌ 無法連線至 Firebase 資料庫，請確認設定是否正確！");
         }
     }
 
@@ -662,7 +654,6 @@
         renderOrderStatusListGroup();
     }
 
-    // --- 各項業務邏輯與 Firestore 同步 ---
     function renderAdminServicesTable() {
         const tbody = document.getElementById('adminServiceTableBody');
         tbody.innerHTML = '';
