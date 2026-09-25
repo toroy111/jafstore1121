@@ -40,7 +40,7 @@
         .admin-cat-btn:hover { border-color: #0d6efd; color: #0d6efd; }
         .admin-cat-btn.active { background-color: #0d6efd; color: #fff; border-color: #0d6efd; box-shadow: 0 3px 8px rgba(13, 110, 253, 0.25); }
         .preview-thumb-box { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
-        .preview-thumb-box img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
+        .preview-thumb-box img, .preview-thumb-box video { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
         .preview-thumb-box .btn-remove-thumb { position: absolute; top: -6px; right: -6px; padding: 0.1rem 0.3rem; font-size: 0.6rem; border-radius: 50%; }
         
         /* 獨立且乾淨舒服的質感登入畫面 */
@@ -122,6 +122,11 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link w-100 text-start" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab">
+                    <i class="fa-solid fa-images me-2"></i>歷史施工成果管理
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link w-100 text-start" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
                     <i class="fa-solid fa-cart-shopping me-2"></i>前台商品訂單
                 </button>
@@ -170,6 +175,31 @@
                             </tr>
                         </thead>
                         <tbody id="adminProductTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 歷史施工成果管理 (新增區塊) -->
+            <div class="tab-pane fade" id="portfolio" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fa-solid fa-images me-2 text-success"></i>歷史案件施工成果管理 (照片/影片)</h2>
+                    <button class="btn btn-success" onclick="openPortfolioModal()">
+                        <i class="fa-solid fa-plus me-1"></i>新增施工成果
+                    </button>
+                </div>
+                <div class="table-responsive p-3">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>預覽</th>
+                                <th>案件標題</th>
+                                <th>服務分類</th>
+                                <th>媒體數量</th>
+                                <th>施工說明摘要</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminPortfolioTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -272,6 +302,61 @@
 
         </div>
     </main>
+</div>
+
+<!-- 歷史施工成果 新增/編輯 Modal 彈窗 (新增區塊) -->
+<div class="modal fade" id="portfolioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="portfolioModalTitle">新增施工成果照片/影片</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="portfolioForm">
+                    <input type="hidden" id="portEditId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">案件標題</label>
+                        <input type="text" class="form-control" id="portTitle" required placeholder="例如：公寓對講機系統更新、浴室明鏡與收納櫃安裝">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">對應服務分類</label>
+                            <select class="form-select" id="portCategory" required>
+                                <option value="居家水電維修">居家水電維修</option>
+                                <option value="弱電">弱電 (如：公寓對講機修繕)</option>
+                                <option value="代客安裝">代客安裝 (如：浴室鏡櫃、電視固定架)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 照片與影片上傳區 -->
+                    <div class="mb-3 p-3 border rounded bg-light">
+                        <label class="form-label fw-bold text-success"><i class="fa-solid photo-film me-1"></i> 上傳施工照片或影片 (支援圖檔與 MP4 影片)</label>
+                        <div class="input-group mb-2">
+                            <input type="file" class="form-control" id="portMediaFile" accept="image/*,video/*" multiple onchange="handlePortfolioMediaFiles(event)">
+                            <button class="btn btn-outline-success" type="button" onclick="addPortUrlInput()">加入媒體網址</button>
+                        </div>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control" id="portMediaUrlInput" placeholder="或者貼上圖片/影片網址 (URL) 點擊右側加入">
+                            <button class="btn btn-outline-secondary" type="button" onclick="addPortUrlManual()">加入</button>
+                        </div>
+                        <div class="form-text text-muted mb-2">您可以上傳多張施工照片或短片，展示您的專業工法與成果。</div>
+                        <div id="portfolioPreviewContainer" class="d-flex flex-wrap mt-2"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">施工詳細說明</label>
+                        <textarea class="form-control" id="portDescription" rows="3" placeholder="請輸入此案件的施工細節、線路佈局或完工成果說明..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-success" onclick="savePortfolioItem()">儲存施工成果</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 訂單細節檢視 Modal 彈窗 -->
@@ -480,9 +565,21 @@
         }
     ];
 
+    // 預設施工成果範例
+    const defaultPortfolios = [
+        {
+            id: 101,
+            title: "公寓對講機系統全面檢修與線路更新",
+            category: "弱電",
+            media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"],
+            description: "住戶通話雜音與按鈕失效修復，重新整理弱電箱內部配置。"
+        }
+    ];
+
     let currentAdminCategory = 'all';
     let currentEditingSpecs = [];
     let currentEditingImages = []; 
+    let currentEditingPortfolioMedia = [];
 
     // 1. 登入驗證相關邏輯
     function checkAdminLoginState() {
@@ -503,7 +600,6 @@
         const u = document.getElementById('adminUser').value.trim();
         const p = document.getElementById('adminPass').value.trim();
 
-        // 帳號密碼維持為 admin / love11
         if (u === 'admin' && p === 'love11') {
             sessionStorage.setItem('admin_logged_in', 'true');
             checkAdminLoginState();
@@ -550,6 +646,16 @@
 
     function saveStoredProducts(prods) {
         localStorage.setItem('shop_products', JSON.stringify(prods));
+    }
+
+    // 歷史案件施工成果 LocalStorage 存取
+    function getStoredPortfolios() {
+        const data = localStorage.getItem('shop_portfolios');
+        return data ? JSON.parse(data) : defaultPortfolios;
+    }
+
+    function saveStoredPortfolios(ports) {
+        localStorage.setItem('shop_portfolios', JSON.stringify(ports));
     }
 
     function renderAdminCategoryTabs() {
@@ -612,11 +718,44 @@
         });
     }
 
+    // 渲染歷史施工成果列表
+    function renderAdminPortfolios() {
+        const tbody = document.getElementById('adminPortfolioTableBody');
+        const portfolios = getStoredPortfolios();
+        tbody.innerHTML = '';
+
+        if (portfolios.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">目前尚無歷史案件施工成果，請點擊右上角新增！</td></tr>`;
+            return;
+        }
+
+        portfolios.forEach(port => {
+            const firstMedia = (port.media && port.media.length > 0) ? port.media[0] : 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80';
+            const isVideo = firstMedia.endsWith('.mp4') || firstMedia.includes('video');
+            let previewHtml = isVideo ? `<video src="${firstMedia}" class="admin-prod-img"></video>` : `<img src="${firstMedia}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'">`;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${previewHtml}</td>
+                    <td><strong>${port.title}</strong></td>
+                    <td><span class="badge bg-success">${port.category}</span></td>
+                    <td><span class="badge bg-secondary">${port.media ? port.media.length : 0} 個檔案</span></td>
+                    <td><small class="text-muted text-truncate-2" style="max-width: 250px;">${port.description || ''}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openPortfolioModal(${port.id})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePortfolio(${port.id})"><i class="fa-solid fa-trash"></i> 刪除</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
     // 初始化載入
     document.addEventListener("DOMContentLoaded", function() {
         checkAdminLoginState();
         renderAdminCategoryTabs();
         renderAdminProducts('all');
+        renderAdminPortfolios();
         renderAdminOrders();
         renderAdminRepairs();
         updateCategorySelectOptions();
@@ -629,6 +768,139 @@
         categories.forEach(cat => {
             select.innerHTML += `<option value="${cat}">${cat}</option>`;
         });
+    }
+
+    // 歷史施工成果 Modal 控制與 CRUD
+    function openPortfolioModal(portId = null) {
+        const modal = new bootstrap.Modal(document.getElementById('portfolioModal'));
+        const title = document.getElementById('portfolioModalTitle');
+        document.getElementById('portfolioForm').reset();
+        document.getElementById('portEditId').value = '';
+        currentEditingPortfolioMedia = [];
+
+        if (portId) {
+            title.textContent = '編輯施工成果';
+            const portfolios = getStoredPortfolios();
+            const port = portfolios.find(p => p.id === portId);
+            if (port) {
+                document.getElementById('portEditId').value = port.id;
+                document.getElementById('portTitle').value = port.title;
+                document.getElementById('portCategory').value = port.category;
+                document.getElementById('portDescription').value = port.description || '';
+                currentEditingPortfolioMedia = port.media ? [...port.media] : [];
+            }
+        } else {
+            title.textContent = '新增施工成果照片/影片';
+            currentEditingPortfolioMedia = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+        }
+
+        renderPortfolioPreviewContainer();
+        modal.show();
+    }
+
+    function handlePortfolioMediaFiles(event) {
+        const files = event.target.files;
+        if (!files) return;
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentEditingPortfolioMedia.push(e.target.result);
+                renderPortfolioPreviewContainer();
+            };
+            reader.readAsDataURL(files[i]);
+        }
+    }
+
+    function addPortUrlManual() {
+        const input = document.getElementById('portMediaUrlInput');
+        const url = input.value.trim();
+        if (!url) return;
+        currentEditingPortfolioMedia.push(url);
+        input.value = '';
+        renderPortfolioPreviewContainer();
+    }
+
+    function addPortUrlInput() {
+        const url = prompt('請輸入圖片或影片網址 (URL)：');
+        if (url && url.trim()) {
+            currentEditingPortfolioMedia.push(url.trim());
+            renderPortfolioPreviewContainer();
+        }
+    }
+
+    function removePortfolioMediaItem(index) {
+        currentEditingPortfolioMedia.splice(index, 1);
+        renderPortfolioPreviewContainer();
+    }
+
+    function renderPortfolioPreviewContainer() {
+        const container = document.getElementById('portfolioPreviewContainer');
+        container.innerHTML = '';
+        if (currentEditingPortfolioMedia.length === 0) {
+            container.innerHTML = '<span class="text-danger small">請至少保留或加入一個媒體檔案！</span>';
+            return;
+        }
+        currentEditingPortfolioMedia.forEach((mediaUrl, index) => {
+            const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.includes('video') || mediaUrl.startsWith('data:video');
+            const mediaTag = isVideo ? `<video src="${mediaUrl}"></video>` : `<img src="${mediaUrl}" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'">`;
+            
+            container.innerHTML += `
+                <div class="preview-thumb-box">
+                    ${mediaTag}
+                    <button type="button" class="btn btn-danger btn-remove-thumb" onclick="removePortfolioMediaItem(${index})"><i class="fa-solid fa-xmark"></i></button>
+                    ${isVideo ? '<span class="badge bg-warning text-dark position-absolute bottom-0 start-0 w-100" style="font-size:0.55rem;">影片</span>' : ''}
+                </div>
+            `;
+        });
+    }
+
+    function savePortfolioItem() {
+        const editId = document.getElementById('portEditId').value;
+        const title = document.getElementById('portTitle').value.trim();
+        const category = document.getElementById('portCategory').value;
+        const description = document.getElementById('portDescription').value.trim();
+
+        if (!title) {
+            alert('請填寫案件標題！');
+            return;
+        }
+
+        if (currentEditingPortfolioMedia.length === 0) {
+            alert('請至少加入一個施工照片或影片！');
+            return;
+        }
+
+        let portfolios = getStoredPortfolios();
+        const portfolioData = {
+            id: editId ? parseInt(editId) : Date.now(),
+            title,
+            category,
+            media: currentEditingPortfolioMedia,
+            description
+        };
+
+        if (editId) {
+            const index = portfolios.findIndex(p => p.id === parseInt(editId));
+            if (index > -1) {
+                portfolios[index] = portfolioData;
+            }
+        } else {
+            portfolios.unshift(portfolioData);
+        }
+
+        saveStoredPortfolios(portfolios);
+        bootstrap.Modal.getInstance(document.getElementById('portfolioModal')).hide();
+        renderAdminPortfolios();
+        alert('🎉 歷史施工成果儲存成功！');
+    }
+
+    function deletePortfolio(id) {
+        if (confirm('確定要刪除這筆歷史施工成果嗎？')) {
+            let portfolios = getStoredPortfolios();
+            portfolios = portfolios.filter(p => p.id !== id);
+            saveStoredPortfolios(portfolios);
+            renderAdminPortfolios();
+        }
     }
 
     // 類別管理相關
@@ -787,7 +1059,6 @@
                 </div>
             `;
 
-            // 調整操作欄位：包含「完成計數」、「編輯資料」、「刪除訂單」按鈕，並排顯示不擁擠
             let actionHtml = `
                 <div class="d-flex flex-column gap-1">
                     ${isCompleted ? 
