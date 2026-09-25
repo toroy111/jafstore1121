@@ -292,6 +292,43 @@
     </div>
 </div>
 
+<!-- 編輯訂單資訊 Modal 彈窗 -->
+<div class="modal fade" id="editOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>編輯訂單資料</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editOrderForm">
+                    <input type="hidden" id="editOrderId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">顧客姓名</label>
+                        <input type="text" class="form-control" id="editOrderCustomer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">聯絡電話</label>
+                        <input type="text" class="form-control" id="editOrderPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">收件地址</label>
+                        <input type="text" class="form-control" id="editOrderAddress" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">付款方式</label>
+                        <input type="text" class="form-control" id="editOrderPayment" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveEditedOrder()">儲存修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 自訂與編輯訂單狀態設定 Modal -->
 <div class="modal fade" id="orderStatusSettingModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -750,12 +787,19 @@
                 </div>
             `;
 
-            let actionHtml = '';
-            if (isCompleted) {
-                actionHtml = `<button class="btn btn-sm btn-success" disabled><i class="fa-solid fa-check me-1"></i>已完成計數</button>`;
-            } else {
-                actionHtml = `<button class="btn btn-sm btn-success" onclick="completeOrderAndCount('${ord.id}')"><i class="fa-solid fa-check me-1"></i>確認完成並計數</button>`;
-            }
+            // 調整操作欄位：包含「完成計數」、「編輯資料」、「刪除訂單」按鈕，並排顯示不擁擠
+            let actionHtml = `
+                <div class="d-flex flex-column gap-1">
+                    ${isCompleted ? 
+                        `<button class="btn btn-sm btn-success w-100" disabled><i class="fa-solid fa-check me-1"></i>已完成計數</button>` : 
+                        `<button class="btn btn-sm btn-success w-100" onclick="completeOrderAndCount('${ord.id}')"><i class="fa-solid fa-check me-1"></i>確認完成並計數</button>`
+                    }
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary w-50" onclick="openEditOrderModal('${ord.id}')"><i class="fa-solid fa-pen"></i> 編輯</button>
+                        <button class="btn btn-sm btn-outline-danger w-50" onclick="deleteOrder('${ord.id}')"><i class="fa-solid fa-trash"></i> 刪除</button>
+                    </div>
+                </div>
+            `;
 
             const rowHtml = `
                 <tr>
@@ -829,6 +873,58 @@
 
         const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
         modal.show();
+    }
+
+    function openEditOrderModal(orderId) {
+        const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        const ord = orders.find(o => o.id === orderId);
+        if (!ord) return;
+
+        document.getElementById('editOrderId').value = ord.id;
+        document.getElementById('editOrderCustomer').value = ord.customer;
+        document.getElementById('editOrderPhone').value = ord.phone;
+        document.getElementById('editOrderAddress').value = ord.address;
+        document.getElementById('editOrderPayment').value = ord.paymentMethod;
+
+        const modal = new bootstrap.Modal(document.getElementById('editOrderModal'));
+        modal.show();
+    }
+
+    function saveEditedOrder() {
+        const orderId = document.getElementById('editOrderId').value;
+        const customer = document.getElementById('editOrderCustomer').value.trim();
+        const phone = document.getElementById('editOrderPhone').value.trim();
+        const address = document.getElementById('editOrderAddress').value.trim();
+        const paymentMethod = document.getElementById('editOrderPayment').value.trim();
+
+        if (!customer || !phone || !address) {
+            alert('請完整填寫顧客姓名、電話與收件地址！');
+            return;
+        }
+
+        let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        const idx = orders.findIndex(o => o.id === orderId);
+        if (idx > -1) {
+            orders[idx].customer = customer;
+            orders[idx].phone = phone;
+            orders[idx].address = address;
+            orders[idx].paymentMethod = paymentMethod;
+
+            localStorage.setItem('shop_orders', JSON.stringify(orders));
+            bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+            renderAdminOrders();
+            alert('🎉 訂單資料更新成功！');
+        }
+    }
+
+    function deleteOrder(orderId) {
+        if (confirm(`確定要刪除訂單「${orderId}」嗎？刪除後將無法復原！`)) {
+            let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+            orders = orders.filter(o => o.id !== orderId);
+            localStorage.setItem('shop_orders', JSON.stringify(orders));
+            renderAdminOrders();
+            alert('🗑️ 訂單已成功刪除！');
+        }
     }
 
     function updateOrderStatus(orderId, newStatus) {
