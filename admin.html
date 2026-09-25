@@ -121,10 +121,10 @@
                     <i class="fa-solid fa-boxes-stacked me-2"></i>商品與類別管理
                 </button>
             </li>
-            <!-- 歷史施工成果管理分頁按鈕 -->
+            <!-- 歷史案件與服務項目管理分頁按鈕 -->
             <li class="nav-item mb-1" role="presentation">
                 <button class="nav-link w-100 text-start" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
-                    <i class="fa-solid fa-images me-2"></i>歷史施工成果管理
+                    <i class="fa-solid fa-images me-2"></i>歷史施工與服務項目管理
                 </button>
             </li>
             <li class="nav-item mb-1" role="presentation">
@@ -180,29 +180,56 @@
                 </div>
             </div>
 
-            <!-- 歷史案件施工成果管理 (與前台三個區塊同步) -->
+            <!-- 歷史案件與服務項目管理面板 -->
             <div class="tab-pane fade" id="history" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2><i class="fa-solid fa-images me-2 text-success"></i>歷史案件施工成果管理 (照片/影片)</h2>
-                    <button class="btn btn-success" onclick="openHistoryModal()">
-                        <i class="fa-solid fa-plus me-1"></i>新增施工成果
-                    </button>
+                <!-- 服務項目管理專區 -->
+                <div class="card p-4 mb-4 shadow-sm border-primary">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-primary mb-0"><i class="fa-solid fa-screwdriver-wrench me-2"></i>前台服務項目管理</h4>
+                        <button class="btn btn-primary btn-sm" onclick="openServiceModal()">
+                            <i class="fa-solid fa-plus me-1"></i>新增服務項目
+                        </button>
+                    </div>
+                    <p class="text-muted small mb-3">您在此新增或編輯的服務項目，將直接呈現於前台首頁頂部的服務卡片區域供客戶點擊預覽。</p>
+                    <div class="table-responsive p-2">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>圖示 (Icon)</th>
+                                    <th>服務標題</th>
+                                    <th>服務項目簡介摘要</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminServiceTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
-                <p class="text-muted small">在此新增、編輯或刪除的施工照片與影片，將自動同步儲存並顯示於前台的「居家水電維修」、「弱電工程」、「代客安裝」這三個服務區塊中供客戶點擊預覽！</p>
-                <div class="table-responsive p-3">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>預覽封面</th>
-                                <th>案件標題</th>
-                                <th>對應服務分類</th>
-                                <th>媒體數量</th>
-                                <th>施工說明摘要</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminHistoryTableBody"></tbody>
-                    </table>
+
+                <!-- 歷史施工成果管理專區 -->
+                <div class="card p-4 shadow-sm border-success">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="text-success mb-0"><i class="fa-solid fa-images me-2"></i>歷史案件施工成果管理 (照片/影片)</h4>
+                        <button class="btn btn-success btn-sm" onclick="openHistoryModal()">
+                            <i class="fa-solid fa-plus me-1"></i>新增施工成果
+                        </button>
+                    </div>
+                    <p class="text-muted small mb-3">在此上傳的施工照片與影片，將自動同步顯示在對應的前台服務項目卡片中供客戶預覽！</p>
+                    <div class="table-responsive p-2">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>預覽封面</th>
+                                    <th>案件標題</th>
+                                    <th>服務分類</th>
+                                    <th>媒體數量</th>
+                                    <th>施工說明摘要</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminHistoryTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -306,6 +333,40 @@
     </main>
 </div>
 
+<!-- 新增/編輯 服務項目 Modal -->
+<div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="serviceModalTitle">新增服務項目</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm">
+                    <input type="hidden" id="serviceEditId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">服務名稱</label>
+                        <input type="text" class="form-control" id="serviceName" required placeholder="例如：居家水電維修">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">FontAwesome 圖示代碼 (Icon Class)</label>
+                        <input type="text" class="form-control" id="serviceIcon" required placeholder="例如：fa-solid fa-bolt">
+                        <div class="form-text text-muted">可填入 FontAwesome 圖示，如 fa-solid fa-bolt 或 fa-solid fa-network-wired。</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">服務項目簡介摘要</label>
+                        <textarea class="form-control" id="serviceDesc" rows="3" placeholder="例如：燈具更換、插座線路重拉、開關修繕與開關箱升級。"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveServiceItem()">儲存服務項目</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 新增/編輯 歷史施工成果 Modal -->
 <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -325,9 +386,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">對應前台服務分類</label>
                             <select class="form-select" id="historyCategory" required>
-                                <option value="居家水電維修">居家水電維修</option>
-                                <option value="弱電工程">弱電工程</option>
-                                <option value="代客安裝">代客安裝</option>
+                                <!-- 動態載入服務項目選項 -->
                             </select>
                         </div>
                     </div>
@@ -570,7 +629,120 @@
     function saveStoredProducts(prods) { localStorage.setItem('shop_products', JSON.stringify(prods)); }
 
     // ==========================================
-    // 歷史施工成果管理邏輯 (與前台三個區塊完全同步)
+    // 前台服務項目管理邏輯 (新增)
+    // ==========================================
+    function getStoredServices() {
+        const data = localStorage.getItem('shop_services');
+        return data ? JSON.parse(data) : [
+            { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
+            { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
+            { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
+        ];
+    }
+
+    function saveStoredServices(services) { 
+        localStorage.setItem('shop_services', JSON.stringify(services)); 
+        updateHistoryCategorySelectOptions();
+    }
+
+    function renderAdminServicesTable() {
+        const services = getStoredServices();
+        const tbody = document.getElementById('adminServiceTableBody');
+        tbody.innerHTML = '';
+
+        if (services.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">目前尚無服務項目！</td></tr>`;
+            return;
+        }
+
+        services.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><i class="${item.icon} fa-lg text-primary"></i></td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><small class="text-muted">${item.description}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openServiceModal(${item.id})"><i class="fa-solid fa-pen"></i> 編輯</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteServiceItem(${item.id})"><i class="fa-solid fa-trash"></i> 刪除</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function openServiceModal(id = null) {
+        const modal = new bootstrap.Modal(document.getElementById('serviceModal'));
+        document.getElementById('serviceForm').reset();
+        document.getElementById('serviceEditId').value = '';
+
+        if (id) {
+            document.getElementById('serviceModalTitle').textContent = '編輯服務項目';
+            const services = getStoredServices();
+            const s = services.find(x => x.id === id);
+            if (s) {
+                document.getElementById('serviceEditId').value = s.id;
+                document.getElementById('serviceName').value = s.name;
+                document.getElementById('serviceIcon').value = s.icon;
+                document.getElementById('serviceDesc').value = s.description;
+            }
+        } else {
+            document.getElementById('serviceModalTitle').textContent = '新增服務項目';
+            document.getElementById('serviceIcon').value = 'fa-solid fa-screwdriver-wrench';
+        }
+        modal.show();
+    }
+
+    function saveServiceItem() {
+        const editId = document.getElementById('serviceEditId').value;
+        const name = document.getElementById('serviceName').value.trim();
+        const icon = document.getElementById('serviceIcon').value.trim();
+        const description = document.getElementById('serviceDesc').value.trim();
+
+        if (!name) { alert('請填寫服務名稱！'); return; }
+
+        let services = getStoredServices();
+        const data = {
+            id: editId ? parseInt(editId) : Date.now(),
+            name,
+            icon: icon || 'fa-solid fa-wrench',
+            description
+        };
+
+        if (editId) {
+            const idx = services.findIndex(x => x.id === parseInt(editId));
+            if (idx > -1) services[idx] = data;
+        } else {
+            services.push(data);
+        }
+
+        saveStoredServices(services);
+        bootstrap.Modal.getInstance(document.getElementById('serviceModal')).hide();
+        renderAdminServicesTable();
+        alert('🎉 服務項目儲存成功！');
+    }
+
+    function deleteServiceItem(id) {
+        let services = getStoredServices();
+        if (services.length <= 1) { alert('至少需要保留一個服務項目！'); return; }
+        if (confirm('確定要刪除這個服務項目嗎？')) {
+            services = services.filter(x => x.id !== id);
+            saveStoredServices(services);
+            renderAdminServicesTable();
+        }
+    }
+
+    function updateHistoryCategorySelectOptions() {
+        const select = document.getElementById('historyCategory');
+        if (!select) return;
+        const services = getStoredServices();
+        select.innerHTML = '';
+        services.forEach(s => {
+            select.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        });
+    }
+
+    // ==========================================
+    // 歷史施工成果管理邏輯
     // ==========================================
     function getStoredHistoryCases() {
         const data = localStorage.getItem('shop_history_cases');
@@ -620,6 +792,7 @@
         document.getElementById('historyForm').reset();
         document.getElementById('historyEditId').value = '';
         currentEditingHistoryMedia = [];
+        updateHistoryCategorySelectOptions();
 
         if (id) {
             document.getElementById('historyModalTitle').textContent = '編輯歷史施工成果';
@@ -699,7 +872,7 @@
         saveStoredHistoryCases(cases);
         bootstrap.Modal.getInstance(document.getElementById('historyModal')).hide();
         renderAdminHistoryTable();
-        alert('🎉 施工成果儲存成功，已同步至前台服務區塊！');
+        alert('🎉 施工成果儲存成功！');
     }
 
     function deleteHistoryCase(id) {
@@ -708,19 +881,20 @@
             cases = cases.filter(x => x.id !== id);
             saveStoredHistoryCases(cases);
             renderAdminHistoryTable();
-            alert('🗑️ 施工成果已刪除，前台畫面已同步更新！');
         }
     }
 
     // 初始化載入
     document.addEventListener("DOMContentLoaded", function() {
         checkAdminLoginState();
+        renderAdminServicesTable();
         renderAdminHistoryTable();
         renderAdminCategoryTabs();
         renderAdminProducts('all');
         renderAdminOrders();
         renderAdminRepairs();
         updateCategorySelectOptions();
+        updateHistoryCategorySelectOptions();
     });
 
     function renderAdminCategoryTabs() {
@@ -825,6 +999,7 @@
         }
     }
 
+    // 訂單管理與其他保持完整
     function renderAdminOrders() {
         const pendingTbody = document.getElementById('pendingOrderTableBody');
         const completedTbody = document.getElementById('completedOrderTableBody');
