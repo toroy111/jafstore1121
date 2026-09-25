@@ -40,11 +40,65 @@
         .preview-thumb-box { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
         .preview-thumb-box img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
         .preview-thumb-box .btn-remove-thumb { position: absolute; top: -6px; right: -6px; padding: 0.1rem 0.3rem; font-size: 0.6rem; border-radius: 50%; }
+        /* 登入遮罩畫面 */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(33, 37, 41, 0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* 右下角懸浮登出按鈕 */
+        .floating-logout {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 1050;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div class="d-flex">
+<!-- 1. 後台登入驗證遮罩畫面 -->
+<div id="loginOverlay">
+    <div class="card p-4 shadow-lg" style="width: 380px; border-radius: 12px;">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold text-primary"><i class="fa-solid fa-lock me-2"></i>管理員身分驗證</h3>
+            <p class="text-muted small">請輸入後台管理帳號與密碼以進入系統</p>
+        </div>
+        <form id="loginForm" onsubmit="handleAdminLogin(event)">
+            <div class="mb-3">
+                <label class="form-label fw-bold">管理員帳號 (Admin)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                    <input type="text" class="form-control" id="adminUser" required placeholder="請輸入帳號">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold">密碼 (Password)</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+                    <input type="password" class="form-control" id="adminPass" required placeholder="請輸入密碼">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">安全登入後台</button>
+            <div class="form-text text-center mt-3 text-muted">預設帳號：<code class="text-dark">admin</code> / 密碼：<code class="text-dark">1234</code></div>
+        </form>
+    </div>
+</div>
+
+<!-- 右下方固定登出按鈕 -->
+<button class="btn btn-danger floating-logout d-none" id="floatingLogoutBtn" onclick="handleAdminLogout()">
+    <i class="fa-solid fa-right-from-bracket me-2"></i>登出後台
+</button>
+
+<div class="d-flex" id="adminDashboardLayout" style="display: none !important;">
     <!-- 側邊選單 Sidebar -->
     <nav class="sidebar p-3 d-md-block collapse">
         <h4 class="text-white text-center mb-4"><i class="fa-solid fa-gears me-2"></i>後台管理</h4>
@@ -107,10 +161,13 @@
                 </div>
             </div>
 
-            <!-- 顧客購買訂單管理 -->
+            <!-- 顧客購買訂單管理 (需求2與3：簡化明細、狀態下拉與編輯、已完成/尚未完成上下分流) -->
             <div class="tab-pane fade" id="orders" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2><i class="fa-solid fa-bag-shopping me-2 text-primary"></i>顧客購買訂單</h2>
+                    <h2><i class="fa-solid fa-bag-shopping me-2 text-primary"></i>顧客購買訂單管理</h2>
+                    <button class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#orderStatusSettingModal">
+                        <i class="fa-solid fa-sliders me-1"></i>管理訂單狀態選單
+                    </button>
                 </div>
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -126,21 +183,53 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive p-3">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>訂單編號</th>
-                                <th>顧客資料</th>
-                                <th>購買商品明細</th>
-                                <th>總金額</th>
-                                <th>購買時間</th>
-                                <th>訂單狀態</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderTableBody"></tbody>
-                    </table>
+
+                <!-- 尚未完成的訂單專區 -->
+                <div class="card mb-4 shadow-sm border-warning">
+                    <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-clock-rotate-left me-2"></i>尚未完成的訂單 (處理中 / 備貨中 / 待出貨)</span>
+                        <span class="badge bg-dark" id="pendingOrdersCountBadge">0</span>
+                    </div>
+                    <div class="table-responsive p-2 mb-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>訂單編號</th>
+                                    <th>顧客資料</th>
+                                    <th>購買明細摘要</th>
+                                    <th>總金額</th>
+                                    <th>購買時間</th>
+                                    <th>訂單狀態設定</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingOrderTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 已完成的訂單專區 -->
+                <div class="card shadow-sm border-success">
+                    <div class="card-header bg-success text-white fw-bold d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-circle-check me-2"></i>已完成的歷史訂單</span>
+                        <span class="badge bg-dark" id="completedOrdersCountBadge">0</span>
+                    </div>
+                    <div class="table-responsive p-2 mb-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>訂單編號</th>
+                                    <th>顧客資料</th>
+                                    <th>購買明細摘要</th>
+                                    <th>總金額</th>
+                                    <th>購買時間</th>
+                                    <th>訂單狀態</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="completedOrderTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -170,6 +259,48 @@
 
         </div>
     </main>
+</div>
+
+<!-- 訂單細節檢視 Modal 彈窗 (點擊展開明細) -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-dark">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-receipt me-2"></i>訂單商品詳細明細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="orderDetailModalBody">
+                <!-- 動態填入明細 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自訂與編輯訂單狀態設定 Modal -->
+<div class="modal fade" id="orderStatusSettingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-sliders me-2"></i>管理訂單狀態選項</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="newOrderStatusInput" placeholder="輸入新的訂單狀態名稱 (例如：備貨中、配送中)...">
+                    <button class="btn btn-success" type="button" onclick="addNewOrderStatus()">新增狀態</button>
+                </div>
+                <div class="form-text text-muted mb-3">您可以自由新增、刪除後台訂單下拉選單所使用的狀態名稱。</div>
+                <hr>
+                <ul class="list-group" id="orderStatusListGroup"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- 新增/編輯 商品 Modal 彈窗 -->
@@ -276,6 +407,8 @@
 
 <script>
     const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
+    const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
+    
     const defaultProducts = [
         {
             id: 1,
@@ -294,44 +427,47 @@
                 "https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?auto=format&fit=crop&w=500&q=80"
             ],
             description: "嚴選優質小麥與天然酵母手作烘焙，口感鬆軟香氣濃郁。"
-        },
-        {
-            id: 2,
-            name: "精緻手作手工餅乾禮盒",
-            category: "烘焙與茶飲",
-            price: 250,
-            sales: 210,
-            specs: [
-                { name: "標準規格", price: 250 },
-                { name: "特惠組合包", price: 450 }
-            ],
-            img: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
-            images: [
-                "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=500&q=80",
-                "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=500&q=80"
-            ],
-            description: "手工精心製作，送禮自用兩相宜。"
-        },
-        {
-            id: 3,
-            name: "冷泡蕎麥特調茶飲 (瓶裝)",
-            category: "烘焙與茶飲",
-            price: 60,
-            sales: 180,
-            specs: [
-                { name: "標準規格", price: 60 }
-            ],
-            img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80",
-            images: [
-                "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=500&q=80"
-            ],
-            description: "嚴選黃金蕎麥冷泡萃取，無咖啡因清香解膩。"
         }
     ];
 
     let currentAdminCategory = 'all';
     let currentEditingSpecs = [];
     let currentEditingImages = []; 
+
+    // 1. 登入驗證相關邏輯
+    function checkAdminLoginState() {
+        const isLogged = sessionStorage.getItem('admin_logged_in');
+        if (isLogged === 'true') {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('adminDashboardLayout').style.display = 'flex';
+            document.getElementById('floatingLogoutBtn').classList.remove('d-none');
+        } else {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('adminDashboardLayout').style.display = 'none';
+            document.getElementById('floatingLogoutBtn').classList.add('d-none');
+        }
+    }
+
+    function handleAdminLogin(event) {
+        event.preventDefault();
+        const u = document.getElementById('adminUser').value.trim();
+        const p = document.getElementById('adminPass').value.trim();
+
+        if (u === 'admin' && p === '1234') {
+            sessionStorage.setItem('admin_logged_in', 'true');
+            checkAdminLoginState();
+            alert('🎉 成功登入後台管理系統！');
+        } else {
+            alert('❌ 帳號或密碼錯誤！預設帳號為 admin，密碼為 1234');
+        }
+    }
+
+    function handleAdminLogout() {
+        if (confirm('確定要登出後台嗎？')) {
+            sessionStorage.removeItem('admin_logged_in');
+            checkAdminLoginState();
+        }
+    }
 
     function getStoredCategories() {
         const data = localStorage.getItem('shop_categories');
@@ -340,6 +476,15 @@
 
     function saveStoredCategories(cats) {
         localStorage.setItem('shop_categories', JSON.stringify(cats));
+    }
+
+    function getStoredOrderStatuses() {
+        const data = localStorage.getItem('shop_order_statuses');
+        return data ? JSON.parse(data) : defaultOrderStatuses;
+    }
+
+    function saveStoredOrderStatuses(statuses) {
+        localStorage.setItem('shop_order_statuses', JSON.stringify(statuses));
     }
 
     function getStoredProducts() {
@@ -418,6 +563,7 @@
 
     // 初始化載入
     document.addEventListener("DOMContentLoaded", function() {
+        checkAdminLoginState();
         renderAdminCategoryTabs();
         renderAdminProducts('all');
         renderAdminOrders();
@@ -488,6 +634,241 @@
             updateCategorySelectOptions();
             renderAdminProducts('all');
         }
+    }
+
+    // ==========================================
+    // 訂單狀態下拉選單管理相關
+    // ==========================================
+    const orderStatusModalEl = document.getElementById('orderStatusSettingModal');
+    if (orderStatusModalEl) {
+        orderStatusModalEl.addEventListener('show.bs.modal', function () {
+            renderOrderStatusListGroup();
+        });
+    }
+
+    function renderOrderStatusListGroup() {
+        const listGroup = document.getElementById('orderStatusListGroup');
+        const statuses = getStoredOrderStatuses();
+        listGroup.innerHTML = '';
+        statuses.forEach((st, index) => {
+            listGroup.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${st}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrderStatus(${index})"><i class="fa-solid fa-xmark"></i></button>
+                </li>
+            `;
+        });
+    }
+
+    function addNewOrderStatus() {
+        const input = document.getElementById('newOrderStatusInput');
+        const val = input.value.trim();
+        if (!val) return;
+        let statuses = getStoredOrderStatuses();
+        if (statuses.includes(val)) {
+            alert('此訂單狀態已存在！');
+            return;
+        }
+        statuses.push(val);
+        saveStoredOrderStatuses(statuses);
+        input.value = '';
+        renderOrderStatusListGroup();
+        renderAdminOrders();
+    }
+
+    function deleteOrderStatus(index) {
+        let statuses = getStoredOrderStatuses();
+        if (statuses.length <= 1) {
+            alert('至少需保留一個訂單狀態！');
+            return;
+        }
+        if (confirm(`確定要刪除「${statuses[index]}」狀態嗎？`)) {
+            statuses.splice(index, 1);
+            saveStoredOrderStatuses(statuses);
+            renderOrderStatusListGroup();
+            renderAdminOrders();
+        }
+    }
+
+    // ==========================================
+    // 需求 2 與 3：訂單簡化、狀態下拉、上下分流渲染
+    // ==========================================
+    function renderAdminOrders() {
+        const pendingTbody = document.getElementById('pendingOrderTableBody');
+        const completedTbody = document.getElementById('completedOrderTableBody');
+        const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        const statuses = getStoredOrderStatuses();
+        
+        document.getElementById('totalOrdersCount').textContent = orders.length;
+        let totalAmount = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
+        document.getElementById('totalSalesAmount').textContent = `$${totalAmount}`;
+
+        pendingTbody.innerHTML = '';
+        completedTbody.innerHTML = '';
+
+        let pendingCount = 0;
+        let completedCount = 0;
+
+        if (orders.length === 0) {
+            pendingTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無任何顧客訂單記錄！</td></tr>`;
+            completedTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無已完成的訂單！</td></tr>`;
+            document.getElementById('pendingOrdersCountBadge').textContent = '0';
+            document.getElementById('completedOrdersCountBadge').textContent = '0';
+            return;
+        }
+
+        orders.forEach(ord => {
+            const isCompleted = ord.status && (ord.status.includes('已完成') || ord.status.includes('已完工'));
+            if (isCompleted) {
+                completedCount++;
+            } else {
+                pendingCount++;
+            }
+
+            // 產生狀態下拉選單 HTML
+            let statusSelectHtml = `<select class="form-select form-select-sm" onchange="updateOrderStatus('${ord.id}', this.value)">`;
+            statuses.forEach(st => {
+                const selected = (ord.status === st) ? 'selected' : '';
+                statusSelectHtml += `<option value="${st}" ${selected}>${st}</option>`;
+            });
+            statusSelectHtml += `</select>`;
+
+            // 商品總件數計算與點擊按鈕
+            let totalItemsQty = ord.items.reduce((sum, i) => sum + i.qty, 0);
+            let summaryHtml = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>共 ${ord.items.length} 項商品 (總計 ${totalItemsQty} 件)</span>
+                    <button class="btn btn-sm btn-outline-info py-0 px-2" onclick="openOrderDetailModal('${ord.id}')"><i class="fa-solid fa-eye me-1"></i>點擊展開明細</button>
+                </div>
+            `;
+
+            let actionHtml = '';
+            if (isCompleted) {
+                actionHtml = `<button class="btn btn-sm btn-success" disabled><i class="fa-solid fa-check me-1"></i>已完成計數</button>`;
+            } else {
+                actionHtml = `<button class="btn btn-sm btn-success" onclick="completeOrderAndCount('${ord.id}')"><i class="fa-solid fa-check me-1"></i>確認完成並計數</button>`;
+            }
+
+            const rowHtml = `
+                <tr>
+                    <td><strong>${ord.id}</strong></td>
+                    <td>${ord.customer}<br><small class="text-muted">${ord.phone}</small><br><small class="text-muted">${ord.address}</small></td>
+                    <td>${summaryHtml}</td>
+                    <td class="text-success fw-bold">$${ord.total} <br><small class="text-muted">(${ord.paymentMethod})</small></td>
+                    <td><small>${ord.date}</small></td>
+                    <td>${statusSelectHtml}</td>
+                    <td>${actionHtml}</td>
+                </tr>
+            `;
+
+            if (isCompleted) {
+                completedTbody.innerHTML += rowHtml;
+            } else {
+                pendingTbody.innerHTML += rowHtml;
+            }
+        });
+
+        document.getElementById('pendingOrdersCountBadge').textContent = pendingCount;
+        document.getElementById('completedOrdersCountBadge').textContent = completedCount;
+
+        if (pendingCount === 0) {
+            pendingTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">目前沒有尚未完成的訂單！</td></tr>`;
+        }
+        if (completedCount === 0) {
+            completedTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">目前沒有已完成的訂單！</td></tr>`;
+        }
+    }
+
+    // 展開訂單詳細明細 Modal
+    function openOrderDetailModal(orderId) {
+        const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        const ord = orders.find(o => o.id === orderId);
+        if (!ord) return;
+
+        const bodyContainer = document.getElementById('orderDetailModalBody');
+        let itemsDetailHtml = '';
+        ord.items.forEach((item, idx) => {
+            itemsDetailHtml += `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <strong>${idx + 1}. ${item.name}</strong>
+                        <br><small class="text-muted">規格款式：${item.spec}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-danger">$${item.price}</span> × ${item.qty}
+                        <br><strong class="text-success">$${item.price * item.qty}</strong>
+                    </div>
+                </div>
+            `;
+        });
+
+        bodyContainer.innerHTML = `
+            <div class="mb-3">
+                <p class="mb-1"><strong>訂單編號：</strong>${ord.id}</p>
+                <p class="mb-1"><strong>顧客姓名：</strong>${ord.customer} (${ord.phone})</p>
+                <p class="mb-1"><strong>收件地址：</strong>${ord.address}</p>
+                <p class="mb-1"><strong>購買時間：</strong>${ord.date}</p>
+                <p class="mb-1"><strong>付款方式：</strong>${ord.paymentMethod}</p>
+            </div>
+            <hr>
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-basket-shopping me-2"></i>購買商品明細清單：</h6>
+            <div class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;">
+                ${itemsDetailHtml}
+            </div>
+            <div class="text-end mt-3">
+                <h5 class="fw-bold text-success">訂單總金額：$${ord.total}</h5>
+            </div>
+        `;
+
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        modal.show();
+    }
+
+    // 更新訂單狀態（透過下拉選單）
+    function updateOrderStatus(orderId, newStatus) {
+        let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        const idx = orders.findIndex(o => o.id === orderId);
+        if (idx > -1) {
+            orders[idx].status = newStatus;
+            localStorage.setItem('shop_orders', JSON.stringify(orders));
+            renderAdminOrders();
+        }
+    }
+
+    // 確認完成訂單並累加商品銷量
+    function completeOrderAndCount(orderId) {
+        let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
+        let products = getStoredProducts();
+
+        const orderIndex = orders.findIndex(o => o.id === orderId);
+        if (orderIndex === -1) return;
+
+        const order = orders[orderIndex];
+
+        if (order.status && order.status.includes('已完成')) {
+            alert('此訂單已經確認完成過了！');
+            return;
+        }
+
+        if (!confirm(`確定要將訂單 ${orderId} 標記為「✅ 已完成」？\n系統將自動把此訂單內的商品數量累加到前台的「已售出」熱銷排行中，並移至已完成專區！`)) {
+            return;
+        }
+
+        // 逐一將訂單內的商品數量累加到對應的產品已售出 (sales) 中
+        order.items.forEach(orderItem => {
+            const prodIndex = products.findIndex(p => p.id === orderItem.id);
+            if (prodIndex > -1) {
+                products[prodIndex].sales = (products[prodIndex].sales || 0) + orderItem.qty;
+            }
+        });
+
+        order.status = "✅ 已完成";
+
+        localStorage.setItem('shop_orders', JSON.stringify(orders));
+        saveStoredProducts(products);
+
+        renderAdminOrders();
+        alert('🎉 訂單已確認完成！商品已售出數量已成功自動增加，並已移動至已完成專區！');
     }
 
     // 商品新增與編輯彈窗
@@ -644,8 +1025,8 @@
             price,
             sales,
             specs: currentEditingSpecs,
-            img: currentEditingImages[0], // 封面圖
-            images: currentEditingImages, // 多圖陣列
+            img: currentEditingImages[0], 
+            images: currentEditingImages, 
             description
         };
 
@@ -671,86 +1052,6 @@
             saveStoredProducts(products);
             renderAdminProducts(currentAdminCategory);
         }
-    }
-
-    // ==========================================
-    // 顧客訂單管理與已售出數量連動的核心邏輯
-    // ==========================================
-    function renderAdminOrders() {
-        const tbody = document.getElementById('orderTableBody');
-        const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-        
-        document.getElementById('totalOrdersCount').textContent = orders.length;
-        let totalAmount = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
-        document.getElementById('totalSalesAmount').textContent = `$${totalAmount}`;
-
-        tbody.innerHTML = '';
-        if (orders.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無任何顧客訂單記錄！</td></tr>`;
-            return;
-        }
-
-        orders.forEach(ord => {
-            let itemsHtml = ord.items.map(i => `${i.name} (${i.spec}) × ${i.qty}`).join('<br>');
-            const isCompleted = ord.status && ord.status.includes('已完成');
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><strong>${ord.id}</strong></td>
-                    <td>${ord.customer}<br><small class="text-muted">${ord.phone}</small><br><small class="text-muted">${ord.address}</small></td>
-                    <td>${itemsHtml}</td>
-                    <td class="text-success fw-bold">$${ord.total} (${ord.paymentMethod})</td>
-                    <td><small>${ord.date}</small></td>
-                    <td><span class="badge ${isCompleted ? 'bg-success' : 'bg-warning text-dark'}">${ord.status || '處理中'}</span></td>
-                    <td>
-                        ${isCompleted 
-                            ? '<button class="btn btn-sm btn-secondary" disabled>已完成扣款/計數</button>'
-                            : `<button class="btn btn-sm btn-success" onclick="completeOrder('${ord.id}')"><i class="fa-solid fa-check me-1"></i>確認完成</button>`
-                        }
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    // 關鍵核心：當後台點擊「確認完成」時，自動累加商品的 Sales 已售出數量
-    function completeOrder(orderId) {
-        let orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
-        let products = getStoredProducts();
-
-        const orderIndex = orders.findIndex(o => o.id === orderId);
-        if (orderIndex === -1) return;
-
-        const order = orders[orderIndex];
-
-        // 避免重複計算已完成的訂單
-        if (order.status && order.status.includes('已完成')) {
-            alert('此訂單已經確認完成過了！');
-            return;
-        }
-
-        if (!confirm(`確定要將訂單 ${orderId} 標記為「已完成」？\n系統將自動把此訂單內的商品數量累加到前台的「已售出」與熱銷排行中！`)) {
-            return;
-        }
-
-        // 逐一將訂單內的商品數量累加到對應的產品已售出 (sales) 中
-        order.items.forEach(orderItem => {
-            const prodIndex = products.findIndex(p => p.id === orderItem.id);
-            if (prodIndex > -1) {
-                products[prodIndex].sales = (products[prodIndex].sales || 0) + orderItem.qty;
-            }
-        });
-
-        // 更新訂單狀態
-        order.status = "✅ 已完成 (已取貨付款)";
-
-        // 儲存回 localStorage 確保前後台即時同步
-        localStorage.setItem('shop_orders', JSON.stringify(orders));
-        saveStoredProducts(products);
-
-        // 重新渲染後台表格
-        renderAdminOrders();
-        alert('🎉 訂單已確認完成！商品已售出數量已成功自動增加！');
     }
 
     // 維修諮詢管理
