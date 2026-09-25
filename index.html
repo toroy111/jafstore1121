@@ -3,7 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>嚴選好物商城 × 居家水電弱電工程</title>
+    
+    <!-- 搜索引擎優化 (SEO) 核心 Meta 標籤 -->
+    <title>嚴選好物商城 × 居家水電弱電工程 | 大台北地區水電維修與手作烘焙</title>
+    <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選新鮮手作烘焙麵包、餅乾與冷泡茶飲線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
+    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 手作烘焙商城, 嚴選好物, 網購點心">
+    <meta name="author" content="張安賦">
+
+    <!-- 社群分享預覽設定 (Open Graph / SEO) -->
+    <meta property="og:title" content="嚴選好物商城 × 居家水電弱電工程">
+    <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選手作烘焙美食線上商城，立即線上預約與選購！">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_TW">
+
+    <!-- 結構化資料 (Structured Data - LocalBusiness & Store) 幫助 Google 搜尋結果呈現商家資訊 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "嚴選好物商城 × 居家水電弱電工程",
+      "image": "1.png",
+      "telephone": "0963-726-958",
+      "email": "love112152@gmail.com",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "台北市",
+        "addressRegion": "大台北地區",
+        "addressCountry": "TW"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        ],
+        "opens": "08:30",
+        "closes": "20:00"
+      },
+      "priceRange": "$"
+    }
+    </script>
+
     <style>
         /* ==========================================
            1. 全域樣式設定 (Global Styles)
@@ -1110,7 +1149,7 @@
             <div class="shop-modal-body">
                 <!-- 左側：多圖輪播與縮圖區塊 -->
                 <div class="modal-gallery-container">
-                    <img id="modalProdImg" src="" alt="商品圖片" class="shop-modal-img">
+                    <img id="modalProdImg" src="" alt="商品詳細圖片" class="shop-modal-img">
                     <div class="modal-thumbnails" id="modalThumbnailsContainer">
                         <!-- 動態填入縮圖 -->
                     </div>
@@ -1174,13 +1213,13 @@
                     </div>
                     <div class="service-card">
                         <div class="service-icon">📡</div>
-                        <h3>弱電</h3>
-                        <p>公寓對講機修繕。</p>
+                        <h3>弱電工程</h3>
+                        <p>公寓對講機修繕、網路線路佈建。</p>
                     </div>
                     <div class="service-card">
                         <div class="service-icon">🛠️</div>
                         <h3>代客安裝</h3>
-                        <p>浴室鏡櫃、電視固定架。</p>
+                        <p>浴室鏡櫃、電視固定架安裝。</p>
                     </div>
                 </div>
             </div>
@@ -1213,7 +1252,7 @@
 
                         <!-- 聯絡資訊下方的個人名片圖片 -->
                         <div>
-                            <img src="1.png" alt="張安賦 個人名片" class="business-card-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
+                            <img src="1.png" alt="張安賦 個人水電弱電名片" class="business-card-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'">
                         </div>
                     </div>
 
@@ -1597,7 +1636,6 @@
         let currentUser = null;
 
         document.addEventListener("DOMContentLoaded", function() {
-            // 檢查是否已存在持久化登入狀態
             const savedLogin = localStorage.getItem('shop_isLoggedIn');
             const savedUser = localStorage.getItem('shop_currentUser');
             if (savedLogin === 'true' && savedUser) {
@@ -1682,9 +1720,6 @@
             });
         }
 
-        /* ==========================================
-           商城商品彈跳視窗與多圖輪播切換邏輯
-           ========================================== */
         function openShopModal(product) {
             selectedProductForModal = product;
             document.getElementById('modalProdTitle').textContent = product.name;
@@ -1892,9 +1927,6 @@
             document.getElementById('cartModalOverlay').classList.remove('active');
         }
 
-        /* ==========================================
-           進度追蹤功能邏輯 (商品訂單與水電工程進度)
-           ========================================== */
         function openTrackingModal() {
             if (!isLoggedIn) {
                 alert('⚠️ 請先登入會員帳號才能追蹤您的訂單與水電維修進度！');
@@ -1927,7 +1959,6 @@
         }
 
         function renderTrackingData() {
-            // 1. 渲染商品訂單追蹤
             const ordersContainer = document.getElementById('trackingOrdersListContainer');
             const orders = JSON.parse(localStorage.getItem('shop_orders') || '[]');
             
@@ -1959,7 +1990,6 @@
                 ordersContainer.innerHTML = html;
             }
 
-            // 2. 渲染水電弱電工程進度追蹤
             const repairsContainer = document.getElementById('trackingRepairsListContainer');
             const repairs = JSON.parse(localStorage.getItem('shop_repairs') || '[]');
 
@@ -1994,9 +2024,6 @@
             }
         }
 
-        /* ==========================================
-           水電選單與會員互動功能
-           ========================================== */
         function toggleWaterElectric() {
             const section = document.getElementById('waterElectricSection');
             const btn = document.getElementById('toggleBtn');
@@ -2113,13 +2140,11 @@
         function openAuthModal() { document.getElementById('authModalOverlay').classList.add('active'); }
         function closeAuthModal() { document.getElementById('authModalOverlay').classList.remove('active'); }
 
-        // 右下角會員/登出按鈕點擊處理
         function handleFloatingBtnClick() {
             if (isLoggedIn) {
                 if (confirm(`您目前已登入帳號：${currentUser}\n是否要進行登出？`)) {
                     isLoggedIn = false;
                     currentUser = null;
-                    // 清除 localStorage 儲存的登入資訊
                     localStorage.removeItem('shop_isLoggedIn');
                     localStorage.removeItem('shop_currentUser');
 
@@ -2184,7 +2209,6 @@
             isLoggedIn = true;
             currentUser = emailVal;
 
-            // 儲存登入狀態至 localStorage 實現跨重整與關閉瀏覽器維持登入
             localStorage.setItem('shop_isLoggedIn', 'true');
             localStorage.setItem('shop_currentUser', currentUser);
 
@@ -2206,7 +2230,7 @@
         function handleSendRegisterCode(e) {
             e.preventDefault();
             const name = document.getElementById('registerName').value;
-            const phone = document.getElementById('registerPhone').value;
+            const phone = document.getElementById('registerPhone',).value;
             const email = document.getElementById('registerEmail').value;
             const p1 = document.getElementById('registerPassword').value;
             const p2 = document.getElementById('registerConfirmPassword').value;
