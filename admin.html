@@ -42,16 +42,25 @@
         .preview-thumb-box { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
         .preview-thumb-box img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; }
         .preview-thumb-box .btn-remove-thumb { position: absolute; top: -6px; right: -6px; padding: 0.1rem 0.3rem; font-size: 0.6rem; border-radius: 50%; }
-        /* 登入遮罩畫面 */
+        
+        /* 獨立且乾淨舒服的質感登入畫面 */
         #loginOverlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(33, 37, 41, 0.95);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
         }
+        .login-card {
+            width: 400px;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
         /* 右下角懸浮登出按鈕 */
         .floating-logout {
             position: fixed;
@@ -67,29 +76,32 @@
 </head>
 <body>
 
-<!-- 1. 後台登入驗證遮罩畫面 -->
+<!-- 1. 後台獨立驗證登入畫面 -->
 <div id="loginOverlay">
-    <div class="card p-4 shadow-lg" style="width: 380px; border-radius: 12px;">
+    <div class="card login-card p-4 p-md-5">
         <div class="text-center mb-4">
-            <h3 class="fw-bold text-primary"><i class="fa-solid fa-lock me-2"></i>管理員身分驗證</h3>
-            <p class="text-muted small">請輸入後台管理帳號與密碼以進入系統</p>
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                <i class="fa-solid fa-lock fa-2x"></i>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">管理員登入</h3>
+            <p class="text-muted small">請輸入後台管理帳號與密碼進入系統</p>
         </div>
         <form id="loginForm" onsubmit="handleAdminLogin(event)">
             <div class="mb-3">
-                <label class="form-label fw-bold">管理員帳號</label>
+                <label class="form-label fw-bold text-secondary small">管理員帳號</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                    <input type="text" class="form-control" id="adminUser" required placeholder="請輸入帳號">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                    <input type="text" class="form-control bg-light border-start-0 py-2" id="adminUser" required placeholder="請輸入帳號">
                 </div>
             </div>
             <div class="mb-4">
-                <label class="form-label fw-bold">密碼</label>
+                <label class="form-label fw-bold text-secondary small">密碼</label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
-                    <input type="password" class="form-control" id="adminPass" required placeholder="請輸入密碼">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-key text-muted"></i></span>
+                    <input type="password" class="form-control bg-light border-start-0 py-2" id="adminPass" required placeholder="請輸入密碼">
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">安全登入後台</button>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm rounded-pill">安全登入後台</button>
         </form>
     </div>
 </div>
@@ -454,8 +466,8 @@
         const u = document.getElementById('adminUser').value.trim();
         const p = document.getElementById('adminPass').value.trim();
 
-        // 帳號密碼維持為 admin / love11
-        if (u === 'admin' && p === 'love11') {
+        // 帳號密碼維持為 admin / 1234
+        if (u === 'admin' && p === '1234') {
             sessionStorage.setItem('admin_logged_in', 'true');
             checkAdminLoginState();
             alert('🎉 成功登入後台管理系統！');
