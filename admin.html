@@ -453,7 +453,7 @@
             allUsersInfoCache = val;
             loadChatUsersList(); 
             if (selectedChatUser) {
-                selectChatUser(selectedChatUser); // 如果當前正在看某個用戶對話，即時更新頂部標題的姓名
+                selectChatUser(selectedChatUser); 
             }
         });
 
@@ -515,8 +515,8 @@
 
                 let finalTitleHtml = '';
                 if (displayName) {
-                    // 會員帳號旁邊同步顯示客人的名字與電話
-                    finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>${displayName}</strong> <span class="text-muted small">(${accountLabel})</span>`;
+                    // 要求格式：會員帳號後面接名字，再接信箱在下方
+                    finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>會員帳號：${displayName}</strong><br><small class="text-muted">${accountLabel}</small>`;
                     if (displayPhone) {
                         finalTitleHtml += `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>`;
                     }
