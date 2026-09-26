@@ -447,7 +447,7 @@
             renderAdminPasswordResets();
         });
 
-        // 監聽會員資料以對應姓名與電話
+        // 監聽會員資料以對應真實姓名與電話
         db.ref('shop_users').on('value', (snapshot) => {
             const val = snapshot.val() || {};
             allUsersInfoCache = val;
@@ -460,7 +460,9 @@
         });
     }
 
-    // 後台即時聊天室管理功能
+    // ==========================================
+    // [已修改] 後台即時聊天室管理功能：自動對應前台實際登入帳號與名字
+    // ==========================================
     function loadChatUsersList() {
         db.ref('chats').once('value').then((snapshot) => {
             const val = snapshot.val() || {};
@@ -482,22 +484,47 @@
                 const userMsgs = val[userId] || {};
                 let unreadCount = 0;
                 Object.values(userMsgs).forEach(m => {
-                    // 若是顧客傳送的 (sender === 'customer' 或無 sender)，且尚未被管理員標記已讀
                     if ((m.sender === 'customer' || !m.sender) && !m.adminRead) {
                         unreadCount++;
                     }
                 });
                 totalUnreadCount += unreadCount;
 
-                // 嘗試從會員資料 (allUsersInfoCache) 或其他地方尋找姓名/電話
-                let displayName = `帳號：${userId}`;
+                // 智慧對應：從會員資料庫 (allUsersInfoCache) 尋找對應的姓名或電話
+                let displayName = '';
                 let displayPhone = '';
-                
-                // 檢查是否有儲存的使用者詳細資料
+                let accountLabel = userId;
+
+                // 檢查是否直接以 userId 當作手機/帳號匹配
                 if (allUsersInfoCache[userId]) {
                     const uInfo = allUsersInfoCache[userId];
                     if (uInfo.name) displayName = uInfo.name;
                     if (uInfo.phone) displayPhone = uInfo.phone;
+                } else {
+                    // 若找不到直接對應，檢查是否有會員的 phone 或 email 吻合 userId
+                    for (let key in allUsersInfoCache) {
+                        const uInfo = allUsersInfoCache[key];
+                        if (key === userId || uInfo.phone === userId || uInfo.email === userId) {
+                            if (uInfo.name) displayName = uInfo.name;
+                            if (uInfo.phone) displayPhone = uInfo.phone;
+                            break;
+                        }
+                    }
+                }
+
+                // 如果依然找不到名字，則判斷是不是訪客，顯示比較友善的標籤
+                let finalTitleHtml = '';
+                if (displayName) {
+                    finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>${displayName}</strong>`;
+                    if (displayPhone) {
+                        finalTitleHtml += `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>`;
+                    } else {
+                        finalTitleHtml += `<br><small class="text-muted">帳號：${accountLabel}</small>`;
+                    }
+                } else if (userId.startsWith('訪客_')) {
+                    finalTitleHtml = `<i class="fa-solid fa-user-clock me-1 text-warning"></i><strong>一般訪客</strong><br><small class="text-muted">${userId}</small>`;
+                } else {
+                    finalTitleHtml = `<i class="fa-solid fa-user me-1 text-primary"></i><strong>會員帳號</strong><br><small class="text-muted">${userId}</small>`;
                 }
 
                 const isSelected = selectedChatUser === userId ? 'active' : '';
@@ -505,10 +532,7 @@
 
                 userListContainer.innerHTML += `
                     <div class="list-group-item list-group-item-action chat-user-item d-flex justify-content-between align-items-center ${isSelected}" onclick="selectChatUser('${userId}')">
-                        <div>
-                            <i class="fa-solid fa-user-circle me-1 text-primary"></i><strong>${displayName}</strong>
-                            ${displayPhone ? `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>` : `<br><small class="text-muted">${userId}</small>`}
-                        </div>
+                        <div>${finalTitleHtml}</div>
                         ${unreadBadgeHtml}
                     </div>
                 `;
@@ -529,14 +553,34 @@
     function selectChatUser(userId) {
         selectedChatUser = userId;
         
-        // 顯示對應的使用者名稱或電話在標題
-        let titleLabel = `與 顧客 (${userId}) 對話中`;
+        // [已修改] 右側對話標題自動帶入真實姓名與實際登入帳號/電話
+        let titleLabel = `與 訪客 (${userId}) 對話中`;
+        let matchedName = '';
+        let matchedPhone = '';
+
         if (allUsersInfoCache[userId]) {
             const u = allUsersInfoCache[userId];
-            if (u.name || u.phone) {
-                titleLabel = `與 顧客：${u.name || userId} ${u.phone ? '(' + u.phone + ')' : ''} 對話中`;
+            if (u.name) matchedName = u.name;
+            if (u.phone) matchedPhone = u.phone;
+        } else {
+            for (let key in allUsersInfoCache) {
+                const u = allUsersInfoCache[key];
+                if (key === userId || u.phone === userId || u.email === userId) {
+                    if (u.name) matchedName = u.name;
+                    if (u.phone) matchedPhone = u.phone;
+                    break;
+                }
             }
         }
+
+        if (matchedName) {
+            titleLabel = `與 顧客：${matchedName} ${matchedPhone ? '(' + matchedPhone + ')' : '(' + userId + ')'} 對話中`;
+        } else if (userId.startsWith('訪客_')) {
+            titleLabel = `與 訪客 (${userId}) 對話中`;
+        } else {
+            titleLabel = `與 登入會員 (${userId}) 對話中`;
+        }
+
         document.getElementById('activeChatUserTitle').textContent = titleLabel;
 
         // 點擊選取後，將該用戶的所有訊息標記為已讀
