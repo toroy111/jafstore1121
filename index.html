@@ -1279,9 +1279,8 @@
         </section>
     </div>
 
-    <!-- 懸浮快捷按鈕區 (依圖片順序：1.會員中心 2.訂單與進度包裹按鈕 3.購物車) -->
+    <!-- 懸浮快捷按鈕區 -->
     <div class="floating-container">
-        <!-- 新增：聯繫管理者即時客服按鈕 -->
         <button type="button" class="floating-btn" onclick="toggleChatWidget()" title="聯繫後台管理者">
             💬
         </button>
@@ -1320,14 +1319,12 @@
                 <button class="auth-close-btn" onclick="closeOrderTrackModal()">×</button>
             </div>
             <div class="auth-modal-body">
-                <div id="orderTrackContentBox">
-                    <!-- 動態帶入查詢結果 -->
-                </div>
+                <div id="orderTrackContentBox"></div>
             </div>
         </div>
     </div>
 
-    <!-- 會員登入/註冊/忘記密碼 Modal -->
+    <!-- 會員登入/註冊/忘記密碼/會員中心 Modal -->
     <div class="auth-modal-overlay" id="authModalOverlay" onclick="closeAuthModal(event)">
         <div class="auth-modal" onclick="event.stopPropagation()">
             <div class="auth-modal-header">
@@ -1335,7 +1332,6 @@
                 <button class="auth-close-btn" onclick="closeAuthModal()">×</button>
             </div>
             <div class="auth-modal-body" id="authModalBodyContent">
-                <!-- 動態切換：未登入顯示登入/註冊/忘記密碼；已登入顯示帳號資訊與登出按鈕 -->
                 <div id="authTabsContainer">
                     <div class="auth-tabs">
                         <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">會員登入</div>
@@ -1344,11 +1340,11 @@
                     </div>
                 </div>
 
-                <!-- 1. 會員登入表單 (手機號碼) -->
+                <!-- 1. 會員登入表單 -->
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
-                        <label>手機號碼帳號</label>
-                        <input type="tel" id="loginPhone" required placeholder="請輸入手機號碼">
+                        <label>信箱帳號 (登入使用)</label>
+                        <input type="email" id="loginEmail" required placeholder="請輸入註冊信箱">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1357,15 +1353,23 @@
                     <button type="submit" class="auth-submit-btn">立即登入</button>
                 </form>
 
-                <!-- 2. 註冊帳號表單 (手機號碼) -->
+                <!-- 2. 註冊帳號表單 -->
                 <form id="registerFormPanel" class="auth-form-panel" onsubmit="handleUserRegister(event)">
                     <div class="auth-form-group">
-                        <label>手機號碼帳號</label>
+                        <label>名字</label>
+                        <input type="text" id="regName" required placeholder="請輸入您的名字">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>手機號碼</label>
                         <input type="tel" id="regPhone" required placeholder="請輸入手機號碼">
                     </div>
                     <div class="auth-form-group">
-                        <label>設定密碼</label>
-                        <input type="password" id="regPass" required placeholder="設定 6 位數以上密碼">
+                        <label>信箱帳號 (作為登入使用)</label>
+                        <input type="email" id="regEmail" required placeholder="請輸入信箱帳號">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>密碼</label>
+                        <input type="password" id="regPass" required placeholder="設定密碼">
                     </div>
                     <button type="submit" class="auth-submit-btn">註冊新帳號</button>
                 </form>
@@ -1373,11 +1377,48 @@
                 <!-- 3. 忘記密碼申請表單 -->
                 <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleUserForgot(event)">
                     <div class="auth-form-group">
-                        <label>註冊的手機號碼或信箱</label>
-                        <input type="text" id="forgotPhone" required placeholder="輸入您註冊的手機號碼">
+                        <label>註冊時的手機號碼或信箱</label>
+                        <input type="text" id="forgotInput" required placeholder="輸入手機號碼或信箱">
                     </div>
-                    <button type="submit" class="auth-submit-btn">送出重設密碼申請</button>
+                    <button type="submit" class="auth-submit-btn">送出密碼重新申請</button>
                 </form>
+
+                <!-- 3-1. 輸入驗證碼與更改密碼介面 -->
+                <form id="forgotVerifyPanel" class="auth-form-panel" onsubmit="handleVerifyAndResetPass(event)">
+                    <div class="auth-form-group">
+                        <label>請輸入驗證碼</label>
+                        <input type="text" id="forgotCode" required placeholder="請輸入驗證碼">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>要更改的新密碼</label>
+                        <input type="password" id="newResetPass" required placeholder="請輸入新密碼">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">確認修改密碼</button>
+                </form>
+
+                <!-- 4. 會員中心編輯與檢視面板 (登入後顯示) -->
+                <div id="loggedInInfoPanel" class="auth-form-panel">
+                    <form onsubmit="handleUpdateProfile(event)">
+                        <div class="auth-form-group">
+                            <label>編輯名字</label>
+                            <input type="text" id="editName" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label>編輯手機號碼</label>
+                            <input type="tel" id="editPhone" required>
+                        </div>
+                        <div class="auth-form-group">
+                            <label>編輯信箱 (登入帳號)</label>
+                            <input type="email" id="editEmail" required disabled style="background:#f1f5f9;">
+                        </div>
+                        <div class="auth-form-group">
+                            <label>更改密碼 (若不修改請保持空白)</label>
+                            <input type="password" id="editPass" placeholder="留空則不修改密碼">
+                        </div>
+                        <button type="submit" class="auth-submit-btn">儲存編輯變更</button>
+                        <button type="button" class="btn btn-danger" style="width: 100%; margin-top: 10px;" onclick="handleUserLogout()">登出帳號</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -1430,15 +1471,14 @@
         let selectedProductForModal = null;
         let selectedSpecForModal = null;
         let selectedTimesArray = [];
-        let currentUserPhone = localStorage.getItem('currentUserPhone') || null;
+        let currentUserEmail = localStorage.getItem('currentUserEmail') || null;
 
-        // 客服聊天專用識別 ID (若未登入則自動產生訪客ID並存入 localStorage)
         let currentChatVisitorId = localStorage.getItem('currentChatVisitorId');
         if (!currentChatVisitorId) {
             currentChatVisitorId = 'VISITOR_' + Math.random().toString(36).substring(2, 9);
             localStorage.setItem('currentChatVisitorId', currentChatVisitorId);
         }
-        const activeChatUserId = currentUserPhone ? currentUserPhone : currentChatVisitorId;
+        const activeChatUserId = currentUserEmail ? currentUserEmail.replace(/[^a-zA-Z0-9]/g, '_') : currentChatVisitorId;
 
         // ==========================================
         // 3. 資料監聽與初始化載入
@@ -1492,7 +1532,6 @@
                 if (val) historyCases = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
             });
 
-            // 監聽即時客服對話訊息
             db.ref(`shop_chats/${activeChatUserId}/messages`).on('value', (snapshot) => {
                 const val = snapshot.val();
                 const body = document.getElementById('chatMessagesBody');
@@ -1815,7 +1854,6 @@
             }
         }
 
-        // 時段下拉選單互動
         function toggleDropdown(e) {
             e.stopPropagation();
             document.getElementById('dropdownList').classList.toggle('active');
@@ -1928,7 +1966,7 @@
         function openOrderTrackModal() {
             const contentBox = document.getElementById('orderTrackContentBox');
             
-            if (!currentUserPhone) {
+            if (!currentUserEmail) {
                 contentBox.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <p style="color: #64748b; margin-bottom: 15px;">您目前尚未登入會員，請先登入帳號以自動查詢您的訂單與水電進度。</p>
@@ -1936,33 +1974,45 @@
                     </div>
                 `;
             } else {
-                contentBox.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px 0;">正在查詢帳號 (${currentUserPhone}) 的資料...</div>`;
+                contentBox.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px 0;">正在查詢帳號 (${currentUserEmail}) 的資料...</div>`;
                 
-                db.ref('shop_orders').orderByChild('phone').equalTo(currentUserPhone).once('value', snapshotOrders => {
-                    db.ref('shop_repairs').orderByChild('phone').equalTo(currentUserPhone).once('value', snapshotRepairs => {
-                        let html = `<div style="margin-bottom: 10px; font-size: 13px; color: #0066cc;"><strong>當前登入帳號：${currentUserPhone}</strong></div>`;
-                        const ordersVal = snapshotOrders.val();
-                        const repairsVal = snapshotRepairs.val();
+                db.ref('shop_users').orderByChild('email').equalTo(currentUserEmail).once('value', snapshotUser => {
+                    let userPhone = '';
+                    if (snapshotUser.exists()) {
+                        const uData = Object.values(snapshotUser.val())[0];
+                        userPhone = uData.phone || '';
+                    }
 
-                        html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
-                        if (ordersVal) {
-                            Object.values(ordersVal).forEach(o => {
-                                html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
-                            });
-                        } else {
-                            html += `<div class="text-muted" style="font-size:12px;">無相關商城訂單。</div>`;
-                        }
+                    db.ref('shop_orders').once('value', snapshotOrders => {
+                        db.ref('shop_repairs').once('value', snapshotRepairs => {
+                            let html = `<div style="margin-bottom: 10px; font-size: 13px; color: #0066cc;"><strong>當前登入帳號：${currentUserEmail}</strong></div>`;
+                            
+                            html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
+                            let foundOrder = false;
+                            if (snapshotOrders.val()) {
+                                Object.values(snapshotOrders.val()).forEach(o => {
+                                    if (o.phone === userPhone || o.customerEmail === currentUserEmail) {
+                                        foundOrder = true;
+                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
+                                    }
+                                });
+                            }
+                            if (!foundOrder) html += `<div class="text-muted" style="font-size:12px;">無相關商城訂單。</div>`;
 
-                        html += `<div style="margin-top:10px;"><strong>⚡ 水電預約記錄：</strong></div>`;
-                        if (repairsVal) {
-                            Object.values(repairsVal).forEach(r => {
-                                html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
-                            });
-                        } else {
-                            html += `<div class="text-muted" style="font-size:12px;">無相關水電預約。</div>`;
-                        }
+                            html += `<div style="margin-top:10px;"><strong>⚡ 水電預約記錄：</strong></div>`;
+                            let foundRepair = false;
+                            if (snapshotRepairs.val()) {
+                                Object.values(snapshotRepairs.val()).forEach(r => {
+                                    if (r.phone === userPhone) {
+                                        foundRepair = true;
+                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
+                                    }
+                                });
+                            }
+                            if (!foundRepair) html += `<div class="text-muted" style="font-size:12px;">無相關水電預約。</div>`;
 
-                        contentBox.innerHTML = html;
+                            contentBox.innerHTML = html;
+                        });
                     });
                 });
             }
@@ -1997,57 +2047,56 @@
             const loginPanel = document.getElementById('loginFormPanel');
             const registerPanel = document.getElementById('registerFormPanel');
             const forgotPanel = document.getElementById('forgotFormPanel');
+            const forgotVerifyPanel = document.getElementById('forgotVerifyPanel');
+            const loggedInPanel = document.getElementById('loggedInInfoPanel');
             const modalTitle = document.getElementById('authModalTitle');
 
-            if (currentUserPhone) {
-                modalTitle.textContent = '會員中心 (已登入)';
+            if (currentUserEmail) {
+                modalTitle.textContent = '會員中心';
                 if (tabsContainer) tabsContainer.style.display = 'none';
-                if (loginPanel) loginPanel.style.display = 'none';
-                if (registerPanel) registerPanel.style.display = 'none';
-                if (forgotPanel) forgotPanel.style.display = 'none';
-
-                let infoDiv = document.getElementById('loggedInInfoPanel');
-                if (!infoDiv) {
-                    infoDiv = document.createElement('div');
-                    infoDiv.id = 'loggedInInfoPanel';
-                    document.getElementById('authModalBodyContent').appendChild(infoDiv);
+                if (loginPanel) loginPanel.classList.remove('active');
+                if (registerPanel) registerPanel.classList.remove('active');
+                if (forgotPanel) forgotPanel.classList.remove('active');
+                if (forgotVerifyPanel) forgotVerifyPanel.classList.remove('active');
+                
+                if (loggedInPanel) {
+                    loggedInPanel.classList.add('active');
+                    db.ref('shop_users').orderByChild('email').equalTo(currentUserEmail).once('value', snapshot => {
+                        const val = snapshot.val();
+                        if (val) {
+                            const uData = Object.values(val)[0];
+                            document.getElementById('editName').value = uData.name || '';
+                            document.getElementById('editPhone').value = uData.phone || '';
+                            document.getElementById('editEmail').value = uData.email || currentUserEmail;
+                            document.getElementById('editPass').value = '';
+                        }
+                    });
                 }
-                infoDiv.style.display = 'block';
-                infoDiv.innerHTML = `
-                    <div style="text-align: center; padding: 15px 0;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">👤</div>
-                        <h4 style="color: #1e293b; margin-bottom: 6px;">您好，會員</h4>
-                        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">綁定手機號碼：<strong>${currentUserPhone}</strong></p>
-                        <button type="button" class="btn btn-danger" style="width: 100%;" onclick="handleUserLogout()">登出帳號</button>
-                    </div>
-                `;
             } else {
                 modalTitle.textContent = '會員中心';
                 if (tabsContainer) tabsContainer.style.display = 'block';
-                if (loginPanel) loginPanel.style.display = 'block';
-                const infoDiv = document.getElementById('loggedInInfoPanel');
-                if (infoDiv) infoDiv.style.display = 'none';
+                if (loggedInPanel) loggedInPanel.classList.remove('active');
                 switchAuthTab('login');
             }
         }
 
         function handleUserLogin(e) {
             e.preventDefault();
-            const phone = document.getElementById('loginPhone').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
 
-            db.ref('shop_users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+            db.ref('shop_users').orderByChild('email').equalTo(email).once('value', snapshot => {
                 const val = snapshot.val();
                 if (!val) {
-                    alert('❌ 此手機號碼尚未註冊！');
+                    alert('❌ 此信箱帳號尚未註冊！');
                     return;
                 }
                 const userData = Object.values(val)[0];
                 if (userData.pass === pass) {
-                    currentUserPhone = phone;
-                    localStorage.setItem('currentUserPhone', phone);
-                    alert(`🎉 歡迎回來，${phone}！登入成功。`);
-                    location.reload(); // 重新整理以同步更新聊天身分
+                    currentUserEmail = email;
+                    localStorage.setItem('currentUserEmail', email);
+                    alert(`🎉 歡迎回來，${userData.name || email}！登入成功。`);
+                    location.reload();
                 } else {
                     alert('❌ 密碼錯誤！');
                 }
@@ -2055,25 +2104,27 @@
         }
 
         function handleUserLogout() {
-            currentUserPhone = null;
-            localStorage.removeItem('currentUserPhone');
+            currentUserEmail = null;
+            localStorage.removeItem('currentUserEmail');
             alert('👋 已成功登出帳號！');
             location.reload();
         }
 
         function handleUserRegister(e) {
             e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPass').value.trim();
 
-            db.ref('shop_users').orderByChild('phone').equalTo(phone).once('value', snapshot => {
+            db.ref('shop_users').orderByChild('email').equalTo(email).once('value', snapshot => {
                 if (snapshot.exists()) {
-                    alert('❌ 此手機號碼已經註冊過了！');
+                    alert('❌ 此信箱帳號已經註冊過了！');
                     return;
                 }
 
-                db.ref('shop_users').push({ phone, pass, date: new Date().toLocaleString() }).then(() => {
-                    alert('🎉 註冊成功！請使用您的手機號碼登入。');
+                db.ref('shop_users').push({ name, phone, email, pass, date: new Date().toLocaleString() }).then(() => {
+                    alert('🎉 註冊成功！請使用您的信箱帳號登入。');
                     switchAuthTab('login');
                 });
             });
@@ -2081,18 +2132,74 @@
 
         function handleUserForgot(e) {
             e.preventDefault();
-            const phone = document.getElementById('forgotPhone').value.trim();
+            const inputVal = document.getElementById('forgotInput').value.trim();
             
             const resetData = {
                 id: 'RES' + Date.now(),
-                phone: phone,
-                status: '待後台發送驗證碼至信箱',
+                input: inputVal,
+                status: '待發送驗證碼',
                 date: new Date().toLocaleString()
             };
 
             db.ref('shop_password_resets').push(resetData).then(() => {
-                alert('🎉 重設密碼申請已送出！管理員驗證後將發送驗證碼給您。');
-                closeAuthModal();
+                alert('🎉 密碼重新申請已送出！請輸入驗證碼與要更改的密碼。');
+                document.getElementById('forgotFormPanel').classList.remove('active');
+                document.getElementById('forgotVerifyPanel').classList.add('active');
+            });
+        }
+
+        function handleVerifyAndResetPass(e) {
+            e.preventDefault();
+            const code = document.getElementById('forgotCode').value.trim();
+            const newPass = document.getElementById('newResetPass').value.trim();
+            const inputVal = document.getElementById('forgotInput').value.trim();
+
+            if (!code) { alert('請輸入驗證碼！'); return; }
+
+            // 簡易模擬驗證碼確認並更新密碼
+            db.ref('shop_users').once('value', snapshot => {
+                const val = snapshot.val();
+                let foundKey = null;
+                if (val) {
+                    Object.entries(val).forEach(([key, user]) => {
+                        if (user.email === inputVal || user.phone === inputVal) {
+                            foundKey = key;
+                        }
+                    });
+                }
+
+                if (foundKey) {
+                    db.ref(`shop_users/${foundKey}`).update({ pass: newPass }).then(() => {
+                        alert('🎉 密碼已成功修改！請使用新密碼重新登入。');
+                        document.getElementById('forgotVerifyPanel').classList.remove('active');
+                        switchAuthTab('login');
+                    });
+                } else {
+                    alert('❌ 找不到對應的使用者帳號資料！');
+                }
+            });
+        }
+
+        function handleUpdateProfile(e) {
+            e.preventDefault();
+            const newName = document.getElementById('editName').value.trim();
+            const newPhone = document.getElementById('editPhone').value.trim();
+            const newPass = document.getElementById('editPass').value.trim();
+
+            db.ref('shop_users').orderByChild('email').equalTo(currentUserEmail).once('value', snapshot => {
+                const val = snapshot.val();
+                if (val) {
+                    const userKey = Object.keys(val)[0];
+                    let updateData = { name: newName, phone: newPhone };
+                    if (newPass) {
+                        updateData.pass = newPass;
+                    }
+
+                    db.ref(`shop_users/${userKey}`).update(updateData).then(() => {
+                        alert('🎉 會員資料已成功更新！');
+                        updateAuthModalUI();
+                    });
+                }
             });
         }
     </script>
