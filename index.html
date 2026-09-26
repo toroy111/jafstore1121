@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 搜索引擎優化 (SEO) 核心 Meta 標籤 -->
-    <title>嚴選優質商品商城與專業居家水電弱電工程</title>
-    <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選生活好物與五金商品線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
-    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 五金商城">
+    <title>珍愛家蔬食早午餐 × 居家水電弱電工程 | 大台北地區水電維修與手作烘焙</title>
+    <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選新鮮手作烘焙麵包、餅乾與冷泡茶飲線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
+    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 手作烘焙商城, 珍愛家蔬食早午餐, 網購點心">
     <meta name="author" content="張安賦">
 
     <!-- 社群分享預覽設定 (Open Graph / SEO) -->
-    <meta property="og:title" content="專業居家水電弱電工程與嚴選優質商品商城">
-    <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選生活好物線上商城，立即線上預約與選購！">
+    <meta property="og:title" content="珍愛家蔬食早午餐 × 居家水電弱電工程">
+    <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選手作烘焙美食線上商城，立即線上預約與選購！">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
 
@@ -100,7 +100,7 @@
             position: relative;
             height: 480px;
             background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), 
-                        url('https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+                        url('https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1099,8 +1099,8 @@
     <!-- 頂部 Banner -->
     <header class="hero-banner">
         <div class="hero-content">
-            <h1>專業居家水電弱電工程 × 優質生活百貨商城</h1>
-            <p>在地嚴選優質商品，提供安心好物選購；同步提供專業水電修繕與弱電工程服務</p>
+            <h1>珍愛家蔬食早午餐 × 居家水電弱電工程</h1>
+            <p>在地嚴選優質商品，提供安心手作與好物選購；同步提供專業水電修繕服務</p>
             <div class="hero-buttons">
                 <a href="#shop" class="btn btn-accent">瀏覽商城商品</a>
                 <button type="button" class="btn btn-primary" onclick="toggleWaterElectric()">水電弱電需求填寫</button>
@@ -1112,7 +1112,7 @@
     <section id="shop" class="shop-section">
         <div class="container">
             <h2 class="section-title">嚴選優質商品</h2>
-            <p class="section-subtitle">生活用品、水電五金與好物，點擊商品即可檢視介紹與多圖輪播規格</p>
+            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與多圖輪播規格</p>
 
             <div class="category-tabs" id="categoryTabsContainer"></div>
 
@@ -1275,7 +1275,7 @@
     <!-- 頁尾 -->
     <footer>
         <div class="container">
-            <div class="footer-logo">專業水電弱電工程 × 百貨商城</div>
+            <div class="footer-logo">珍愛家蔬食早午餐 × 居家水電弱電</div>
             <ul class="footer-links">
                 <li><a href="#shop">嚴選商城商品</a></li>
                 <li><a href="#" onclick="toggleWaterElectric(); return false;">水電弱電服務</a></li>
@@ -1328,19 +1328,23 @@
                     <button type="submit" class="auth-submit-btn" style="background-color: #10b981;">註冊新帳號</button>
                 </form>
 
-                <!-- 忘記密碼表單 (已修正：填寫手機號碼向後台申請驗證碼 -> 輸入收到的驗證碼與新密碼變更) -->
-                <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleForgotPasswordRequest(event)">
+                <!-- 忘記密碼表單 -->
+                <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleForgotPassword(event)">
                     <div class="auth-form-group">
                         <label>手機號碼 / 帳號</label>
                         <input type="tel" id="forgotPhone" required placeholder="請輸入您註冊的手機號碼">
                     </div>
-                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">送出申請，請後台發送驗證碼至信箱</button>
+                    <div class="auth-form-group">
+                        <label>相關問題與說明</label>
+                        <textarea id="forgotQuestion" rows="3" required placeholder="請描述您遇到的問題（例如：無法登入或需重設密碼）以送交後台審核"></textarea>
+                    </div>
+                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">送出問題給後台申請驗證碼</button>
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
                     
                     <div class="auth-form-group">
-                        <label>信箱收到的驗證碼</label>
-                        <input type="text" id="resetCode" placeholder="請輸入信箱收到的驗證碼">
+                        <label>後台收到的驗證碼</label>
+                        <input type="text" id="resetCode" placeholder="請輸入後台提供的驗證碼">
                     </div>
                     <div class="auth-form-group">
                         <label>輸入新密碼</label>
@@ -1429,7 +1433,7 @@
         window.rtdbFns = { ref, get, push, query, orderByChild };
 
         // 預設後備分類與服務
-        const defaultCategories = ["生活用品", "水電五金"];
+        const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
         const defaultServices = [
             { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
             { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
@@ -1583,43 +1587,45 @@
             }
         }
 
-        // 修正後的忘記密碼申請：填寫帳號發送驗證碼給後台信箱
-        async function handleForgotPasswordRequest(e) {
+        // 忘記密碼：送出問題與申請給後台與資料庫
+        async function handleForgotPassword(e) {
             e.preventDefault();
             const phone = document.getElementById('forgotPhone').value.trim();
+            const question = document.getElementById('forgotQuestion').value.trim();
 
-            if (!phone) {
-                alert('請輸入您的手機號碼 / 帳號！');
+            if (!phone || !question) {
+                alert('請完整填寫手機號碼與相關問題！');
                 return;
             }
 
             const resetRequest = {
                 id: 'PWR' + Date.now().toString().slice(-6),
                 phone: phone,
+                question: question,
                 date: new Date().toLocaleString(),
-                status: '待後台發送驗證碼至信箱'
+                status: '待後台審核提供驗證碼'
             };
 
             try {
                 await window.rtdbFns.push(window.rtdbFns.ref(window.rtdb, "shop_password_resets"), resetRequest);
-                alert(`📤 密碼重設申請已送出（單號：${resetRequest.id}）！\n後台將會發送驗證碼至該帳號對應的信箱，請至信箱收信後將驗證碼填入下方欄位完成變更。`);
+                alert(`📤 您的密碼重設申請已成功送至後台！\n單號：${resetRequest.id}\n請等候後台人員提供驗證碼，並於下方輸入以完成更換。`);
             } catch (error) {
                 alert('❌ 申請送出失敗：' + error.message);
             }
         }
 
-        // 驗證碼確認與密碼更新
+        // 依據驗證碼執行密碼更換
         function executePasswordReset() {
             const code = document.getElementById('resetCode').value.trim();
             const newPass = document.getElementById('resetNewPassword').value.trim();
 
             if (!code || !newPass) {
-                alert('請輸入信箱收到的驗證碼以及您的新密碼！');
+                alert('請輸入後台提供的驗證碼以及您的新密碼！');
                 return;
             }
 
             if (code.length < 4) {
-                alert('❌ 驗證碼格式不正確，請確認信件內容！');
+                alert('❌ 驗證碼格式不正確，請向後台確認！');
                 return;
             }
 
