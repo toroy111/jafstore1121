@@ -447,21 +447,24 @@
             renderAdminPasswordResets();
         });
 
-        // 監聽會員資料以對應真實姓名與電話
+        // 即時監聽會員資料庫，當前台有更改名字或資料時，後台聊天列表與標題會自動同步更新
         db.ref('shop_users').on('value', (snapshot) => {
             const val = snapshot.val() || {};
             allUsersInfoCache = val;
-            loadChatUsersList(); // 資料更新時重新整理聊天列表
+            loadChatUsersList(); 
+            if (selectedChatUser) {
+                selectChatUser(selectedChatUser); // 如果當前正在看某個用戶對話，即時更新頂部標題的姓名
+            }
         });
 
-        // 修正：全域監聽 `chats` 根路徑以隨時更新側邊欄的未讀紅點計數與列表
+        // 全域監聽 chats 根路徑以隨時更新側邊欄的未讀紅點計數與列表
         db.ref('chats').on('value', (snapshot) => {
             loadChatUsersList();
         });
     }
 
     // ==========================================
-    // 後台即時聊天室管理功能：自動對應前台實際登入會員與訪客的聊天內容
+    // 後台即時聊天室管理功能：自動對應前台實際登入會員與訪客的聊天內容（含姓名同步）
     // ==========================================
     function loadChatUsersList() {
         db.ref('chats').once('value').then((snapshot) => {
@@ -490,7 +493,7 @@
                 });
                 totalUnreadCount += unreadCount;
 
-                // 智慧對應：從會員資料庫 (allUsersInfoCache) 尋找對應的姓名或電話
+                // 智慧對應：從會員資料庫 (allUsersInfoCache) 尋找對應的姓名或電話，自動同步最新姓名
                 let displayName = '';
                 let displayPhone = '';
                 let accountLabel = userId;
@@ -512,11 +515,10 @@
 
                 let finalTitleHtml = '';
                 if (displayName) {
-                    finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>${displayName}</strong>`;
+                    // 會員帳號旁邊同步顯示客人的名字與電話
+                    finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>${displayName}</strong> <span class="text-muted small">(${accountLabel})</span>`;
                     if (displayPhone) {
                         finalTitleHtml += `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>`;
-                    } else {
-                        finalTitleHtml += `<br><small class="text-muted">帳號：${accountLabel}</small>`;
                     }
                 } else if (userId.startsWith('訪客_')) {
                     finalTitleHtml = `<i class="fa-solid fa-user-clock me-1 text-warning"></i><strong>一般訪客</strong><br><small class="text-muted">${userId}</small>`;
@@ -569,7 +571,7 @@
         }
 
         if (matchedName) {
-            titleLabel = `與 顧客：${matchedName} ${matchedPhone ? '(' + matchedPhone + ')' : '(' + userId + ')'} 對話中`;
+            titleLabel = `與 顧客：${matchedName} (${userId}) ${matchedPhone ? ' - 電話：' + matchedPhone : ''} 對話中`;
         } else if (userId.startsWith('訪客_')) {
             titleLabel = `與 訪客 (${userId}) 對話中`;
         } else {
