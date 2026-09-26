@@ -447,7 +447,7 @@
             renderAdminPasswordResets();
         });
 
-        // 即時監聽會員資料庫，當前台有更改名字或資料時，後台聊天列表與標題會自動同步更新
+        // 即時監聽會員資料庫，支援自動 ID 與各種 Key 值的深度比對
         db.ref('shop_users').on('value', (snapshot) => {
             const val = snapshot.val() || {};
             allUsersInfoCache = val;
@@ -493,7 +493,7 @@
                 });
                 totalUnreadCount += unreadCount;
 
-                // 智慧對應：從會員資料庫 (allUsersInfoCache) 尋找對應的姓名或電話，自動同步最新姓名
+                // 智慧深度對應：支援直接 Key 匹配以及透過 email/phone 屬性匹配自動產生的 Push ID 節點
                 let displayName = '';
                 let displayPhone = '';
                 let accountLabel = userId;
@@ -505,7 +505,15 @@
                 } else {
                     for (let key in allUsersInfoCache) {
                         const uInfo = allUsersInfoCache[key];
-                        if (key === userId || uInfo.phone === userId || uInfo.email === userId) {
+                        // 檢查 email、phone 或 key 是否與當前聊天 userId 相符
+                        const cleanUserId = userId.replace(/[@._]/g, '').toLowerCase();
+                        const cleanEmail = (uInfo.email || '').replace(/[@._]/g, '').toLowerCase();
+                        if (
+                            key === userId || 
+                            uInfo.phone === userId || 
+                            uInfo.email === userId ||
+                            (cleanEmail && cleanEmail === cleanUserId)
+                        ) {
                             if (uInfo.name) displayName = uInfo.name;
                             if (uInfo.phone) displayPhone = uInfo.phone;
                             break;
@@ -562,7 +570,14 @@
         } else {
             for (let key in allUsersInfoCache) {
                 const u = allUsersInfoCache[key];
-                if (key === userId || u.phone === userId || u.email === userId) {
+                const cleanUserId = userId.replace(/[@._]/g, '').toLowerCase();
+                const cleanEmail = (u.email || '').replace(/[@._]/g, '').toLowerCase();
+                if (
+                    key === userId || 
+                    u.phone === userId || 
+                    u.email === userId ||
+                    (cleanEmail && cleanEmail === cleanUserId)
+                ) {
                     if (u.name) matchedName = u.name;
                     if (u.phone) matchedPhone = u.phone;
                     break;
