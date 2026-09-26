@@ -1225,11 +1225,14 @@
                 <h3 id="authModalTitle">會員中心</h3>
                 <button class="auth-close-btn" onclick="closeAuthModal()">×</button>
             </div>
-            <div class="auth-modal-body">
-                <div class="auth-tabs">
-                    <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">會員登入</div>
-                    <div class="auth-tab" id="tabRegisterBtn" onclick="switchAuthTab('register')">註冊帳號</div>
-                    <div class="auth-tab" id="tabForgotBtn" onclick="switchAuthTab('forgot')">忘記密碼</div>
+            <div class="auth-modal-body" id="authModalBodyContent">
+                <!-- 動態切換：未登入顯示登入/註冊/忘記密碼；已登入顯示帳號資訊與登出按鈕 -->
+                <div id="authTabsContainer">
+                    <div class="auth-tabs">
+                        <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">會員登入</div>
+                        <div class="auth-tab" id="tabRegisterBtn" onclick="switchAuthTab('register')">註冊帳號</div>
+                        <div class="auth-tab" id="tabForgotBtn" onclick="switchAuthTab('forgot')">忘記密碼</div>
+                    </div>
                 </div>
 
                 <!-- 1. 會員登入表單 (改用手機號碼) -->
@@ -1318,6 +1321,7 @@
         let selectedProductForModal = null;
         let selectedSpecForModal = null;
         let selectedTimesArray = [];
+        let currentUserPhone = localStorage.getItem('currentUserPhone') || null; // 儲存登入狀態
 
         // ==========================================
         // 3. 資料監聽與初始化載入
@@ -1729,6 +1733,7 @@
         // 7. 會員中心彈跳視窗與功能 (手機號碼帳號)
         // ==========================================
         function openAuthModal() {
+            updateAuthModalUI();
             document.getElementById('authModalOverlay').classList.add('active');
         }
 
@@ -1802,6 +1807,45 @@
             }
         }
 
+        function updateAuthModalUI() {
+            const tabsContainer = document.getElementById('authTabsContainer');
+            const loginPanel = document.getElementById('loginFormPanel');
+            const registerPanel = document.getElementById('registerFormPanel');
+            const forgotPanel = document.getElementById('forgotFormPanel');
+            const modalTitle = document.getElementById('authModalTitle');
+
+            if (currentUserPhone) {
+                modalTitle.textContent = '會員中心 (已登入)';
+                if (tabsContainer) tabsContainer.style.display = 'none';
+                if (loginPanel) loginPanel.style.display = 'none';
+                if (registerPanel) registerPanel.style.display = 'none';
+                if (forgotPanel) forgotPanel.style.display = 'none';
+
+                let infoDiv = document.getElementById('loggedInInfoPanel');
+                if (!infoDiv) {
+                    infoDiv = document.createElement('div');
+                    infoDiv.id = 'loggedInInfoPanel';
+                    document.getElementById('authModalBodyContent').appendChild(infoDiv);
+                }
+                infoDiv.style.display = 'block';
+                infoDiv.innerHTML = `
+                    <div style="text-align: center; padding: 15px 0;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">👤</div>
+                        <h4 style="color: #1e293b; margin-bottom: 6px;">您好，會員</h4>
+                        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">綁定手機號碼：<strong>${currentUserPhone}</strong></p>
+                        <button type="button" class="btn btn-danger" style="width: 100%;" onclick="handleUserLogout()">登出帳號</button>
+                    </div>
+                `;
+            } else {
+                modalTitle.textContent = '會員中心';
+                if (tabsContainer) tabsContainer.style.display = 'block';
+                if (loginPanel) loginPanel.style.display = 'block';
+                const infoDiv = document.getElementById('loggedInInfoPanel');
+                if (infoDiv) infoDiv.style.display = 'none';
+                switchAuthTab('login');
+            }
+        }
+
         function handleUserLogin(e) {
             e.preventDefault();
             const phone = document.getElementById('loginPhone').value.trim();
@@ -1815,12 +1859,21 @@
                 }
                 const userData = Object.values(val)[0];
                 if (userData.pass === pass) {
+                    currentUserPhone = phone;
+                    localStorage.setItem('currentUserPhone', phone);
                     alert(`🎉 歡迎回來，${phone}！登入成功。`);
                     closeAuthModal();
                 } else {
                     alert('❌ 密碼錯誤！');
                 }
             });
+        }
+
+        function handleUserLogout() {
+            currentUserPhone = null;
+            localStorage.removeItem('currentUserPhone');
+            alert('👋 已成功登出帳號！');
+            closeAuthModal();
         }
 
         function handleUserRegister(e) {
