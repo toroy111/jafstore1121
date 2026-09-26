@@ -1388,42 +1388,28 @@
         import { getFirestore, collection, getDocs, addDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // TODO: 請填入您從 Firebase 主控台取得的專案設定
-        const firebaseConfig = {
-  apiKey: "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE",
-  authDomain: "jafstore1121.firebaseapp.com",
-  databaseURL: "https://jafstore1121-default-rtdb.firebaseio.com", // <-- 確認這裡是否正確
-  projectId: "jafstore1121",
-  storageBucket: "jafstore1121.appspot.com",
-  messagingSenderId: "G-EGS8R6B6KE",
-  appId: "1:273721257948:web:6b3dc62a8f6989bfbf2919"
-};
+        const firebaseConfig = { 
+            apiKey : "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE" , 
+            authDomain : "jafstore1121.firebaseapp.com" , 
+            databaseURL : "https://jafstore1121-default-rtdb.firebaseio.com" , 
+            projectId : "jafstore1121" , 
+            storageBucket : "jafstore1121.firebasestorage.app" , 
+            messagingSenderId : "273721257948" , 
+            appId : "1:273721257948:web:6b3dc62a8f6989bfbf2919" , 
+            measurementId : "G-EGS8R6B6KE" 
+        };
 
         // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // 將重要變數掛載至 window 供全域函式調用
         window.db = db;
         window.auth = auth;
         window.firebaseFns = { collection, getDocs, addDoc, query, where, orderBy };
 
-        // 預設資料（若 Firestore 中尚無資料時使用）
+        // 預設後備分類與服務
         const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
-        const defaultProducts = [
-            {
-                id: 1,
-                name: "招牌手作烘焙麵包",
-                category: "烘焙與茶飲",
-                price: 120,
-                sales: 350,
-                specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
-                img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
-                images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
-                description: "嚴選優質小麥與天然酵母手作烘焙。"
-            }
-        ];
         const defaultServices = [
             { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
             { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
@@ -1435,40 +1421,39 @@
         let cachedServices = defaultServices;
         let cachedHistoryCases = [];
 
-        // 從 Firestore 讀取資料
+        // 從 Firestore 即時讀取最新資料
         async function fetchFirestoreData() {
             try {
-                // 讀取分類
+                // 1. 讀取後台分類
                 const catSnap = await getDocs(collection(db, "categories"));
                 if (!catSnap.empty) {
                     cachedCategories = catSnap.docs.map(doc => doc.data().name);
                 }
 
-                // 讀取商品
+                // 2. 讀取後台商品（直接同步 Firestore 裡新增的商品）
                 const prodSnap = await getDocs(collection(db, "products"));
                 if (!prodSnap.empty) {
                     cachedProducts = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 } else {
-                    cachedProducts = defaultProducts;
+                    cachedProducts = [];
                 }
 
-                // 讀取服務項目
+                // 3. 讀取服務項目
                 const servSnap = await getDocs(collection(db, "services"));
                 if (!servSnap.empty) {
                     cachedServices = servSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 }
 
-                // 讀取歷史案例
+                // 4. 讀取歷史案例
                 const caseSnap = await getDocs(collection(db, "history_cases"));
                 if (!caseSnap.empty) {
                     cachedHistoryCases = caseSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 }
             } catch (err) {
-                console.error("讀取 Firebase 資料失敗，使用預設值:", err);
-                cachedProducts = defaultProducts;
+                console.error("讀取 Firebase 資料失敗:", err);
             }
 
-            // 初始化渲染
+            // 初始化渲染畫面
             renderCategoryTabs();
             renderProducts('all');
             renderServicesCards();
@@ -1480,7 +1465,6 @@
         window.getStoredServices = () => cachedServices;
         window.getStoredHistoryCases = () => cachedHistoryCases;
 
-        // 監聽 Firebase Auth 登入狀態
         onAuthStateChanged(auth, (user) => {
             const userBtn = document.getElementById('floatingUserBtn');
             if (user) {
@@ -1493,7 +1477,7 @@
             updateCartBadge();
         });
 
-        // 頁面載入後抓取資料
+        // 載入時立即抓取
         fetchFirestoreData();
     </script>
 
@@ -1508,7 +1492,6 @@
             updateCartBadge();
         });
 
-        // 登入狀態檢查與控制 (使用 Firebase Auth)
         function isUserLoggedIn() {
             return window.auth && window.auth.currentUser !== null;
         }
@@ -1602,12 +1585,12 @@
             }
 
             if (products.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 30px;">目前此類別尚無商品上架！</p>`;
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 30px;">目前此類別尚無商品上架！請至後台新增商品。</p>`;
                 return;
             }
 
             products.forEach((prod, index) => {
-                const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
+                const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : (prod.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80');
                 const isTop = (category === 'all' && index < 3);
                 grid.innerHTML += `
                     <div class="product-card" onclick="openShopModal('${prod.id}')">
@@ -1634,7 +1617,7 @@
             document.getElementById('modalProdDesc').textContent = prod.description || '暫無詳細說明';
             document.getElementById('modalQtyInput').value = 1;
 
-            const images = (prod.images && prod.images.length > 0) ? prod.images : [prod.img];
+            const images = (prod.images && prod.images.length > 0) ? prod.images : [prod.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
             document.getElementById('modalProdImg').src = images[0];
 
             const thumbContainer = document.getElementById('modalThumbnailsContainer');
@@ -1773,7 +1756,6 @@
             }
         }
 
-        // 將訂單送至 Firebase Firestore 的 orders 集合
         async function submitOrderToBackend(e) {
             e.preventDefault();
             if (cartItems.length === 0) {
@@ -1948,7 +1930,6 @@
             finalInput.value = selectedTimesList.join('、');
         }
 
-        // 將水電預約諮詢送至 Firebase Firestore 的 repairs 集合
         async function submitRepairConsultation(e) {
             e.preventDefault();
             if (selectedTimesList.length === 0) {
@@ -2006,7 +1987,6 @@
             }
         }
 
-        // 從 Firebase 撈取該使用者的訂單記錄並渲染
         async function renderTrackingOrders() {
             const container = document.getElementById('trackingOrdersListContainer');
             container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">載入中...</p>`;
@@ -2040,7 +2020,6 @@
             }
         }
 
-        // 從 Firebase 撈取水電預約記錄並渲染
         async function renderTrackingRepairs() {
             const container = document.getElementById('trackingRepairsListContainer');
             container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">載入中...</p>`;
