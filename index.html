@@ -906,7 +906,7 @@
             padding-top: 20px;
         }
 
-        /* 懸浮按鈕區 (已修復補回追蹤訂單與水電狀態圈圈) */
+        /* 懸浮按鈕區 */
         .floating-container {
             position: fixed;
             bottom: 30px;
@@ -1298,11 +1298,11 @@
                     <div class="auth-tab" id="tabForgotBtn" onclick="switchAuthTab('forgot')">忘記密碼</div>
                 </div>
 
-                <!-- 登入表單 -->
+                <!-- 1. 會員登入表單 (信箱帳號與密碼) -->
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
-                        <label>手機號碼 / 帳號</label>
-                        <input type="text" id="loginEmail" required placeholder="請輸入您的手機號碼">
+                        <label>信箱帳號</label>
+                        <input type="email" id="loginEmail" required placeholder="請輸入您的信箱帳號">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1311,44 +1311,44 @@
                     <button type="submit" class="auth-submit-btn">立即登入</button>
                 </form>
 
-                <!-- 註冊表單 -->
+                <!-- 2. 註冊表單 (姓名、手機、信箱帳號、密碼) -->
                 <form id="registerFormPanel" class="auth-form-panel" onsubmit="handleUserRegister(event)">
                     <div class="auth-form-group">
                         <label>姓名</label>
                         <input type="text" id="regName" required placeholder="請輸入您的姓名">
                     </div>
                     <div class="auth-form-group">
-                        <label>手機號碼 (帳號)</label>
-                        <input type="tel" id="regEmail" required placeholder="請輸入手機號碼">
+                        <label>手機</label>
+                        <input type="tel" id="regPhone" required placeholder="請輸入手機號碼">
                     </div>
                     <div class="auth-form-group">
-                        <label>設定密碼</label>
+                        <label>信箱帳號 (作為登入使用)</label>
+                        <input type="email" id="regEmail" required placeholder="請輸入您的電子信箱">
+                    </div>
+                    <div class="auth-form-group">
+                        <label>密碼</label>
                         <input type="password" id="regPassword" required placeholder="設定登入密碼">
                     </div>
                     <button type="submit" class="auth-submit-btn" style="background-color: #10b981;">註冊新帳號</button>
                 </form>
 
-                <!-- 忘記密碼表單 -->
+                <!-- 3. 忘記密碼表單 (信箱、申請驗證碼、輸入驗證碼、新密碼) -->
                 <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleForgotPassword(event)">
                     <div class="auth-form-group">
-                        <label>手機號碼 / 帳號</label>
-                        <input type="tel" id="forgotPhone" required placeholder="請輸入您註冊的手機號碼">
+                        <label>信箱帳號</label>
+                        <input type="email" id="forgotEmail" required placeholder="請輸入註冊時的電子信箱">
                     </div>
-                    <div class="auth-form-group">
-                        <label>相關問題與說明</label>
-                        <textarea id="forgotQuestion" rows="3" required placeholder="請描述您遇到的問題（例如：無法登入或需重設密碼）以送交後台審核"></textarea>
-                    </div>
-                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">送出問題給後台申請驗證碼</button>
+                    <button type="submit" class="auth-submit-btn" style="background-color: #e67e22;">申請驗證碼</button>
                     
                     <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;">
                     
                     <div class="auth-form-group">
-                        <label>後台收到的驗證碼</label>
-                        <input type="text" id="resetCode" placeholder="請輸入後台提供的驗證碼">
+                        <label>輸入驗證碼</label>
+                        <input type="text" id="resetCode" placeholder="請輸入收到的驗證碼">
                     </div>
                     <div class="auth-form-group">
-                        <label>輸入新密碼</label>
-                        <input type="password" id="resetNewPassword" placeholder="請設定您的新密碼">
+                        <label>填寫要更改的密碼</label>
+                        <input type="password" id="resetNewPassword" placeholder="請輸入新密碼">
                     </div>
                     <button type="button" class="auth-submit-btn" style="background-color: #0f172a;" onclick="executePasswordReset()">確認更換密碼</button>
                 </form>
@@ -1356,7 +1356,7 @@
         </div>
     </div>
 
-    <!-- 懸浮按鈕區 (已補回右下角的訂單與水電狀態追蹤按鈕) -->
+    <!-- 懸浮按鈕區 -->
     <div class="floating-container">
         <button type="button" class="floating-btn" onclick="openAuthModal()" title="會員登入狀態" id="floatingUserBtn">👤</button>
         <button type="button" class="floating-btn" onclick="openTrackingModal()" title="追蹤下單商品與水電進度">📦</button>
@@ -1488,7 +1488,7 @@
         onAuthStateChanged(auth, (user) => {
             const userBtn = document.getElementById('floatingUserBtn');
             if (user) {
-                userBtn.title = `已登入 (${user.email || user.phoneNumber})，點擊可登出`;
+                userBtn.title = `已登入 (${user.email})，點擊可登出`;
                 userBtn.style.backgroundColor = "#10b981";
             } else {
                 userBtn.title = "會員登入 / 註冊";
@@ -1557,54 +1557,51 @@
 
         async function handleUserLogin(e) {
             e.preventDefault();
-            const phoneInput = document.getElementById('loginEmail').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
-            const email = phoneInput.includes('@') ? phoneInput : `${phoneInput}@jafstore.internal`;
             try {
                 await signInWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
                 alert(`🎉 歡迎回來！登入成功！`);
             } catch (error) {
-                alert('❌ 登入失敗：請確認帳號或密碼是否正確。\n(' + error.message + ')');
+                alert('❌ 登入失敗：請確認信箱帳號或密碼是否正確。\n(' + error.message + ')');
             }
         }
 
         async function handleUserRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
-            const phoneInput = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPassword').value.trim();
-            const email = phoneInput.includes('@') ? phoneInput : `${phoneInput}@jafstore.internal`;
+
             try {
                 await createUserWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
-                alert('🎉 註冊成功並已自動登入！');
+                alert(`🎉 註冊成功！歡迎 ${name}，已自動幫您登入！`);
             } catch (error) {
-                alert('❌ 註冊失敗：此手機號碼可能已被註冊。\n(' + error.message + ')');
+                alert('❌ 註冊失敗：此信箱可能已被註冊。\n(' + error.message + ')');
             }
         }
 
         async function handleForgotPassword(e) {
             e.preventDefault();
-            const phone = document.getElementById('forgotPhone').value.trim();
-            const question = document.getElementById('forgotQuestion').value.trim();
-
-            if (!phone || !question) {
-                alert('請完整填寫手機號碼與相關問題！');
+            const email = document.getElementById('forgotEmail').value.trim();
+            if (!email) {
+                alert('請輸入您的信箱帳號！');
                 return;
             }
 
             const resetRequest = {
                 id: 'PWR' + Date.now().toString().slice(-6),
-                phone: phone,
-                question: question,
+                email: email,
                 date: new Date().toLocaleString(),
                 status: '待後台審核提供驗證碼'
             };
 
             try {
                 await window.rtdbFns.push(window.rtdbFns.ref(window.rtdb, "shop_password_resets"), resetRequest);
-                alert(`📤 您的密碼重設申請已成功送至後台！\n單號：${resetRequest.id}\n請等候後台人員提供驗證碼，並於下方輸入以完成更換。`);
+                alert(`📤 您的驗證碼申請已送出！單號：${resetRequest.id}\n請等候後台人員提供驗證碼，並於下方輸入以完成更換。`);
             } catch (error) {
                 alert('❌ 申請送出失敗：' + error.message);
             }
@@ -1615,7 +1612,7 @@
             const newPass = document.getElementById('resetNewPassword').value.trim();
 
             if (!code || !newPass) {
-                alert('請輸入後台提供的驗證碼以及您的新密碼！');
+                alert('請輸入驗證碼以及您的新密碼！');
                 return;
             }
 
@@ -1631,7 +1628,7 @@
                     switchAuthTab('login');
                     return;
                 } catch (err) {
-                    console.warn("需重新驗證或直接提示", err);
+                    console.warn("需重新登入驗證", err);
                 }
             }
 
@@ -1689,7 +1686,6 @@
             });
         }
 
-        // 修復規格亂碼問題：確保規格名稱安全解碼並防錯
         function openShopModal(productId) {
             const prod = getStoredProducts().find(p => p.id == productId);
             if (!prod) return;
@@ -1713,7 +1709,7 @@
             specContainer.innerHTML = '';
             if (prod.specs && prod.specs.length > 0) {
                 prod.specs.forEach((spec, idx) => {
-                    const specName = decodeURIComponent(escape(spec.name || '標準規格')); // 修正特殊編碼避免亂碼
+                    const specName = decodeURIComponent(escape(spec.name || '標準規格'));
                     specContainer.innerHTML += `<button type="button" class="spec-btn ${idx === 0 ? 'active' : ''}" onclick="selectSpec(this, '${specName}', ${spec.price})">${specName} (NT$ ${spec.price})</button>`;
                 });
                 selectedSpecItem = { name: prod.specs[0].name, price: prod.specs[0].price };
@@ -1873,7 +1869,7 @@
                 localStorage.removeItem('shop_cart');
                 updateCartBadge();
                 document.getElementById('cartModalOverlay').classList.remove('active');
-                alert(`🎉 訂單已成功送出並同步至 Realtime Database！您的訂單編號為：${newOrder.id}`);
+                alert(`🎉 訂單已成功送出！您的訂單編號為：${newOrder.id}`);
             } catch (error) {
                 alert('❌ 訂單送出失敗：' + error.message);
             }
@@ -2036,7 +2032,7 @@
 
             try {
                 await window.rtdbFns.push(window.rtdbFns.ref(window.rtdb, "shop_repairs"), newRepair);
-                alert(`🎉 水電預約諮詢已送出並同步至 Realtime Database！您的諮詢單號為：${newRepair.id}`);
+                alert(`🎉 水電預約諮詢已送出！您的諮詢單號為：${newRepair.id}`);
                 e.target.reset();
                 selectedTimesList = [];
                 renderSelectedTimesTags();
