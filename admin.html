@@ -107,8 +107,9 @@
                 </button>
             </li>
             <li class="nav-item mb-1" role="presentation">
-                <button class="nav-link w-100 text-start" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatManagement" type="button" role="tab" onclick="loadChatUsersList()">
-                    <i class="fa-solid fa-comments me-2"></i>即時客服聊天
+                <button class="nav-link w-100 text-start d-flex justify-content-between align-items-center" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatManagement" type="button" role="tab" onclick="loadChatUsersList()">
+                    <span><i class="fa-solid fa-comments me-2"></i>即時客服聊天</span>
+                    <span class="badge bg-danger rounded-pill d-none" id="sidebarChatUnreadBadge">0</span>
                 </button>
             </li>
             <li class="nav-item mb-1" role="presentation">
@@ -293,7 +294,7 @@
                 </div>
             </div>
 
-            <!-- 新增：即時客服聊天管理分頁 -->
+            <!-- 即時客服聊天管理分頁 -->
             <div class="tab-pane fade" id="chatManagement" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2><i class="fa-solid fa-comments me-2 text-primary"></i>顧客即時客服諮詢回覆</h2>
@@ -348,7 +349,7 @@
     </main>
 </div>
 
-<!-- Modals (略過未更動部分保持原樣) -->
+<!-- Modals -->
 <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="serviceModalTitle">新增服務項目</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="serviceForm"><input type="hidden" id="serviceEditId"><div class="mb-3"><label class="form-label fw-bold">服務名稱</label><input type="text" class="form-control" id="serviceName" required></div><div class="mb-3"><label class="form-label fw-bold">FontAwesome 圖示代碼</label><input type="text" class="form-control" id="serviceIcon" required></div><div class="mb-3"><label class="form-label fw-bold">服務項目簡介摘要</label><textarea class="form-control" id="serviceDesc" rows="3"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveServiceItem()">儲存服務項目</button></div></div></div>
 </div>
@@ -388,6 +389,7 @@
     let currentEditingImages = []; 
     let currentEditingHistoryMedia = [];
     let selectedChatUser = null; // 當前選取的聊天用戶
+    let allUsersInfoCache = {}; // 緩存所有會員資料以供對照姓名/電話
 
     let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
@@ -444,38 +446,119 @@
             dbCache.password_resets = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
             renderAdminPasswordResets();
         });
+
+        // 監聽會員資料以對應姓名與電話
+        db.ref('shop_users').on('value', (snapshot) => {
+            const val = snapshot.val() || {};
+            allUsersInfoCache = val;
+            loadChatUsersList(); // 資料更新時重新整理聊天列表
+        });
+
+        // 全域監聽 chats 以隨時更新側邊欄的未讀紅點計數
+        db.ref('chats').on('value', (snapshot) => {
+            loadChatUsersList();
+        });
     }
 
     // 後台即時聊天室管理功能
     function loadChatUsersList() {
-        db.ref('chats').on('value', (snapshot) => {
+        db.ref('chats').once('value').then((snapshot) => {
             const val = snapshot.val() || {};
             const userListContainer = document.getElementById('adminChatUserList');
+            if (!userListContainer) return;
             userListContainer.innerHTML = '';
             const users = Object.keys(val);
+            
             if (users.length === 0) {
                 userListContainer.innerHTML = `<div class="text-center text-muted py-4">尚無聊天記錄</div>`;
+                document.getElementById('sidebarChatUnreadBadge').classList.add('d-none');
+                document.getElementById('sidebarChatUnreadBadge').textContent = '0';
                 return;
             }
+
+            let totalUnreadCount = 0;
+
             users.forEach(userId => {
+                const userMsgs = val[userId] || {};
+                let unreadCount = 0;
+                Object.values(userMsgs).forEach(m => {
+                    // 若是顧客傳送的 (sender === 'customer' 或無 sender)，且尚未被管理員標記已讀
+                    if ((m.sender === 'customer' || !m.sender) && !m.adminRead) {
+                        unreadCount++;
+                    }
+                });
+                totalUnreadCount += unreadCount;
+
+                // 嘗試從會員資料 (allUsersInfoCache) 或其他地方尋找姓名/電話
+                let displayName = `帳號：${userId}`;
+                let displayPhone = '';
+                
+                // 檢查是否有儲存的使用者詳細資料
+                if (allUsersInfoCache[userId]) {
+                    const uInfo = allUsersInfoCache[userId];
+                    if (uInfo.name) displayName = uInfo.name;
+                    if (uInfo.phone) displayPhone = uInfo.phone;
+                }
+
                 const isSelected = selectedChatUser === userId ? 'active' : '';
+                const unreadBadgeHtml = unreadCount > 0 ? `<span class="badge bg-danger rounded-pill">${unreadCount} 未讀</span>` : '';
+
                 userListContainer.innerHTML += `
-                    <div class="list-group-item list-group-item-action chat-user-item ${isSelected}" onclick="selectChatUser('${userId}')">
-                        <i class="fa-solid fa-user-circle me-2 text-primary"></i><strong>顧客帳號：${userId}</strong>
+                    <div class="list-group-item list-group-item-action chat-user-item d-flex justify-content-between align-items-center ${isSelected}" onclick="selectChatUser('${userId}')">
+                        <div>
+                            <i class="fa-solid fa-user-circle me-1 text-primary"></i><strong>${displayName}</strong>
+                            ${displayPhone ? `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>` : `<br><small class="text-muted">${userId}</small>`}
+                        </div>
+                        ${unreadBadgeHtml}
                     </div>
                 `;
             });
+
+            // 更新側邊欄總未讀紅點
+            const badgeEl = document.getElementById('sidebarChatUnreadBadge');
+            if (totalUnreadCount > 0) {
+                badgeEl.textContent = totalUnreadCount;
+                badgeEl.classList.remove('d-none');
+            } else {
+                badgeEl.classList.add('d-none');
+                badgeEl.textContent = '0';
+            }
         });
     }
 
     function selectChatUser(userId) {
         selectedChatUser = userId;
-        document.getElementById('activeChatUserTitle').textContent = `與 顧客 (${userId}) 對話中`;
+        
+        // 顯示對應的使用者名稱或電話在標題
+        let titleLabel = `與 顧客 (${userId}) 對話中`;
+        if (allUsersInfoCache[userId]) {
+            const u = allUsersInfoCache[userId];
+            if (u.name || u.phone) {
+                titleLabel = `與 顧客：${u.name || userId} ${u.phone ? '(' + u.phone + ')' : ''} 對話中`;
+            }
+        }
+        document.getElementById('activeChatUserTitle').textContent = titleLabel;
+
+        // 點擊選取後，將該用戶的所有訊息標記為已讀
+        db.ref(`chats/${userId}`).once('value').then((snapshot) => {
+            const msgs = snapshot.val() || {};
+            let updates = {};
+            Object.keys(msgs).forEach(msgKey => {
+                if (!msgs[msgKey].adminRead) {
+                    updates[`${msgKey}/adminRead`] = true;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                db.ref(`chats/${userId}`).update(updates);
+            }
+        });
+
         loadChatUsersList();
 
         db.ref(`chats/${userId}`).on('value', (snapshot) => {
             const messages = snapshot.val() || {};
             const box = document.getElementById('adminChatMessagesBox');
+            if(!box) return;
             box.innerHTML = '';
             const msgKeys = Object.keys(messages);
             if (msgKeys.length === 0) {
@@ -511,6 +594,7 @@
         db.ref(`chats/${selectedChatUser}`).push({
             sender: 'admin',
             text: text,
+            adminRead: true,
             timestamp: Date.now()
         });
         input.value = '';
@@ -755,11 +839,6 @@
             renderAdminHistoryTable();
         }
     }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        checkAdminLoginState();
-        initFirebaseListeners(); // 啟動 Firebase 監聽
-    });
 
     function renderAdminCategoryTabs() {
         const container = document.getElementById('adminCategoryTabsContainer');
@@ -1196,10 +1275,8 @@
         }
 
         if (confirm(`確定要發送重設密碼驗證信到 ${targetEmail} 嗎？`)) {
-            // 產生一組 6 位數隨機驗證碼
             const verifyCode = Math.floor(100000 + Math.random() * 900000);
 
-            // 更新資料庫狀態為已發送並存入驗證碼供前台驗證比對
             let resets = dbCache.password_resets || [];
             const idx = resets.findIndex(r => r.id === resetId);
             if (idx > -1) {
