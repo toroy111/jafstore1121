@@ -461,7 +461,7 @@
     }
 
     // ==========================================
-    // [已修改] 後台即時聊天室管理功能：自動對應前台實際登入帳號與名字
+    // [已升級] 後台即時聊天室管理功能：自動對應前台實際登入會員的姓名與電話
     // ==========================================
     function loadChatUsersList() {
         db.ref('chats').once('value').then((snapshot) => {
@@ -495,13 +495,11 @@
                 let displayPhone = '';
                 let accountLabel = userId;
 
-                // 檢查是否直接以 userId 當作手機/帳號匹配
                 if (allUsersInfoCache[userId]) {
                     const uInfo = allUsersInfoCache[userId];
                     if (uInfo.name) displayName = uInfo.name;
                     if (uInfo.phone) displayPhone = uInfo.phone;
                 } else {
-                    // 若找不到直接對應，檢查是否有會員的 phone 或 email 吻合 userId
                     for (let key in allUsersInfoCache) {
                         const uInfo = allUsersInfoCache[key];
                         if (key === userId || uInfo.phone === userId || uInfo.email === userId) {
@@ -512,7 +510,6 @@
                     }
                 }
 
-                // 如果依然找不到名字，則判斷是不是訪客，顯示比較友善的標籤
                 let finalTitleHtml = '';
                 if (displayName) {
                     finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>${displayName}</strong>`;
@@ -538,7 +535,6 @@
                 `;
             });
 
-            // 更新側邊欄總未讀紅點
             const badgeEl = document.getElementById('sidebarChatUnreadBadge');
             if (totalUnreadCount > 0) {
                 badgeEl.textContent = totalUnreadCount;
@@ -553,7 +549,6 @@
     function selectChatUser(userId) {
         selectedChatUser = userId;
         
-        // [已修改] 右側對話標題自動帶入真實姓名與實際登入帳號/電話
         let titleLabel = `與 訪客 (${userId}) 對話中`;
         let matchedName = '';
         let matchedPhone = '';
@@ -583,7 +578,6 @@
 
         document.getElementById('activeChatUserTitle').textContent = titleLabel;
 
-        // 點擊選取後，將該用戶的所有訊息標記為已讀
         db.ref(`chats/${userId}`).once('value').then((snapshot) => {
             const msgs = snapshot.val() || {};
             let updates = {};
