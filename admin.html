@@ -390,7 +390,6 @@
     let currentEditingHistoryMedia = [];
     let selectedChatUser = null; // 當前選取的聊天用戶
     let allUsersInfoCache = {}; // 緩存所有會員資料以供對照姓名/電話
-    let chatUserInfoMap = {}; // 緩存從聊天訊息中帶過來的訪客姓名/電話
 
     let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
@@ -455,14 +454,14 @@
             loadChatUsersList(); // 資料更新時重新整理聊天列表
         });
 
-        // 全域監聽 chats 以隨時更新側邊欄的未讀紅點計數與即時同步使用者名稱
+        // 修正：全域監聽 `chats` 根路徑以隨時更新側邊欄的未讀紅點計數與列表
         db.ref('chats').on('value', (snapshot) => {
             loadChatUsersList();
         });
     }
 
     // ==========================================
-    // [已完美升級] 後台即時聊天室管理功能：自動對應前台實際登入會員或帶過來的姓名與電話
+    // 後台即時聊天室管理功能：自動對應前台實際登入會員與訪客的聊天內容
     // ==========================================
     function loadChatUsersList() {
         db.ref('chats').once('value').then((snapshot) => {
@@ -484,33 +483,19 @@
             users.forEach(userId => {
                 const userMsgs = val[userId] || {};
                 let unreadCount = 0;
-                let foundNameInChat = '';
-                let foundPhoneInChat = '';
-
                 Object.values(userMsgs).forEach(m => {
-                    if ((m.sender === 'customer' || !m.sender) && !m.adminRead) {
+                    if (m.sender === 'customer' && !m.adminRead) {
                         unreadCount++;
                     }
-                    // 檢查訊息內是否有帶出前台傳過來的姓名或電話資訊
-                    if (m.customerName && !foundNameInChat) foundNameInChat = m.customerName;
-                    if (m.customerPhone && !foundPhoneInChat) foundPhoneInChat = m.customerPhone;
                 });
                 totalUnreadCount += unreadCount;
 
-                // 如果聊天紀錄裡有帶名字，存入快照對照
-                if (foundNameInChat) {
-                    chatUserInfoMap[userId] = { name: foundNameInChat, phone: foundPhoneInChat };
-                }
-
-                // 智慧對應：優先從會員資料庫 (allUsersInfoCache) 或聊天訊息快照尋找真實姓名與電話
+                // 智慧對應：從會員資料庫 (allUsersInfoCache) 尋找對應的姓名或電話
                 let displayName = '';
                 let displayPhone = '';
                 let accountLabel = userId;
 
-                if (chatUserInfoMap[userId] && chatUserInfoMap[userId].name) {
-                    displayName = chatUserInfoMap[userId].name;
-                    displayPhone = chatUserInfoMap[userId].phone || '';
-                } else if (allUsersInfoCache[userId]) {
+                if (allUsersInfoCache[userId]) {
                     const uInfo = allUsersInfoCache[userId];
                     if (uInfo.name) displayName = uInfo.name;
                     if (uInfo.phone) displayPhone = uInfo.phone;
@@ -568,10 +553,7 @@
         let matchedName = '';
         let matchedPhone = '';
 
-        if (chatUserInfoMap[userId] && chatUserInfoMap[userId].name) {
-            matchedName = chatUserInfoMap[userId].name;
-            matchedPhone = chatUserInfoMap[userId].phone || '';
-        } else if (allUsersInfoCache[userId]) {
+        if (allUsersInfoCache[userId]) {
             const u = allUsersInfoCache[userId];
             if (u.name) matchedName = u.name;
             if (u.phone) matchedPhone = u.phone;
@@ -596,6 +578,7 @@
 
         document.getElementById('activeChatUserTitle').textContent = titleLabel;
 
+        // 點選聊天對象時將該使用者的訊息全部標記為已讀
         db.ref(`chats/${userId}`).once('value').then((snapshot) => {
             const msgs = snapshot.val() || {};
             let updates = {};
@@ -611,6 +594,7 @@
 
         loadChatUsersList();
 
+        // 監聽特定使用者的即時對話訊息
         db.ref(`chats/${userId}`).on('value', (snapshot) => {
             const messages = snapshot.val() || {};
             const box = document.getElementById('adminChatMessagesBox');
@@ -627,7 +611,7 @@
                 box.innerHTML += `
                     <div class="d-flex flex-column">
                         <div class="chat-bubble ${bubbleClass}">
-                            <div class="small fw-bold text-muted mb-1">${m.sender === 'admin' ? '管理者' : (matchedName || '顧客')}</div>
+                            <div class="small fw-bold text-muted mb-1">${m.sender === 'admin' ? '管理者' : '顧客'}</div>
                             <div>${m.text}</div>
                         </div>
                     </div>
