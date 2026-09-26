@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 搜索引擎優化 (SEO) 核心 Meta 標籤 -->
-    <title>珍愛家蔬食早午餐 × 居家水電弱電工程服務</title>
+    <title>嚴選優質電商× 居家水電弱電工程服務</title>
     <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選優質商品線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
-    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 珍愛家蔬食早午餐">
+    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電">
     <meta name="author" content="張安賦">
 
     <!-- 社群分享預覽設定 (Open Graph / SEO) -->
-    <meta property="og:title" content="珍愛家蔬食早午餐 × 居家水電弱電工程服務">
+    <meta property="og:title" content="嚴選優質電商× 居家水電弱電工程服務">
     <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選優質商品線上商城，立即線上預約與選購！">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
@@ -884,7 +884,7 @@
             padding-top: 20px;
         }
 
-        /* 懸浮按鈕區 */
+        /* 懸浮按鈕區 (依圖片由上至下排列：會員、包裹/進度、購物車) */
         .floating-container {
             position: fixed;
             bottom: 30px;
@@ -985,7 +985,7 @@
     <!-- 頂部 Banner -->
     <header class="hero-banner">
         <div class="hero-content">
-            <h1>珍愛家蔬食早午餐 × 居家水電弱電工程服務</h1>
+            <h1>嚴選優質電商× 居家水電弱電工程服務</h1>
             <p>在地嚴選優質商品，提供安心好物選購；同步提供專業水電修繕服務</p>
             <div class="hero-buttons">
                 <a href="#shop" class="btn btn-accent">瀏覽商城商品</a>
@@ -1186,15 +1186,36 @@
         </section>
     </div>
 
-    <!-- 懸浮快捷按鈕區 (購物車與會員中心) -->
+    <!-- 懸浮快捷按鈕區 (依圖片順序：1.會員中心 2.訂單與進度包裹按鈕 3.購物車) -->
     <div class="floating-container">
+        <button type="button" class="floating-btn" onclick="openAuthModal()" title="會員中心">
+            👤
+        </button>
+        <button type="button" class="floating-btn" onclick="openOrderTrackModal()" title="訂單與施工進度查詢">
+            📦
+        </button>
         <button type="button" class="floating-btn" onclick="openCartModal()" title="查看購物車">
             🛒
             <span class="cart-badge" id="cartBadge">0</span>
         </button>
-        <button type="button" class="floating-btn" onclick="openAuthModal()" title="會員中心">
-            👤
-        </button>
+    </div>
+
+    <!-- 訂單與施工進度查詢 Modal -->
+    <div class="auth-modal-overlay" id="orderTrackModalOverlay" onclick="closeOrderTrackModal(event)">
+        <div class="auth-modal" onclick="event.stopPropagation()">
+            <div class="auth-modal-header">
+                <h3>📦 訂單與水電進度查詢</h3>
+                <button class="auth-close-btn" onclick="closeOrderTrackModal()">×</button>
+            </div>
+            <div class="auth-modal-body">
+                <div class="auth-form-group">
+                    <label>請輸入您的手機號碼查詢進度</label>
+                    <input type="tel" id="trackPhoneInput" placeholder="例如: 0912345678">
+                </div>
+                <button type="button" class="auth-submit-btn" onclick="queryUserOrdersAndRepairs()">查詢我的訂單與水電狀態</button>
+                <div id="trackResultContainer" style="margin-top: 15px; font-size: 13px;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- 會員登入/註冊/忘記密碼 Modal -->
@@ -1252,7 +1273,7 @@
     <!-- 頁尾 -->
     <footer>
         <div class="container">
-            <div class="footer-logo">珍愛家蔬食早午餐 × 居家水電弱電工程服務</div>
+            <div class="footer-logo">嚴選優質電商× 居家水電弱電工程服務</div>
             <ul class="footer-links">
                 <li><a href="#shop">嚴選商城商品</a></li>
                 <li><a href="#" onclick="toggleWaterElectric(); return false;">水電弱電服務</a></li>
@@ -1715,6 +1736,54 @@
             if (!e || e.target.id === 'authModalOverlay' || e.target.classList.contains('auth-close-btn')) {
                 document.getElementById('authModalOverlay').classList.remove('active');
             }
+        }
+
+        function openOrderTrackModal() {
+            document.getElementById('orderTrackModalOverlay').classList.add('active');
+        }
+
+        function closeOrderTrackModal(e) {
+            if (!e || e.target.id === 'orderTrackModalOverlay' || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('orderTrackModalOverlay').classList.remove('active');
+            }
+        }
+
+        function queryUserOrdersAndRepairs() {
+            const phone = document.getElementById('trackPhoneInput').value.trim();
+            const resultBox = document.getElementById('trackResultContainer');
+            if (!phone) {
+                alert('請輸入手機號碼！');
+                return;
+            }
+            resultBox.innerHTML = '查詢中...';
+
+            db.ref('shop_orders').orderByChild('phone').equalTo(phone).once('value', snapshotOrders => {
+                db.ref('shop_repairs').orderByChild('phone').equalTo(phone).once('value', snapshotRepairs => {
+                    let html = '';
+                    const ordersVal = snapshotOrders.val();
+                    const repairsVal = snapshotRepairs.val();
+
+                    html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
+                    if (ordersVal) {
+                        Object.values(ordersVal).forEach(o => {
+                            html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
+                        });
+                    } else {
+                        html += `<div class="text-muted" style="font-size:12px;">無相關商城訂單。</div>`;
+                    }
+
+                    html += `<div style="margin-top:10px;"><strong>⚡ 水電預約記錄：</strong></div>`;
+                    if (repairsVal) {
+                        Object.values(repairsVal).forEach(r => {
+                            html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
+                        });
+                    } else {
+                        html += `<div class="text-muted" style="font-size:12px;">無相關水電預約。</div>`;
+                    }
+
+                    resultBox.innerHTML = html;
+                });
+            });
         }
 
         function switchAuthTab(tabName) {
