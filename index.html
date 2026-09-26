@@ -1475,7 +1475,7 @@
 
         let currentChatVisitorId = localStorage.getItem('currentChatVisitorId');
         if (!currentChatVisitorId) {
-            currentChatVisitorId = 'VISITOR_' + Math.random().toString(36).substring(2, 9);
+            currentChatVisitorId = '訪客_' + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('currentChatVisitorId', currentChatVisitorId);
         }
         const activeChatUserId = currentUserEmail ? currentUserEmail.replace(/[^a-zA-Z0-9]/g, '_') : currentChatVisitorId;
@@ -1532,7 +1532,8 @@
                 if (val) historyCases = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
             });
 
-            db.ref(`shop_chats/${activeChatUserId}/messages`).on('value', (snapshot) => {
+            // 修正：將聊天監聽路徑改為與後台一致的 `chats/${activeChatUserId}`
+            db.ref(`chats/${activeChatUserId}`).on('value', (snapshot) => {
                 const val = snapshot.val();
                 const body = document.getElementById('chatMessagesBody');
                 if (!body) return;
@@ -1942,12 +1943,13 @@
 
             const messageData = {
                 sender: 'customer',
-                senderId: activeChatUserId,
                 text: text,
-                date: new Date().toLocaleString()
+                adminRead: false,
+                timestamp: Date.now()
             };
 
-            db.ref(`shop_chats/${activeChatUserId}/messages`).push(messageData).then(() => {
+            // 修正：將訊息推送到與後台一致的 `chats/${activeChatUserId}` 路徑
+            db.ref(`chats/${activeChatUserId}`).push(messageData).then(() => {
                 input.value = '';
             });
         }
@@ -2156,7 +2158,6 @@
 
             if (!code) { alert('請輸入驗證碼！'); return; }
 
-            // 簡易模擬驗證碼確認並更新密碼
             db.ref('shop_users').once('value', snapshot => {
                 const val = snapshot.val();
                 let foundKey = null;
