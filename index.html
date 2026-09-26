@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 搜索引擎優化 (SEO) 核心 Meta 標籤 -->
-    <title>嚴選好物商城 × 居家水電弱電工程 | 大台北地區水電維修與手作烘焙</title>
+    <title>珍愛家蔬食早午餐 × 居家水電弱電工程 | 大台北地區水電維修與手作烘焙</title>
     <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選新鮮手作烘焙麵包、餅乾與冷泡茶飲線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
-    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 手作烘焙商城, 嚴選好物, 網購點心">
+    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 手作烘焙商城, 珍愛家蔬食早午餐, 網購點心">
     <meta name="author" content="張安賦">
 
     <!-- 社群分享預覽設定 (Open Graph / SEO) -->
-    <meta property="og:title" content="嚴選好物商城 × 居家水電弱電工程">
+    <meta property="og:title" content="珍愛家蔬食早午餐 × 居家水電弱電工程">
     <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選手作烘焙美食線上商城，立即線上預約與選購！">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
@@ -134,7 +134,6 @@
             background-color: #f8fafc;
         }
 
-        /* 商品分類按鈕列 */
         .category-tabs {
             display: flex;
             justify-content: center;
@@ -191,7 +190,6 @@
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
 
-        /* 熱銷皇冠標籤 */
         .hot-badge {
             position: absolute;
             top: 10px;
@@ -251,7 +249,7 @@
         }
 
         /* ==========================================
-           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal) 與多圖輪播
+           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal)
            ========================================== */
         .shop-modal-overlay {
             position: fixed;
@@ -1101,7 +1099,7 @@
     <!-- 頂部 Banner -->
     <header class="hero-banner">
         <div class="hero-content">
-            <h1>嚴選好物商城 × 居家水電弱電工程</h1>
+            <h1>珍愛家蔬食早午餐 × 居家水電弱電工程</h1>
             <p>在地嚴選優質商品，提供安心手作與好物選購；同步提供專業水電修繕服務</p>
             <div class="hero-buttons">
                 <a href="#shop" class="btn btn-accent">瀏覽商城商品</a>
@@ -1277,7 +1275,7 @@
     <!-- 頁尾 -->
     <footer>
         <div class="container">
-            <div class="footer-logo">嚴選商城 × 居家水電弱電</div>
+            <div class="footer-logo">珍愛家蔬食早午餐 × 居家水電弱電</div>
             <ul class="footer-links">
                 <li><a href="#shop">嚴選商城商品</a></li>
                 <li><a href="#" onclick="toggleWaterElectric(); return false;">水電弱電服務</a></li>
@@ -1302,8 +1300,8 @@
                 <!-- 登入表單 -->
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
-                        <label>電子信箱 / 帳號</label>
-                        <input type="email" id="loginEmail" required placeholder="請輸入您的信箱">
+                        <label>手機號碼 / 帳號</label>
+                        <input type="text" id="loginEmail" required placeholder="請輸入您的手機號碼">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1319,8 +1317,8 @@
                         <input type="text" id="regName" required placeholder="請輸入您的姓名">
                     </div>
                     <div class="auth-form-group">
-                        <label>電子信箱 (帳號)</label>
-                        <input type="email" id="regEmail" required placeholder="請輸入電子信箱">
+                        <label>手機號碼 (帳號)</label>
+                        <input type="tel" id="regEmail" required placeholder="請輸入手機號碼">
                     </div>
                     <div class="auth-form-group">
                         <label>設定密碼</label>
@@ -1382,10 +1380,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDK v10 (ES Modules via CDN) -->
+    <!-- Firebase SDK v10 (Realtime Database via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, addDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getDatabase, ref, get, push, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = { 
@@ -1401,12 +1399,12 @@
 
         // 初始化 Firebase
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const rtdb = getDatabase(app);
         const auth = getAuth(app);
 
-        window.db = db;
+        window.rtdb = rtdb;
         window.auth = auth;
-        window.firebaseFns = { collection, getDocs, addDoc, query, where, orderBy };
+        window.rtdbFns = { ref, get, push, query, orderByChild };
 
         // 預設後備分類與服務
         const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
@@ -1421,36 +1419,41 @@
         let cachedServices = defaultServices;
         let cachedHistoryCases = [];
 
-        // 從 Firestore 即時讀取最新資料
-        async function fetchFirestoreData() {
+        // 從 Firebase Realtime Database 讀取最新資料
+        async function fetchRealtimeData() {
             try {
-                // 1. 讀取後台分類
-                const catSnap = await getDocs(collection(db, "categories"));
-                if (!catSnap.empty) {
-                    cachedCategories = catSnap.docs.map(doc => doc.data().name);
+                // 1. 讀取商品分類 (对应 shop_categories)
+                const catSnap = await get(ref(rtdb, 'shop_categories'));
+                if (catSnap.exists()) {
+                    const catData = catSnap.val();
+                    // 支援陣列或物件格式
+                    cachedCategories = Array.isArray(catData) ? catData.filter(Boolean) : Object.values(catData).map(c => c.name || c);
                 }
 
-                // 2. 讀取後台商品（直接同步 Firestore 裡新增的商品）
-                const prodSnap = await getDocs(collection(db, "products"));
-                if (!prodSnap.empty) {
-                    cachedProducts = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 2. 讀取商品清單 (对应 shop_products)
+                const prodSnap = await get(ref(rtdb, 'shop_products'));
+                if (prodSnap.exists()) {
+                    const prodData = prodSnap.val();
+                    cachedProducts = Array.isArray(prodData) ? prodData.filter(Boolean) : Object.keys(prodData).map(key => ({ id: key, ...prodData[key] }));
                 } else {
                     cachedProducts = [];
                 }
 
-                // 3. 讀取服務項目
-                const servSnap = await getDocs(collection(db, "services"));
-                if (!servSnap.empty) {
-                    cachedServices = servSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 3. 讀取服務項目 (对应 shop_services)
+                const servSnap = await get(ref(rtdb, 'shop_services'));
+                if (servSnap.exists()) {
+                    const servData = servSnap.val();
+                    cachedServices = Array.isArray(servData) ? servData.filter(Boolean) : Object.keys(servData).map(key => ({ id: key, ...servData[key] }));
                 }
 
-                // 4. 讀取歷史案例
-                const caseSnap = await getDocs(collection(db, "history_cases"));
-                if (!caseSnap.empty) {
-                    cachedHistoryCases = caseSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // 4. 讀取歷史案例 (若有 shop_history_cases 節點)
+                const caseSnap = await get(ref(rtdb, 'shop_history_cases'));
+                if (caseSnap.exists()) {
+                    const caseData = caseSnap.val();
+                    cachedHistoryCases = Array.isArray(caseData) ? caseData.filter(Boolean) : Object.keys(caseData).map(key => ({ id: key, ...caseData[key] }));
                 }
             } catch (err) {
-                console.error("讀取 Firebase 資料失敗:", err);
+                console.error("讀取 Realtime Database 資料失敗:", err);
             }
 
             // 初始化渲染畫面
@@ -1468,7 +1471,7 @@
         onAuthStateChanged(auth, (user) => {
             const userBtn = document.getElementById('floatingUserBtn');
             if (user) {
-                userBtn.title = `已登入 (${user.email})，點擊可登出`;
+                userBtn.title = `已登入 (${user.email || user.phoneNumber})，點擊可登出`;
                 userBtn.style.backgroundColor = "#10b981";
             } else {
                 userBtn.title = "會員登入 / 註冊";
@@ -1478,7 +1481,7 @@
         });
 
         // 載入時立即抓取
-        fetchFirestoreData();
+        fetchRealtimeData();
     </script>
 
     <script>
@@ -1532,8 +1535,10 @@
 
         async function handleUserLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
+            const phone = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
+            // 系統內部將手機號碼對應為虛擬信箱進行 Firebase Auth 登入
+            const email = phone.includes('@') ? phone : `${phone}@jafstore.internal`;
             try {
                 await signInWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
@@ -1546,8 +1551,9 @@
         async function handleUserRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
+            const phone = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPassword').value.trim();
+            const email = phone.includes('@') ? phone : `${phone}@jafstore.internal`;
             try {
                 await createUserWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
@@ -1585,7 +1591,7 @@
             }
 
             if (products.length === 0) {
-                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 30px;">目前此類別尚無商品上架！請至後台新增商品。</p>`;
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #64748b; padding: 30px;">目前此類別尚無商品上架！請確認 Realtime Database 中的 shop_products 資料。</p>`;
                 return;
             }
 
@@ -1597,7 +1603,7 @@
                         ${isTop ? '<div class="hot-badge">🔥 熱銷推薦</div>' : ''}
                         <img src="${coverImg}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         <div class="product-info">
-                            <span class="product-category-tag">${prod.category}</span>
+                            <span class="product-category-tag">${prod.category || '精選商品'}</span>
                             <div class="product-title">${prod.name}</div>
                             <div class="product-sales">已售出 ${prod.sales || 0} 件</div>
                             <div class="product-price">NT$ ${prod.price}</div>
@@ -1784,12 +1790,12 @@
             };
 
             try {
-                await window.firebaseFns.addDoc(window.firebaseFns.collection(window.db, "orders"), newOrder);
+                await window.rtdbFns.push(window.rtdbFns.ref(window.rtdb, "shop_orders"), newOrder);
                 cartItems = [];
                 localStorage.removeItem('shop_cart');
                 updateCartBadge();
                 document.getElementById('cartModalOverlay').classList.remove('active');
-                alert(`🎉 訂單已成功送出並同步至 Firebase！您的訂單編號為：${newOrder.id}`);
+                alert(`🎉 訂單已成功送出並同步至 Realtime Database！您的訂單編號為：${newOrder.id}`);
             } catch (error) {
                 alert('❌ 訂單送出失敗：' + error.message);
             }
@@ -1814,7 +1820,7 @@
             services.forEach(s => {
                 grid.innerHTML += `
                     <div class="service-card" onclick="openCaseModalForService('${s.name}')">
-                        <div class="service-icon"><i class="${s.icon}" style="color: #0066cc;"></i></div>
+                        <div class="service-icon"><i class="${s.icon || 'fa-solid fa-bolt'}" style="color: #0066cc;"></i></div>
                         <h3>${s.name}</h3>
                         <p>${s.description}</p>
                     </div>
@@ -1951,8 +1957,8 @@
             };
 
             try {
-                await window.firebaseFns.addDoc(window.firebaseFns.collection(window.db, "repairs"), newRepair);
-                alert(`🎉 水電預約諮詢已送出並同步至 Firebase！您的諮詢單號為：${newRepair.id}`);
+                await window.rtdbFns.push(window.rtdbFns.ref(window.rtdb, "shop_repairs"), newRepair);
+                alert(`🎉 水電預約諮詢已送出並同步至 Realtime Database！您的諮詢單號為：${newRepair.id}`);
                 e.target.reset();
                 selectedTimesList = [];
                 renderSelectedTimesTags();
@@ -1991,12 +1997,12 @@
             const container = document.getElementById('trackingOrdersListContainer');
             container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">載入中...</p>`;
             try {
-                const q = window.firebaseFns.query(window.firebaseFns.collection(window.db, "orders"));
-                const querySnapshot = await window.firebaseFns.getDocs(q);
+                const snap = await window.rtdbFns.get(window.rtdbFns.ref(window.rtdb, "shop_orders"));
                 let orders = [];
-                querySnapshot.forEach((doc) => {
-                    orders.push({ id: doc.id, ...doc.data() });
-                });
+                if (snap.exists()) {
+                    const data = snap.val();
+                    orders = Object.keys(data).map(key => ({ id: data[key].id || key, ...data[key] }));
+                }
 
                 if (orders.length === 0) {
                     container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無商品下單記錄！</p>`;
@@ -2008,7 +2014,7 @@
                         <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:12px;">
                             <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                                 <strong>訂單編號: ${ord.id}</strong>
-                                <span class="badge" style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${ord.status}</span>
+                                <span class="badge" style="background:#0284c7; color:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${ord.status || '處理中'}</span>
                             </div>
                             <p style="font-size:13px; color:#475569;">收件人: ${ord.customer} (${ord.phone}) | 總金額: NT$ ${ord.total}</p>
                             <p style="font-size:12px; color:#64748b;">下單時間: ${ord.date}</p>
@@ -2024,12 +2030,12 @@
             const container = document.getElementById('trackingRepairsListContainer');
             container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">載入中...</p>`;
             try {
-                const q = window.firebaseFns.query(window.firebaseFns.collection(window.db, "repairs"));
-                const querySnapshot = await window.firebaseFns.getDocs(q);
+                const snap = await window.rtdbFns.get(window.rtdbFns.ref(window.rtdb, "shop_orders").parent.child("shop_repairs"));
                 let repairs = [];
-                querySnapshot.forEach((doc) => {
-                    repairs.push({ id: doc.id, ...doc.data() });
-                });
+                if (snap.exists()) {
+                    const data = snap.val();
+                    repairs = Object.keys(data).map(key => ({ id: data[key].id || key, ...data[key] }));
+                }
 
                 if (repairs.length === 0) {
                     container.innerHTML = `<p style="text-align: center; color: #64748b; padding: 20px;">目前尚無水電預約記錄！</p>`;
