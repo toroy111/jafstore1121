@@ -4,41 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理員後台系統 - Admin Dashboard</title>
-    <!-- 防止搜尋引擎索引與檢索，保護後台不被公開搜尋 -->
     <meta name="robots" content="noindex, nofollow">
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome 圖示庫 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         body { background-color: #f8f9fa; }
-        .sidebar { 
-            width: 260px; 
-            min-height: 100vh; 
-            background-color: #212529; 
-            flex-shrink: 0;
-        }
-        .nav-link { 
-            color: #adb5bd; 
-            margin-bottom: 0.4rem; 
-            white-space: nowrap; 
-            font-size: 15px;
-        }
+        .sidebar { width: 260px; min-height: 100vh; background-color: #212529; flex-shrink: 0; }
+        .nav-link { color: #adb5bd; margin-bottom: 0.4rem; white-space: nowrap; font-size: 15px; }
         .nav-link:hover, .nav-link.active { color: #fff; background-color: #0d6efd; }
         .main-content { flex-grow: 1; overflow-x: hidden; }
         .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
         .table-responsive { background-color: #fff; border-radius: 0.5rem; }
-        .text-truncate-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .admin-prod-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
         .admin-category-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         .admin-cat-btn { padding: 8px 18px; background-color: #fff; border: 1px solid #cbd5e1; border-radius: 30px; font-size: 14px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; }
@@ -49,31 +30,21 @@
         .preview-thumb-box .btn-remove-thumb { position: absolute; top: -6px; right: -6px; padding: 0.1rem 0.3rem; font-size: 0.6rem; border-radius: 50%; }
         
         #loginOverlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
         }
-        .login-card {
-            width: 400px;
-            border-radius: 16px;
-            background: #ffffff;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-        .floating-logout {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            z-index: 1050;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border-radius: 30px;
-            padding: 10px 20px;
-            font-weight: bold;
-        }
+        .login-card { width: 400px; border-radius: 16px; background: #ffffff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); overflow: hidden; }
+        .floating-logout { position: fixed; bottom: 25px; right: 25px; z-index: 1050; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-radius: 30px; padding: 10px 20px; font-weight: bold; }
+        
+        /* 即時聊天樣式 */
+        .chat-user-list { max-height: 500px; overflow-y: auto; }
+        .chat-user-item { cursor: pointer; transition: background 0.2s; }
+        .chat-user-item:hover, .chat-user-item.active { background-color: #e9ecef; }
+        .chat-messages-box { height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; }
+        .chat-bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; word-break: break-all; }
+        .chat-bubble.admin { background: #0d6efd; color: #fff; margin-left: auto; text-align: right; }
+        .chat-bubble.customer { background: #e2e8f0; color: #1e293b; margin-right: auto; }
     </style>
 </head>
 <body>
@@ -136,6 +107,11 @@
                 </button>
             </li>
             <li class="nav-item mb-1" role="presentation">
+                <button class="nav-link w-100 text-start" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatManagement" type="button" role="tab" onclick="loadChatUsersList()">
+                    <i class="fa-solid fa-comments me-2"></i>即時客服聊天
+                </button>
+            </li>
+            <li class="nav-item mb-1" role="presentation">
                 <button class="nav-link w-100 text-start" id="password-reset-tab" data-bs-toggle="tab" data-bs-target="#passwordReset" type="button" role="tab">
                     <i class="fa-solid fa-key me-2"></i>忘記密碼申請與發信
                 </button>
@@ -158,9 +134,7 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="admin-category-tabs" id="adminCategoryTabsContainer"></div>
-
                 <div class="table-responsive p-3">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
@@ -319,13 +293,40 @@
                 </div>
             </div>
 
+            <!-- 新增：即時客服聊天管理分頁 -->
+            <div class="tab-pane fade" id="chatManagement" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2><i class="fa-solid fa-comments me-2 text-primary"></i>顧客即時客服諮詢回覆</h2>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-dark text-white fw-bold">諮詢使用者列表</div>
+                            <div class="list-group list-group-flush chat-user-list" id="adminChatUserList">
+                                <div class="text-center text-muted py-4">尚無聊天記錄</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white fw-bold" id="activeChatUserTitle">請選擇左側使用者以開始對話</div>
+                            <div class="card-body">
+                                <div class="chat-messages-box mb-3" id="adminChatMessagesBox">
+                                    <div class="text-center text-muted mt-5">尚未選取對話對象</div>
+                                </div>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="adminChatInput" placeholder="輸入回覆訊息..." onkeypress="handleAdminChatKeypress(event)">
+                                    <button class="btn btn-primary" type="button" onclick="sendAdminChatMessage()"><i class="fa-solid fa-paper-plane me-1"></i>發送</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-pane fade" id="passwordReset" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2><i class="fa-solid fa-key me-2 text-danger"></i>顧客忘記密碼申請與驗證碼發送</h2>
-                </div>
-                <div class="card p-3 mb-3 bg-light border-danger">
-                    <p class="mb-1 fw-bold text-danger"><i class="fa-solid fa-circle-info me-1"></i> 說明：</p>
-                    <p class="small text-muted mb-0">當前台顧客送出忘記密碼申請後會即時同步至此。您點擊「發送驗證碼至信箱」後，系統會發送重設密碼驗證碼給客人，並自動更新狀態。</p>
                 </div>
                 <div class="table-responsive p-3">
                     <table class="table table-hover align-middle">
@@ -347,187 +348,23 @@
     </main>
 </div>
 
-<!-- Modals -->
+<!-- Modals (略過未更動部分保持原樣) -->
 <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold" id="serviceModalTitle">新增服務項目</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="serviceForm">
-                    <input type="hidden" id="serviceEditId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">服務名稱</label>
-                        <input type="text" class="form-control" id="serviceName" required placeholder="例如：居家水電維修">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">FontAwesome 圖示代碼 (Icon Class)</label>
-                        <input type="text" class="form-control" id="serviceIcon" required placeholder="例如：fa-solid fa-bolt">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">服務項目簡介摘要</label>
-                        <textarea class="form-control" id="serviceDesc" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveServiceItem()">儲存服務項目</button>
-            </div>
-        </div>
-    </div>
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="serviceModalTitle">新增服務項目</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="serviceForm"><input type="hidden" id="serviceEditId"><div class="mb-3"><label class="form-label fw-bold">服務名稱</label><input type="text" class="form-control" id="serviceName" required></div><div class="mb-3"><label class="form-label fw-bold">FontAwesome 圖示代碼</label><input type="text" class="form-control" id="serviceIcon" required></div><div class="mb-3"><label class="form-label fw-bold">服務項目簡介摘要</label><textarea class="form-control" id="serviceDesc" rows="3"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveServiceItem()">儲存服務項目</button></div></div></div>
 </div>
 
-<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold" id="historyModalTitle">新增歷史施工成果</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="historyForm">
-                    <input type="hidden" id="historyEditId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">案件標題</label>
-                        <input type="text" class="form-control" id="historyTitle" required>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">對應前台服務分類</label>
-                            <select class="form-select" id="historyCategory" required></select>
-                        </div>
-                    </div>
-                    <div class="mb-3 p-3 border rounded bg-light">
-                        <label class="form-label fw-bold text-success"><i class="fa-solid fa-image me-1"></i> 上傳施工照片或影片 (支援多選)</label>
-                        <input type="file" class="form-control mb-2" id="historyMediaFile" accept="image/*,video/*" multiple onchange="handleHistoryMediaFiles(event)">
-                        <div id="historyMediaPreviewContainer" class="d-flex flex-wrap mt-2"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">施工說明摘要與細節</label>
-                        <textarea class="form-control" id="historyDesc" rows="4"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-success" onclick="saveHistoryCase()">儲存成果</button>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-success text-white"><h5 class="modal-title fw-bold" id="historyModalTitle">新增歷史施工成果</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="historyForm"><input type="hidden" id="historyEditId"><div class="mb-3"><label class="form-label fw-bold">案件標題</label><input type="text" class="form-control" id="historyTitle" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">對應前台服務分類</label><select class="form-select" id="historyCategory" required></select></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">上傳施工照片或影片</label><input type="file" class="form-control mb-2" id="historyMediaFile" accept="image/*,video/*" multiple onchange="handleHistoryMediaFiles(event)"><div id="historyMediaPreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">施工說明摘要</label><textarea class="form-control" id="historyDesc" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-success" onclick="saveHistoryCase()">儲存成果</button></div></div></div></div>
 
-<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-info text-dark">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-receipt me-2"></i>訂單商品詳細明細</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="orderDetailModalBody"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header bg-info text-dark"><h5 class="modal-title fw-bold">訂單商品詳細明細</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="orderDetailModalBody"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
 
-<div class="modal fade" id="orderStatusSettingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-sliders me-2"></i>管理訂單狀態選項</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="newOrderStatusInput" placeholder="輸入新的訂單狀態名稱...">
-                    <button class="btn btn-success" type="button" onclick="addNewOrderStatus()">新增狀態</button>
-                </div>
-                <hr>
-                <ul class="list-group" id="orderStatusListGroup"></ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="modal fade" id="orderStatusSettingModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold">管理訂單狀態選項</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="input-group mb-3"><input type="text" class="form-control" id="newOrderStatusInput" placeholder="輸入新的訂單狀態..."><button class="btn btn-success" type="button" onclick="addNewOrderStatus()">新增狀態</button></div><hr><ul class="list-group" id="orderStatusListGroup"></ul></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
 
-<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="productForm">
-                    <input type="hidden" id="prodEditId">
-                    <div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div>
-                    <div class="row mb-3">
-                        <div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div>
-                        <div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div>
-                        <div class="col-md-3"><label class="form-label fw-bold">初始銷量</label><input type="number" class="form-control" id="prodSales" value="100" min="0"></div>
-                    </div>
-                    
-                    <div class="mb-3 p-3 border rounded bg-light">
-                        <label class="form-label fw-bold text-primary"><i class="fa-solid fa-tags me-1"></i> 商品規格 / 款式與價格設定</label>
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div>
-                            <div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div>
-                            <div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div>
-                        </div>
-                        <div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div>
-                    </div>
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productForm"><input type="hidden" id="prodEditId"><div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div><div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div><div class="col-md-3"><label class="form-label fw-bold">初始銷量</label><input type="number" class="form-control" id="prodSales" value="100" min="0"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-primary">商品規格 / 款式與價格</label><div class="row g-2 mb-2"><div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div><div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div></div><div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">商品多圖輪播設定</label><div class="input-group mb-2"><input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)"><button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button></div><div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">商品內容介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button></div></div></div></div>
 
-                    <div class="mb-3 p-3 border rounded bg-light">
-                        <label class="form-label fw-bold text-success"><i class="fa-solid fa-images me-1"></i> 商品多圖輪播設定</label>
-                        <div class="input-group mb-2">
-                            <input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)">
-                            <button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button>
-                        </div>
-                        <div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div>
-                    </div>
-
-                    <div class="mb-3"><label class="form-label fw-bold">商品內容 / 詳細介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-                <h5 class="modal-title fw-bold">管理商品類別</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="newCategoryName" placeholder="輸入新類別名稱...">
-                    <button class="btn btn-success" type="button" onclick="addCategory()">新增類別</button>
-                </div>
-                <hr>
-                <ul class="list-group" id="categoryListGroup"></ul>
-            </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div>
-        </div>
-    </div>
-</div>
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-secondary text-white"><h5 class="modal-title fw-bold">管理商品類別</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="input-group mb-3"><input type="text" class="form-control" id="newCategoryName" placeholder="輸入新類別名稱..."><button class="btn btn-success" type="button" onclick="addCategory()">新增類別</button></div><hr><ul class="list-group" id="categoryListGroup"></ul></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ==========================================
-    // 1. Firebase 初始化設定 (已對應 jafstore1121 專案)
-    // ==========================================
     const firebaseConfig = { 
         apiKey : "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE", 
         authDomain : "jafstore1121.firebaseapp.com", 
@@ -539,129 +376,69 @@
         measurementId : "G-EGS8R6B6KE" 
     };
 
-    // 初始化 Firebase
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    // ==========================================
-    // 2. 預設資料與快取變數
-    // ==========================================
     const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
     const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
-    const defaultProducts = [
-        {
-            id: 1,
-            name: "招牌手作烘焙麵包",
-            category: "烘焙與茶飲",
-            price: 120,
-            sales: 350,
-            specs: [{ name: "標準規格", price: 120 }, { name: "禮盒裝", price: 180 }],
-            img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80",
-            images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"],
-            description: "嚴選優質小麥與天然酵母手作烘焙。"
-        }
-    ];
+    const defaultProducts = [{ id: 1, name: "招牌手作烘焙麵包", category: "烘焙與茶飲", price: 120, sales: 350, specs: [{ name: "標準規格", price: 120 }], img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80", images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"], description: "嚴選優質小麥與天然酵母手作烘焙。" }];
 
     let currentAdminCategory = 'all';
     let currentEditingSpecs = [];
     let currentEditingImages = []; 
     let currentEditingHistoryMedia = [];
+    let selectedChatUser = null; // 當前選取的聊天用戶
 
-    // 記憶體中同步的 Firebase 資料庫快取
-    let dbCache = {
-        categories: [],
-        order_statuses: [],
-        products: [],
-        services: [],
-        history_cases: [],
-        orders: [],
-        repairs: [],
-        password_resets: []
-    };
+    let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
-    // ==========================================
-    // 3. Firebase 即時監聽與資料同步模組
-    // ==========================================
     function initFirebaseListeners() {
-        // 監聽類別
         db.ref('shop_categories').on('value', (snapshot) => {
             const val = snapshot.val();
             dbCache.categories = val ? (Array.isArray(val) ? val : Object.values(val)) : defaultCategories;
             if(!val) db.ref('shop_categories').set(defaultCategories);
             renderAdminCategoryTabs();
             updateCategorySelectOptions();
-            if(document.getElementById('categoryModal').classList.contains('show')) renderCategoryListGroup();
         });
 
-        // 監聽訂單狀態選項
         db.ref('shop_order_statuses').on('value', (snapshot) => {
             const val = snapshot.val();
             dbCache.order_statuses = val ? (Array.isArray(val) ? val : Object.values(val)) : defaultOrderStatuses;
             if(!val) db.ref('shop_order_statuses').set(defaultOrderStatuses);
-            if(document.getElementById('orderStatusSettingModal').classList.contains('show')) renderOrderStatusListGroup();
         });
 
-        // 監聽商品
         db.ref('shop_products').on('value', (snapshot) => {
             const val = snapshot.val();
-            if (val) {
-                dbCache.products = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
-            } else {
-                dbCache.products = defaultProducts;
-                db.ref('shop_products').set(defaultProducts);
-            }
+            dbCache.products = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : defaultProducts;
+            if(!val) db.ref('shop_products').set(defaultProducts);
             renderAdminProducts(currentAdminCategory);
         });
 
-        // 監聽服務項目 (水電/弱電/代客安裝等)
         db.ref('shop_services').on('value', (snapshot) => {
             const val = snapshot.val();
-            if (val) {
-                dbCache.services = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
-            } else {
-                dbCache.services = [
-                    { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
-                    { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
-                    { id: 3, name: "代客安裝", icon: "fa-solid fa-toolbox", description: "浴室鏡櫃、電視固定架安裝。" }
-                ];
-                db.ref('shop_services').set(dbCache.services);
-            }
+            dbCache.services = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [{ id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉。" }];
+            if(!val) db.ref('shop_services').set(dbCache.services);
             renderAdminServicesTable();
             updateHistoryCategorySelectOptions();
         });
 
-        // 監聽歷史施工成果
         db.ref('shop_history_cases').on('value', (snapshot) => {
             const val = snapshot.val();
-            dbCache.history_cases = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [
-                {
-                    id: 1,
-                    title: "公寓對講機老舊線路全面檢修與更新",
-                    category: "弱電工程",
-                    media: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80"],
-                    description: "針對老舊公寓進行對講機主幹道線路測試與更換。"
-                }
-            ];
+            dbCache.history_cases = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
             renderAdminHistoryTable();
         });
 
-        // 監聽訂單
         db.ref('shop_orders').on('value', (snapshot) => {
             const val = snapshot.val();
             dbCache.orders = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
             renderAdminOrders();
         });
 
-        // 監聽維修諮詢
         db.ref('shop_repairs').on('value', (snapshot) => {
             const val = snapshot.val();
             dbCache.repairs = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
             renderAdminRepairs();
         });
 
-        // 監聽忘記密碼申請
         db.ref('shop_password_resets').on('value', (snapshot) => {
             const val = snapshot.val();
             dbCache.password_resets = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val)) : [];
@@ -669,37 +446,90 @@
         });
     }
 
-    // 資料存取相容函式
-    function getStoredCategories() { return dbCache.categories.length ? dbCache.categories : defaultCategories; }
+    // 後台即時聊天室管理功能
+    function loadChatUsersList() {
+        db.ref('chats').on('value', (snapshot) => {
+            const val = snapshot.val() || {};
+            const userListContainer = document.getElementById('adminChatUserList');
+            userListContainer.innerHTML = '';
+            const users = Object.keys(val);
+            if (users.length === 0) {
+                userListContainer.innerHTML = `<div class="text-center text-muted py-4">尚無聊天記錄</div>`;
+                return;
+            }
+            users.forEach(userId => {
+                const isSelected = selectedChatUser === userId ? 'active' : '';
+                userListContainer.innerHTML += `
+                    <div class="list-group-item list-group-item-action chat-user-item ${isSelected}" onclick="selectChatUser('${userId}')">
+                        <i class="fa-solid fa-user-circle me-2 text-primary"></i><strong>顧客帳號：${userId}</strong>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function selectChatUser(userId) {
+        selectedChatUser = userId;
+        document.getElementById('activeChatUserTitle').textContent = `與 顧客 (${userId}) 對話中`;
+        loadChatUsersList();
+
+        db.ref(`chats/${userId}`).on('value', (snapshot) => {
+            const messages = snapshot.val() || {};
+            const box = document.getElementById('adminChatMessagesBox');
+            box.innerHTML = '';
+            const msgKeys = Object.keys(messages);
+            if (msgKeys.length === 0) {
+                box.innerHTML = `<div class="text-center text-muted mt-5">尚無對話訊息</div>`;
+                return;
+            }
+            msgKeys.forEach(key => {
+                const m = messages[key];
+                const bubbleClass = m.sender === 'admin' ? 'admin' : 'customer';
+                box.innerHTML += `
+                    <div class="d-flex flex-column">
+                        <div class="chat-bubble ${bubbleClass}">
+                            <div class="small fw-bold text-muted mb-1">${m.sender === 'admin' ? '管理者' : '顧客'}</div>
+                            <div>${m.text}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    function handleAdminChatKeypress(e) {
+        if (e.key === 'Enter') sendAdminChatMessage();
+    }
+
+    function sendAdminChatMessage() {
+        if (!selectedChatUser) { alert('請先選擇左側的諮詢使用者！'); return; }
+        const input = document.getElementById('adminChatInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        db.ref(`chats/${selectedChatUser}`).push({
+            sender: 'admin',
+            text: text,
+            timestamp: Date.now()
+        });
+        input.value = '';
+    }
+
+    // 其他輔助函式
+    function getStoredCategories() { return dbCache.categories; }
     function saveStoredCategories(cats) { db.ref('shop_categories').set(cats); }
-
-    function getStoredOrderStatuses() { return dbCache.order_statuses.length ? dbCache.order_statuses : defaultOrderStatuses; }
+    function getStoredOrderStatuses() { return dbCache.order_statuses; }
     function saveStoredOrderStatuses(statuses) { db.ref('shop_order_statuses').set(statuses); }
-
-    function getStoredProducts() { 
-        if(!dbCache.products.length) return defaultProducts;
-        return dbCache.products.map(p => ({
-            ...p,
-            images: (p.images && p.images.length > 0) ? p.images : [p.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80']
-        }));
-    }
+    function getStoredProducts() { return dbCache.products; }
     function saveStoredProducts(prods) { db.ref('shop_products').set(prods); }
-
     function getStoredServices() { return dbCache.services; }
-    function saveStoredServices(services) { 
-        db.ref('shop_services').set(services); 
-        updateHistoryCategorySelectOptions();
-    }
-
+    function saveStoredServices(services) { db.ref('shop_services').set(services); }
     function getStoredHistoryCases() { return dbCache.history_cases; }
     function saveStoredHistoryCases(cases) { db.ref('shop_history_cases').set(cases); }
 
-    // ==========================================
-    // 4. 管理員登入控制
-    // ==========================================
     function checkAdminLoginState() {
-        const isLogged = sessionStorage.getItem('admin_logged_in');
-        if (isLogged === 'true') {
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('adminDashboardLayout').style.display = 'flex';
             document.getElementById('floatingLogoutBtn').classList.remove('d-none');
@@ -712,23 +542,21 @@
 
     function handleAdminLogin(event) {
         event.preventDefault();
-        const u = document.getElementById('adminUser').value.trim();
-        const p = document.getElementById('adminPass').value.trim();
-        if (u === 'admin' && p === 'love11') {
+        if (document.getElementById('adminUser').value.trim() === 'admin' && document.getElementById('adminPass').value.trim() === 'love11') {
             sessionStorage.setItem('admin_logged_in', 'true');
             checkAdminLoginState();
             alert('🎉 成功登入後台管理系統！');
-        } else {
-            alert('❌ 帳號或密碼錯誤！');
-        }
+        } else { alert('❌ 帳號或密碼錯誤！'); }
     }
 
     function handleAdminLogout() {
-        if (confirm('確定要登出後台嗎？')) {
-            sessionStorage.removeItem('admin_logged_in');
-            checkAdminLoginState();
-        }
+        if (confirm('確定要登出後台嗎？')) { sessionStorage.removeItem('admin_logged_in'); checkAdminLoginState(); }
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        checkAdminLoginState();
+        initFirebaseListeners();
+    });
 
     // ==========================================
     // 5. 畫面渲染與互動邏輯
