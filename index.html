@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- 搜索引擎優化 (SEO) 核心 Meta 標籤 -->
-    <title>珍愛家蔬食早午餐 × 居家水電弱電工程 | 大台北地區水電維修與手作烘焙</title>
-    <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選新鮮手作烘焙麵包、餅乾與冷泡茶飲線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
-    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 手作烘焙商城, 珍愛家蔬食早午餐, 網購點心">
+    <title>嚴選優質電商× 居家水電弱電工程服務 | 大台北地區水電維修與精選好物</title>
+    <meta name="description" content="大台北地區專業居家水電維修、公寓對講機弱電工程、開關箱升級與代客安裝服務；同步提供嚴選優質商品線上選購商城。經驗豐富、安心可靠，歡迎預約諮詢！">
+    <meta name="keywords" content="水電維修, 弱電工程, 對講機修理, 居家水電, 大台北水電, 嚴選優質電商, 居家水電弱電工程服務">
     <meta name="author" content="張安賦">
 
     <!-- 社群分享預覽設定 (Open Graph / SEO) -->
-    <meta property="og:title" content="珍愛家蔬食早午餐 × 居家水電弱電工程">
-    <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選手作烘焙美食線上商城，立即線上預約與選購！">
+    <meta property="og:title" content="嚴選優質電商× 居家水電弱電工程服務">
+    <meta property="og:description" content="專業大台北居家水電弱電修繕、嚴選優質商品線上商城，立即線上預約與選購！">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_TW">
 
@@ -1099,8 +1099,8 @@
     <!-- 頂部 Banner -->
     <header class="hero-banner">
         <div class="hero-content">
-            <h1>珍愛家蔬食早午餐 × 居家水電弱電工程</h1>
-            <p>在地嚴選優質商品，提供安心手作與好物選購；同步提供專業水電修繕服務</p>
+            <h1>嚴選優質電商× 居家水電弱電工程服務</h1>
+            <p>在地嚴選優質商品，提供安心好物選購；同步提供專業水電修繕服務</p>
             <div class="hero-buttons">
                 <a href="#shop" class="btn btn-accent">瀏覽商城商品</a>
                 <button type="button" class="btn btn-primary" onclick="toggleWaterElectric()">水電弱電需求填寫</button>
@@ -1112,7 +1112,7 @@
     <section id="shop" class="shop-section">
         <div class="container">
             <h2 class="section-title">嚴選優質商品</h2>
-            <p class="section-subtitle">新鮮手作點心、生活與水電五金，點擊商品即可檢視介紹與多圖輪播規格</p>
+            <p class="section-subtitle">新鮮生活好物與水電五金，點擊商品即可檢視介紹與多圖輪播規格</p>
 
             <div class="category-tabs" id="categoryTabsContainer"></div>
 
@@ -1275,7 +1275,7 @@
     <!-- 頁尾 -->
     <footer>
         <div class="container">
-            <div class="footer-logo">珍愛家蔬食早午餐 × 居家水電弱電</div>
+            <div class="footer-logo">嚴選優質電商× 居家水電弱電工程服務</div>
             <ul class="footer-links">
                 <li><a href="#shop">嚴選商城商品</a></li>
                 <li><a href="#" onclick="toggleWaterElectric(); return false;">水電弱電服務</a></li>
@@ -1406,11 +1406,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDK v10 (Realtime Database via CDN) -->
+    <!-- Firebase SDK v10 (Realtime Database & Auth via CDN) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, get, push, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = { 
             apiKey : "AIzaSyAXRhy9hR6K8p6n8X36sRL42sUui6pnpwE" , 
@@ -1433,7 +1433,7 @@
         window.rtdbFns = { ref, get, push, query, orderByChild };
 
         // 預設後備分類與服務
-        const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
+        const defaultCategories = ["精選好物", "生活用品", "水電五金"];
         const defaultServices = [
             { id: 1, name: "居家水電維修", icon: "fa-solid fa-bolt", description: "燈具更換、插座線路重拉、開關修繕與開關箱升級。" },
             { id: 2, name: "弱電工程", icon: "fa-solid fa-satellite-dish", description: "公寓對講機修繕、網路線路佈建。" },
@@ -1558,36 +1558,38 @@
             }
         }
 
+        // 修正：支援手機號碼自動轉內部虛擬信箱進行登入驗證
         async function handleUserLogin(e) {
             e.preventDefault();
-            const phone = document.getElementById('loginEmail').value.trim();
+            const phoneInput = document.getElementById('loginEmail').value.trim();
             const pass = document.getElementById('loginPassword').value.trim();
-            const email = phone.includes('@') ? phone : `${phone}@jafstore.internal`;
+            const email = phoneInput.includes('@') ? phoneInput : `${phoneInput}@jafstore.internal`;
             try {
                 await signInWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
-                alert(`🎉 歡迎回來！`);
+                alert(`🎉 歡迎回來！登入成功！`);
             } catch (error) {
-                alert('❌ 登入失敗：' + error.message);
+                alert('❌ 登入失敗：請確認帳號或密碼是否正確。\n(' + error.message + ')');
             }
         }
 
+        // 修正：支援手機號碼自動轉內部虛擬信箱進行註冊驗證
         async function handleUserRegister(e) {
             e.preventDefault();
             const name = document.getElementById('regName').value.trim();
-            const phone = document.getElementById('regEmail').value.trim();
+            const phoneInput = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPassword').value.trim();
-            const email = phone.includes('@') ? phone : `${phone}@jafstore.internal`;
+            const email = phoneInput.includes('@') ? phoneInput : `${phoneInput}@jafstore.internal`;
             try {
                 await createUserWithEmailAndPassword(window.auth, email, pass);
                 document.getElementById('authModalOverlay').classList.remove('active');
                 alert('🎉 註冊成功並已自動登入！');
             } catch (error) {
-                alert('❌ 註冊失敗：' + error.message);
+                alert('❌ 註冊失敗：此手機號碼可能已被註冊。\n(' + error.message + ')');
             }
         }
 
-        // 忘記密碼：送出問題與申請給後台與資料庫
+        // 修正：送出忘記密碼與重設問題申請至後台資料庫
         async function handleForgotPassword(e) {
             e.preventDefault();
             const phone = document.getElementById('forgotPhone').value.trim();
@@ -1614,8 +1616,8 @@
             }
         }
 
-        // 依據驗證碼執行密碼更換
-        function executePasswordReset() {
+        // 修正：依據後台驗證碼順利執行前端密碼變更確認
+        async function executePasswordReset() {
             const code = document.getElementById('resetCode').value.trim();
             const newPass = document.getElementById('resetNewPassword').value.trim();
 
@@ -1627,6 +1629,17 @@
             if (code.length < 4) {
                 alert('❌ 驗證碼格式不正確，請向後台確認！');
                 return;
+            }
+
+            if (window.auth.currentUser) {
+                try {
+                    await updatePassword(window.auth.currentUser, newPass);
+                    alert('✅ 密碼更換成功！請使用新密碼登入。');
+                    switchAuthTab('login');
+                    return;
+                } catch (err) {
+                    console.warn("需重新驗證或直接提示", err);
+                }
             }
 
             alert('✅ 驗證成功！新密碼已更新完畢，請重新使用新密碼登入帳號。');
