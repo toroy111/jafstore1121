@@ -1047,7 +1047,7 @@
         </div>
     </div>
 
-    <!-- 購物車與結帳彈跳視窗 (已依要求修改功能3) -->
+    <!-- 購物車與結帳彈跳視窗 -->
     <div class="cart-modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
         <div class="cart-modal" onclick="event.stopPropagation()">
             <div class="shop-modal-header">
@@ -1209,7 +1209,7 @@
         </section>
     </div>
 
-    <!-- 懸浮快捷按鈕區 (依圖片順序：1.會員中心 2.訂單與進度包裹按鈕 3.購物車) -->
+    <!-- 懸浮快捷按鈕區 -->
     <div class="floating-container">
         <button type="button" class="floating-btn" onclick="openAuthModal()" title="會員中心">
             👤
@@ -1223,7 +1223,7 @@
         </button>
     </div>
 
-    <!-- 訂單與施工進度查詢 Modal (已依要求修改功能2) -->
+    <!-- 訂單與施工進度查詢 Modal -->
     <div class="auth-modal-overlay" id="orderTrackModalOverlay" onclick="closeOrderTrackModal(event)">
         <div class="auth-modal" onclick="event.stopPropagation()">
             <div class="auth-modal-header">
@@ -1246,7 +1246,6 @@
                 <button class="auth-close-btn" onclick="closeAuthModal()">×</button>
             </div>
             <div class="auth-modal-body" id="authModalBodyContent">
-                <!-- 動態切換：未登入顯示登入/註冊/忘記密碼；已登入顯示帳號資訊與登出按鈕 -->
                 <div id="authTabsContainer">
                     <div class="auth-tabs">
                         <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">會員登入</div>
@@ -1255,7 +1254,7 @@
                     </div>
                 </div>
 
-                <!-- 1. 會員登入表單 (改用手機號碼) -->
+                <!-- 1. 會員登入表單 -->
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
                         <label>手機號碼帳號</label>
@@ -1268,7 +1267,7 @@
                     <button type="submit" class="auth-submit-btn">立即登入</button>
                 </form>
 
-                <!-- 2. 註冊帳號表單 (改用手機號碼) -->
+                <!-- 2. 註冊帳號表單 -->
                 <form id="registerFormPanel" class="auth-form-panel" onsubmit="handleUserRegister(event)">
                     <div class="auth-form-group">
                         <label>手機號碼帳號</label>
@@ -1284,7 +1283,7 @@
                 <!-- 3. 忘記密碼申請表單 -->
                 <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleUserForgot(event)">
                     <div class="auth-form-group">
-                        <label>註冊的手機號碼或信箱</label>
+                        <label>註冊的手機號碼</label>
                         <input type="text" id="forgotPhone" required placeholder="輸入您註冊的手機號碼">
                     </div>
                     <button type="submit" class="auth-submit-btn">送出重設密碼申請</button>
@@ -1341,7 +1340,7 @@
         let selectedProductForModal = null;
         let selectedSpecForModal = null;
         let selectedTimesArray = [];
-        let currentUserPhone = localStorage.getItem('currentUserPhone') || null; // 儲存登入狀態
+        let currentUserPhone = localStorage.getItem('currentUserPhone') || null;
 
         // ==========================================
         // 3. 資料監聽與初始化載入
@@ -1450,7 +1449,7 @@
         }
 
         // ==========================================
-        // 5. 商品詳情彈跳視窗與購物車邏輯 (已修改功能1)
+        // 5. 商品詳情彈跳視窗與購物車邏輯
         // ==========================================
         function openShopModal(productId) {
             const prod = products.find(p => p.id === productId);
@@ -1465,14 +1464,12 @@
             const imgs = (prod.images && prod.images.length > 0) ? prod.images : [prod.img];
             document.getElementById('modalProdImg').src = imgs[0];
 
-            // 渲染縮圖
             const thumbContainer = document.getElementById('modalThumbnailsContainer');
             thumbContainer.innerHTML = '';
             imgs.forEach((imgUrl, idx) => {
                 thumbContainer.innerHTML += `<img src="${imgUrl}" class="thumbnail-img ${idx === 0 ? 'active' : ''}" onclick="changeModalMainImage('${imgUrl}', this)">`;
             });
 
-            // 渲染規格
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
             if (prod.specs && prod.specs.length > 0) {
@@ -1533,7 +1530,6 @@
             }
 
             updateCartBadge();
-            // [功能 1 修改] 送出後不自動關閉視窗，留在商品欄位裡讓客人決定要繼續購買或按返回
             alert('🎉 成功將商品加入購物車！您可以繼續選購其他規格或點擊返回。');
         }
 
@@ -1703,7 +1699,6 @@
             }
         }
 
-        // 時段下拉選單互動
         function toggleDropdown(e) {
             e.stopPropagation();
             document.getElementById('dropdownList').classList.toggle('active');
@@ -1777,7 +1772,7 @@
         }
 
         // ==========================================
-        // 7. 會員中心彈跳視窗與功能 (已修改功能2)
+        // 7. 會員中心彈跳視窗與功能
         // ==========================================
         function openAuthModal() {
             updateAuthModalUI();
@@ -1793,7 +1788,6 @@
         function openOrderTrackModal() {
             const contentBox = document.getElementById('orderTrackContentBox');
             
-            // [功能 2 修改] 不需要填寫手機號碼，在登入帳號的情況下會自動顯示該帳號裡訂單與水電進度資訊
             if (!currentUserPhone) {
                 contentBox.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
@@ -1952,12 +1946,12 @@
             const resetData = {
                 id: 'RES' + Date.now(),
                 phone: phone,
-                status: '待後台發送驗證碼至信箱',
+                status: '待後台發送驗證碼',
                 date: new Date().toLocaleString()
             };
 
             db.ref('shop_password_resets').push(resetData).then(() => {
-                alert('🎉 重設密碼申請已送出！管理員驗證後將發送驗證碼給您。');
+                alert('🎉 重設密碼申請已送出！管理員驗證後將與您聯繫。');
                 closeAuthModal();
             });
         }
