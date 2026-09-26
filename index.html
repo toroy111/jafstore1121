@@ -965,7 +965,7 @@
         .auth-form-panel.active { display: block; }
         .auth-form-group { margin-bottom: 16px; }
         .auth-form-group label { display: block; font-size: 13px; font-weight: bold; color: #334155; margin-bottom: 6px; }
-        .auth-form-group input, .auth-form-group textarea {
+        .auth-form-group input, .auth-form-group textarea, .auth-form-group select {
             width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;
         }
         .auth-submit-btn {
@@ -1047,7 +1047,7 @@
         </div>
     </div>
 
-    <!-- 購物車與結帳彈跳視窗 -->
+    <!-- 購物車與結帳彈跳視窗 (已依要求修改功能3) -->
     <div class="cart-modal-overlay" id="cartModalOverlay" onclick="closeCartModal(event)">
         <div class="cart-modal" onclick="event.stopPropagation()">
             <div class="shop-modal-header">
@@ -1062,12 +1062,35 @@
                         <input type="text" id="checkoutCustomerName" required placeholder="請輸入姓名">
                     </div>
                     <div class="checkout-form-group">
-                        <label>聯絡手機號碼</label>
-                        <input type="tel" id="checkoutCustomerPhone" required placeholder="請輸入手機號碼">
+                        <label>聯絡電話</label>
+                        <input type="tel" id="checkoutCustomerPhone" required placeholder="請輸入聯絡電話">
                     </div>
                     <div class="checkout-form-group">
-                        <label>收件/配送地址</label>
+                        <label>配送地址選擇</label>
+                        <select id="checkoutDeliveryType" onchange="toggleDeliveryAddressField()" required>
+                            <option value="" disabled selected>請選擇配送方式</option>
+                            <option value="住家地址">住家地址</option>
+                            <option value="7-11便利商店">7-11便利商店</option>
+                            <option value="全家便利商店">全家便利商店</option>
+                            <option value="萊爾富便利商店">萊爾富便利商店</option>
+                        </select>
+                    </div>
+                    <div class="checkout-form-group" id="addressInputGroup">
+                        <label id="addressLabelText">配送地址</label>
                         <input type="text" id="checkoutCustomerAddress" required placeholder="請輸入完整地址">
+                    </div>
+                    <div class="checkout-form-group" id="storeInfoGroup" style="display: none;">
+                        <label>超商門市名稱/店號</label>
+                        <input type="text" id="checkoutStoreInfo" placeholder="例如: 某某門市 (店號: 123456)">
+                    </div>
+                    <div class="checkout-form-group">
+                        <label>付款方式選擇</label>
+                        <select id="checkoutPaymentMethod" required>
+                            <option value="" disabled selected>請選擇付款方式</option>
+                            <option value="網銀匯款">網銀匯款</option>
+                            <option value="貨到付款">貨到付款</option>
+                            <option value="信用卡線上支付">信用卡線上支付</option>
+                        </select>
                     </div>
                     <button type="submit" class="auth-submit-btn">確認送出訂單</button>
                 </form>
@@ -1200,7 +1223,7 @@
         </button>
     </div>
 
-    <!-- 訂單與施工進度查詢 Modal -->
+    <!-- 訂單與施工進度查詢 Modal (已依要求修改功能2) -->
     <div class="auth-modal-overlay" id="orderTrackModalOverlay" onclick="closeOrderTrackModal(event)">
         <div class="auth-modal" onclick="event.stopPropagation()">
             <div class="auth-modal-header">
@@ -1208,12 +1231,9 @@
                 <button class="auth-close-btn" onclick="closeOrderTrackModal()">×</button>
             </div>
             <div class="auth-modal-body">
-                <div class="auth-form-group">
-                    <label>請輸入您的手機號碼查詢進度</label>
-                    <input type="tel" id="trackPhoneInput" placeholder="例如: 0912345678">
+                <div id="orderTrackContentBox">
+                    <!-- 動態帶入查詢結果 -->
                 </div>
-                <button type="button" class="auth-submit-btn" onclick="queryUserOrdersAndRepairs()">查詢我的訂單與水電狀態</button>
-                <div id="trackResultContainer" style="margin-top: 15px; font-size: 13px;"></div>
             </div>
         </div>
     </div>
@@ -1430,7 +1450,7 @@
         }
 
         // ==========================================
-        // 5. 商品詳情彈跳視窗與購物車邏輯
+        // 5. 商品詳情彈跳視窗與購物車邏輯 (已修改功能1)
         // ==========================================
         function openShopModal(productId) {
             const prod = products.find(p => p.id === productId);
@@ -1513,8 +1533,8 @@
             }
 
             updateCartBadge();
-            closeShopModal();
-            alert('🎉 成功將商品加入購物車！');
+            // [功能 1 修改] 送出後不自動關閉視窗，留在商品欄位裡讓客人決定要繼續購買或按返回
+            alert('🎉 成功將商品加入購物車！您可以繼續選購其他規格或點擊返回。');
         }
 
         function updateCartBadge() {
@@ -1558,17 +1578,44 @@
             openCartModal();
         }
 
+        function toggleDeliveryAddressField() {
+            const deliveryType = document.getElementById('checkoutDeliveryType').value;
+            const addressInputGroup = document.getElementById('addressInputGroup');
+            const addressLabelText = document.getElementById('addressLabelText');
+            const storeInfoGroup = document.getElementById('storeInfoGroup');
+            const addressInput = document.getElementById('checkoutCustomerAddress');
+
+            if (deliveryType === '住家地址') {
+                addressInputGroup.style.display = 'block';
+                addressLabelText.textContent = '收件/配送地址';
+                addressInput.placeholder = '請輸入完整住家地址';
+                addressInput.required = true;
+                storeInfoGroup.style.display = 'none';
+            } else if (deliveryType.includes('便利商店')) {
+                addressInputGroup.style.display = 'none';
+                addressInput.required = false;
+                storeInfoGroup.style.display = 'block';
+            }
+        }
+
         function submitCheckoutOrder(e) {
             e.preventDefault();
             if (cart.length === 0) { alert('購物車無商品！'); return; }
             const customer = document.getElementById('checkoutCustomerName').value.trim();
             const phone = document.getElementById('checkoutCustomerPhone').value.trim();
-            const address = document.getElementById('checkoutCustomerAddress').value.trim();
+            const deliveryType = document.getElementById('checkoutDeliveryType').value;
+            let address = document.getElementById('checkoutCustomerAddress').value.trim();
+            const storeInfo = document.getElementById('checkoutStoreInfo').value.trim();
+            const paymentMethod = document.getElementById('checkoutPaymentMethod').value;
+
+            if (deliveryType.includes('便利商店')) {
+                address = `${deliveryType} - ${storeInfo}`;
+            }
 
             const total = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
             const newOrder = {
                 id: 'ORD' + Date.now(),
-                customer, phone, address,
+                customer, phone, address, deliveryType, paymentMethod,
                 items: [...cart],
                 total,
                 status: '處理中 (準備備貨中)',
@@ -1730,7 +1777,7 @@
         }
 
         // ==========================================
-        // 7. 會員中心彈跳視窗與功能 (手機號碼帳號)
+        // 7. 會員中心彈跳視窗與功能 (已修改功能2)
         // ==========================================
         function openAuthModal() {
             updateAuthModalUI();
@@ -1744,6 +1791,48 @@
         }
 
         function openOrderTrackModal() {
+            const contentBox = document.getElementById('orderTrackContentBox');
+            
+            // [功能 2 修改] 不需要填寫手機號碼，在登入帳號的情況下會自動顯示該帳號裡訂單與水電進度資訊
+            if (!currentUserPhone) {
+                contentBox.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <p style="color: #64748b; margin-bottom: 15px;">您目前尚未登入會員，請先登入帳號以自動查詢您的訂單與水電進度。</p>
+                        <button type="button" class="auth-submit-btn" onclick="closeOrderTrackModal(); openAuthModal();">前往登入會員</button>
+                    </div>
+                `;
+            } else {
+                contentBox.innerHTML = `<div style="text-align: center; color: #64748b; padding: 10px 0;">正在查詢帳號 (${currentUserPhone}) 的資料...</div>`;
+                
+                db.ref('shop_orders').orderByChild('phone').equalTo(currentUserPhone).once('value', snapshotOrders => {
+                    db.ref('shop_repairs').orderByChild('phone').equalTo(currentUserPhone).once('value', snapshotRepairs => {
+                        let html = `<div style="margin-bottom: 10px; font-size: 13px; color: #0066cc;"><strong>當前登入帳號：${currentUserPhone}</strong></div>`;
+                        const ordersVal = snapshotOrders.val();
+                        const repairsVal = snapshotRepairs.val();
+
+                        html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
+                        if (ordersVal) {
+                            Object.values(ordersVal).forEach(o => {
+                                html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
+                            });
+                        } else {
+                            html += `<div class="text-muted" style="font-size:12px;">無相關商城訂單。</div>`;
+                        }
+
+                        html += `<div style="margin-top:10px;"><strong>⚡ 水電預約記錄：</strong></div>`;
+                        if (repairsVal) {
+                            Object.values(repairsVal).forEach(r => {
+                                html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
+                            });
+                        } else {
+                            html += `<div class="text-muted" style="font-size:12px;">無相關水電預約。</div>`;
+                        }
+
+                        contentBox.innerHTML = html;
+                    });
+                });
+            }
+
             document.getElementById('orderTrackModalOverlay').classList.add('active');
         }
 
@@ -1751,44 +1840,6 @@
             if (!e || e.target.id === 'orderTrackModalOverlay' || e.target.classList.contains('auth-close-btn')) {
                 document.getElementById('orderTrackModalOverlay').classList.remove('active');
             }
-        }
-
-        function queryUserOrdersAndRepairs() {
-            const phone = document.getElementById('trackPhoneInput').value.trim();
-            const resultBox = document.getElementById('trackResultContainer');
-            if (!phone) {
-                alert('請輸入手機號碼！');
-                return;
-            }
-            resultBox.innerHTML = '查詢中...';
-
-            db.ref('shop_orders').orderByChild('phone').equalTo(phone).once('value', snapshotOrders => {
-                db.ref('shop_repairs').orderByChild('phone').equalTo(phone).once('value', snapshotRepairs => {
-                    let html = '';
-                    const ordersVal = snapshotOrders.val();
-                    const repairsVal = snapshotRepairs.val();
-
-                    html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
-                    if (ordersVal) {
-                        Object.values(ordersVal).forEach(o => {
-                            html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
-                        });
-                    } else {
-                        html += `<div class="text-muted" style="font-size:12px;">無相關商城訂單。</div>`;
-                    }
-
-                    html += `<div style="margin-top:10px;"><strong>⚡ 水電預約記錄：</strong></div>`;
-                    if (repairsVal) {
-                        Object.values(repairsVal).forEach(r => {
-                            html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
-                        });
-                    } else {
-                        html += `<div class="text-muted" style="font-size:12px;">無相關水電預約。</div>`;
-                    }
-
-                    resultBox.innerHTML = html;
-                });
-            });
         }
 
         function switchAuthTab(tabName) {
