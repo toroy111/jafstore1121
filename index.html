@@ -57,32 +57,48 @@
         /* 按鈕基本樣式 */
         .btn {
             display: inline-block;
-            padding: 10px 24px;
-            font-size: 15px;
+            padding: 12px 28px;
+            font-size: 16px;
             font-weight: bold;
             border-radius: 6px;
             text-decoration: none;
             cursor: pointer;
             border: none;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: all 0.2s;
         }
 
         .btn-primary {
-            background-color: #0066cc;
+            background-color: #0f172a;
             color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .btn-primary:hover {
-            background-color: #0052a3;
+            background-color: #1e293b;
+            transform: translateY(-2px);
         }
 
-        .btn-accent {
-            background-color: #e67e22;
+        /* 針對Banner特別強化的清晰高對比按鈕 */
+        .hero-btn-accent {
+            background-color: #c5a059; /* 尊榮金 */
             color: #ffffff;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .hero-btn-accent:hover {
+            background-color: #b08d48;
+            transform: translateY(-2px);
         }
 
-        .btn-accent:hover {
-            background-color: #d35400;
+        .hero-btn-primary {
+            background-color: rgba(15, 23, 42, 0.85); /* 半透明高質感深色 */
+            color: #ffffff;
+            border: 2px solid #c5a059; /* 金色邊框強化輪廓 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .hero-btn-primary:hover {
+            background-color: #0f172a;
+            transform: translateY(-2px);
         }
 
         .btn-danger {
@@ -106,31 +122,36 @@
            ========================================== */
         .hero-banner {
             position: relative;
-            height: 480px;
-            background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), 
-                        url('https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+            height: 520px;
+            background: linear-gradient(rgba(11, 15, 25, 0.75), rgba(11, 15, 25, 0.75)), 
+                        url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=80') center/cover no-repeat;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
             text-align: center;
+            border-bottom: 4px solid #c5a059;
         }
 
         .hero-content h1 {
-            font-size: 40px;
+            font-size: 42px;
             margin-bottom: 15px;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
 
         .hero-content p {
             font-size: 18px;
-            margin-bottom: 25px;
-            color: #e2e8f0;
+            margin-bottom: 30px;
+            color: #f1f5f9;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.6);
         }
 
         .hero-buttons {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             justify-content: center;
         }
 
@@ -164,15 +185,15 @@
         }
 
         .category-btn:hover {
-            border-color: #0066cc;
-            color: #0066cc;
+            border-color: #0f172a;
+            color: #0f172a;
         }
 
         .category-btn.active {
-            background-color: #0066cc;
+            background-color: #0f172a;
             color: #ffffff;
-            border-color: #0066cc;
-            box-shadow: 0 4px 10px rgba(0, 102, 204, 0.25);
+            border-color: #0f172a;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
         }
 
         .grid-4 {
@@ -227,8 +248,8 @@
 
         .product-category-tag {
             font-size: 12px;
-            color: #0066cc;
-            background-color: #e0f2fe;
+            color: #0f172a;
+            background-color: #e2e8f0;
             padding: 2px 8px;
             border-radius: 4px;
             align-self: flex-start;
@@ -251,13 +272,13 @@
 
         .product-price {
             font-size: 18px;
-            color: #e67e22;
+            color: #c5a059;
             font-weight: bold;
             margin-top: auto;
         }
 
         /* ==========================================
-           3-1. 仿蝦皮商品詳情彈跳視窗 (Modal)
+           3-1. 仿精品專櫃商品詳情彈跳視窗 (Modal)
            ========================================== */
         .shop-modal-overlay {
             position: fixed;
@@ -364,12 +385,12 @@
         }
 
         .thumbnail-img:hover {
-            border-color: #0066cc;
+            border-color: #0f172a;
         }
 
         .thumbnail-img.active {
-            border-color: #0066cc;
-            box-shadow: 0 0 5px rgba(0, 102, 204, 0.4);
+            border-color: #0f172a;
+            box-shadow: 0 0 5px rgba(15, 23, 42, 0.4);
         }
 
         .shop-modal-details {
@@ -386,7 +407,7 @@
 
         .modal-prod-price {
             font-size: 22px;
-            color: #e67e22;
+            color: #c5a059;
             font-weight: bold;
         }
 
@@ -396,7 +417,7 @@
             background: #f8fafc;
             padding: 12px;
             border-radius: 6px;
-            border-left: 4px solid #0066cc;
+            border-left: 4px solid #0f172a;
             line-height: 1.5;
         }
 
@@ -425,9 +446,9 @@
         }
 
         .spec-btn.active {
-            border-color: #0066cc;
-            color: #0066cc;
-            background: #e0f2fe;
+            border-color: #0f172a;
+            color: #0f172a;
+            background: #f1f5f9;
             font-weight: bold;
         }
 
@@ -540,8 +561,8 @@
 
         .service-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(0,102,204,0.15);
-            border-color: #0066cc;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.12);
+            border-color: #0f172a;
         }
 
         .service-card::after {
@@ -549,7 +570,7 @@
             display: block;
             margin-top: 15px;
             font-size: 12px;
-            color: #0066cc;
+            color: #0f172a;
             font-weight: bold;
         }
 
@@ -667,7 +688,7 @@
             font-size: 22px;
             color: #1e293b;
             margin-bottom: 15px;
-            border-bottom: 2px solid #0066cc;
+            border-bottom: 2px solid #0f172a;
             padding-bottom: 10px;
         }
 
@@ -758,7 +779,7 @@
         .time-section-title {
             font-size: 13px;
             font-weight: bold;
-            color: #0066cc;
+            color: #0f172a;
             margin: 8px 0 4px 0;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 2px;
@@ -810,15 +831,15 @@
         }
 
         .time-tag {
-            background-color: #e0f2fe;
-            color: #0369a1;
+            background-color: #e2e8f0;
+            color: #0f172a;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 13px;
             display: flex;
             align-items: center;
             gap: 8px;
-            border: 1px solid #bae6fd;
+            border: 1px solid #cbd5e1;
         }
 
         .time-tag .remove-btn {
@@ -884,7 +905,7 @@
             padding-top: 20px;
         }
 
-        /* 懸浮按鈕區 (依圖片由上至下排列：會員、包裹/進度、購物車) */
+        /* 懸浮按鈕區 (已升級為高亮雪白底色搭配深色時尚圖標，確保在任何背景上都清晰可見) */
         .floating-container {
             position: fixed;
             bottom: 30px;
@@ -898,22 +919,24 @@
         .floating-btn {
             width: 60px;
             height: 60px;
-            background-color: #0066cc;
-            color: #ffffff;
+            background-color: #ffffff; /* 亮白色底色，極為醒目 */
+            color: #0f172a;            /* 深色圖標 */
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); /* 強烈陰影以跳脫背景 */
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.2s;
+            transition: all 0.2s;
             font-size: 24px;
             position: relative;
-            border: none;
+            border: 2px solid #c5a059;   /* 金色精緻邊框 */
         }
 
         .floating-btn:hover {
-            transform: scale(1.08);
+            transform: scale(1.1);
+            background-color: #f8fafc;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.45);
         }
 
         .cart-badge {
@@ -976,7 +999,7 @@
             word-break: break-all;
         }
         .chat-bubble.customer {
-            background: #0066cc;
+            background: #0f172a;
             color: #fff;
             align-self: flex-end;
         }
@@ -1030,7 +1053,7 @@
             flex: 1; text-align: center; padding: 10px 4px; font-size: 13px;
             font-weight: bold; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent;
         }
-        .auth-tab.active { color: #0066cc; border-bottom-color: #0066cc; }
+        .auth-tab.active { color: #0f172a; border-bottom-color: #0f172a; }
         .auth-form-panel { display: none; }
         .auth-form-panel.active { display: block; }
         .auth-form-group { margin-bottom: 16px; }
@@ -1039,10 +1062,10 @@
             width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;
         }
         .auth-submit-btn {
-            width: 100%; padding: 12px; background-color: #0066cc; color: white;
+            width: 100%; padding: 12px; background-color: #0f172a; color: white;
             border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px;
         }
-        .auth-submit-btn:hover { background-color: #0052a3; }
+        .auth-submit-btn:hover { background-color: #1e293b; }
 
         @media (max-width: 768px) {
             .grid-3, .grid-4, .contact-grid { grid-template-columns: 1fr; }
@@ -1058,8 +1081,8 @@
             <h1>嚴選優質電商× 居家水電弱電工程服務</h1>
             <p>在地嚴選優質商品，提供安心好物選購；同步提供專業水電修繕服務</p>
             <div class="hero-buttons">
-                <a href="#shop" class="btn btn-accent">瀏覽商城商品</a>
-                <button type="button" class="btn btn-primary" onclick="toggleWaterElectric()">水電弱電需求填寫</button>
+                <a href="#shop" class="btn hero-btn-accent">瀏覽商城商品</a>
+                <button type="button" class="btn hero-btn-primary" onclick="toggleWaterElectric()">水電弱電需求填寫</button>
             </div>
         </div>
     </header>
@@ -1112,7 +1135,7 @@
             </div>
             <div class="shop-modal-footer">
                 <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeShopModal()">返回</button>
-                <button type="button" class="btn btn-accent" style="flex: 2;" onclick="confirmAddToCart()">加入購物車</button>
+                <button type="button" class="btn hero-btn-accent" style="flex: 2;" onclick="confirmAddToCart()">加入購物車</button>
             </div>
         </div>
     </div>
@@ -1279,7 +1302,7 @@
         </section>
     </div>
 
-    <!-- 懸浮快捷按鈕區 -->
+    <!-- 懸浮快捷按鈕區 (雪白高亮版) -->
     <div class="floating-container">
         <button type="button" class="floating-btn" onclick="toggleChatWidget()" title="聯繫後台管理者">
             💬
@@ -1532,7 +1555,6 @@
                 if (val) historyCases = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
             });
 
-            // 修正：將聊天監聽路徑改為與後台一致的 `chats/${activeChatUserId}`
             db.ref(`chats/${activeChatUserId}`).on('value', (snapshot) => {
                 const val = snapshot.val();
                 const body = document.getElementById('chatMessagesBody');
@@ -1948,7 +1970,6 @@
                 timestamp: Date.now()
             };
 
-            // 修正：將訊息推送到與後台一致的 `chats/${activeChatUserId}` 路徑
             db.ref(`chats/${activeChatUserId}`).push(messageData).then(() => {
                 input.value = '';
             });
@@ -1987,7 +2008,7 @@
 
                     db.ref('shop_orders').once('value', snapshotOrders => {
                         db.ref('shop_repairs').once('value', snapshotRepairs => {
-                            let html = `<div style="margin-bottom: 10px; font-size: 13px; color: #0066cc;"><strong>當前登入帳號：${currentUserEmail}</strong></div>`;
+                            let html = `<div style="margin-bottom: 10px; font-size: 13px; color: #0f172a;"><strong>當前登入帳號：${currentUserEmail}</strong></div>`;
                             
                             html += `<div style="margin-top:10px;"><strong>📦 商城訂單記錄：</strong></div>`;
                             let foundOrder = false;
@@ -1995,7 +2016,7 @@
                                 Object.values(snapshotOrders.val()).forEach(o => {
                                     if (o.phone === userPhone || o.customerEmail === currentUserEmail) {
                                         foundOrder = true;
-                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0066cc; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
+                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">訂單編號: ${o.id}<br>狀態: <span style="color:#0f172a; font-weight:bold;">${o.status}</span><br>金額: $${o.total}</div>`;
                                     }
                                 });
                             }
@@ -2007,7 +2028,7 @@
                                 Object.values(snapshotRepairs.val()).forEach(r => {
                                     if (r.phone === userPhone) {
                                         foundRepair = true;
-                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#e67e22; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
+                                        html += `<div style="background:#f8fafc; padding:8px; margin:4px 0; border-radius:4px; border:1px solid #cbd5e1;">項目: ${r.category}<br>狀態: <span style="color:#c5a059; font-weight:bold;">${r.status}</span><br>預約時段: ${r.times}</div>`;
                                     }
                                 });
                             }
