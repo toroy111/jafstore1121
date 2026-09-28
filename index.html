@@ -1115,6 +1115,7 @@
                 <div class="shop-modal-details">
                     <div class="modal-prod-title" id="modalProdNameName">商品名稱</div>
                     <div class="modal-prod-price" id="modalProdPrice">NT$ 0</div>
+                    <div class="product-sales" id="modalProdSales" style="font-size: 13px; color: #64748b;">已售出 0 件</div>
                     
                     <div class="modal-prod-desc" id="modalProdDesc">這裡會顯示商品的詳細介紹內容...</div>
 
@@ -1489,6 +1490,7 @@
         let products = [];
         let services = [];
         let historyCases = [];
+        let orderSalesMap = {}; // 用來記錄各商品後台訂單實際售出數量
         let currentCategory = 'all';
         let cart = [];
         let selectedProductForModal = null;
@@ -1504,13 +1506,35 @@
         const activeChatUserId = currentUserEmail ? currentUserEmail.replace(/[^a-zA-Z0-9]/g, '_') : currentChatVisitorId;
 
         // ==========================================
-        // 3. 資料監聽與初始化載入
+        // 3. 資料監聽與初始化載入 (整合後台訂單銷售量連動)
         // ==========================================
         function initFrontendListeners() {
             db.ref('shop_categories').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) categories = Array.isArray(val) ? val : Object.values(val);
                 renderCategoryTabs();
+            });
+
+            // 即時監聽後台訂單，計算各商品的實際已售出總數
+            db.ref('shop_orders').on('value', (snapshot) => {
+                orderSalesMap = {};
+                const val = snapshot.val();
+                if (val) {
+                    const orders = Array.isArray(val) ? val.filter(Boolean) : Object.values(val);
+                    orders.forEach(order => {
+                        if (order.items && Array.isArray(order.items)) {
+                            order.items.forEach(item => {
+                                const pId = item.id;
+                                const qty = parseInt(item.qty) || 0;
+                                if (!orderSalesMap[pId]) {
+                                    orderSalesMap[pId] = 0;
+                                }
+                                orderSalesMap[pId] += qty;
+                            });
+                        }
+                    });
+                }
+                renderProductGrid(currentCategory);
             });
 
             db.ref('shop_products').on('value', (snapshot) => {
@@ -1578,7 +1602,7 @@
         });
 
         // ==========================================
-        // 4. 商城分類與商品列表渲染
+        // 4. 商城分類與商品列表渲染 (動態帶入已售出數量)
         // ==========================================
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
@@ -1611,14 +1635,17 @@
             grid.innerHTML = '';
             list.forEach(p => {
                 const cover = (p.images && p.images.length > 0) ? p.images[0] : (p.img || '');
+                // 優先計算後台實際訂單售出量，若無則顯示商品預設或0
+                const totalSales = (orderSalesMap[p.id] !== undefined) ? orderSalesMap[p.id] : (p.sales || 0);
+                
                 grid.innerHTML += `
                     <div class="product-card" onclick="openShopModal(${p.id})">
-                        <span class="hot-badge">熱銷 ${p.sales || 100}</span>
+                        <span class="hot-badge">熱銷 ${totalSales}</span>
                         <img src="${cover}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         <div class="product-info">
                             <span class="product-category-tag">${p.category}</span>
                             <div class="product-title">${p.name}</div>
-                            <div class="product-sales">已售出 ${p.sales || 100} 件</div>
+                            <div class="product-sales">已售出 ${totalSales} 件</div>
                             <div class="product-price">NT$ ${p.price}</div>
                         </div>
                     </div>
@@ -1636,6 +1663,11 @@
             document.getElementById('modalProdTitle').textContent = prod.name;
             document.getElementById('modalProdNameName').textContent = prod.name;
             document.getElementById('modalProdPrice').textContent = `NT$ ${prod.price}`;
+            
+            // 動態帶入彈跳視窗內的已售出數量
+            const totalSales = (orderSalesMap[prod.id] !== undefined) ? orderSalesMap[prod.id] : (prod.sales || 0);
+            document.getElementById('modalProdSales').textContent = `已售出 ${totalSales} 件`;
+
             document.getElementById('modalProdDesc').textContent = prod.description || '暫無詳細說明。';
             document.getElementById('modalQtyInput').value = 1;
 
@@ -1797,7 +1829,7 @@
             };
 
             db.ref('shop_orders').push(newOrder).then(() => {
-                alert('🎉 訂單已成功送出！');
+                alert('🎉 訂單已成功送出！售出數量將自動更新於前台。');
                 cart = [];
                 updateCartBadge();
                 closeCartModal();
