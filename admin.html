@@ -37,7 +37,6 @@
         .login-card { width: 400px; border-radius: 16px; background: #ffffff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); overflow: hidden; }
         .floating-logout { position: fixed; bottom: 25px; right: 25px; z-index: 1050; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-radius: 30px; padding: 10px 20px; font-weight: bold; }
         
-        /* 即時聊天樣式 */
         .chat-user-list { max-height: 500px; overflow-y: auto; }
         .chat-user-item { cursor: pointer; transition: background 0.2s; }
         .chat-user-item:hover, .chat-user-item.active { background-color: #e9ecef; }
@@ -145,7 +144,7 @@
                                 <th>所屬類別</th>
                                 <th>價格</th>
                                 <th>規格/款式與價格</th>
-                                <th>銷量</th>
+                                <th>銷量 (自動累計)</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -226,7 +225,7 @@
 
                 <div class="card mb-4 shadow-sm border-warning">
                     <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-clock-rotate-left me-2"></i>尚未完成的訂單</span>
+                        <span><i class="fa-solid fa-clock-rotate-left me-2"></i>尚未完成的訂單 (點擊「完成計數」可自動連動商品銷量)</span>
                         <span class="badge bg-dark" id="pendingOrdersCountBadge">0</span>
                     </div>
                     <div class="table-responsive p-2 mb-0">
@@ -294,7 +293,6 @@
                 </div>
             </div>
 
-            <!-- 即時客服聊天管理分頁 -->
             <div class="tab-pane fade" id="chatManagement" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h2><i class="fa-solid fa-comments me-2 text-primary"></i>顧客即時客服諮詢回覆</h2>
@@ -360,7 +358,7 @@
 
 <div class="modal fade" id="orderStatusSettingModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title fw-bold">管理訂單狀態選項</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="input-group mb-3"><input type="text" class="form-control" id="newOrderStatusInput" placeholder="輸入新的訂單狀態..."><button class="btn btn-success" type="button" onclick="addNewOrderStatus()">新增狀態</button></div><hr><ul class="list-group" id="orderStatusListGroup"></ul></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
 
-<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productForm"><input type="hidden" id="prodEditId"><div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div><div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div><div class="col-md-3"><label class="form-label fw-bold">初始銷量</label><input type="number" class="form-control" id="prodSales" value="100" min="0"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-primary">商品規格 / 款式與價格</label><div class="row g-2 mb-2"><div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div><div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div></div><div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">商品多圖輪播設定</label><div class="input-group mb-2"><input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)"><button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button></div><div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">商品內容介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button></div></div></div></div>
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productForm"><input type="hidden" id="prodEditId"><div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div><div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div><div class="col-md-3"><label class="form-label fw-bold">初始銷量 (預設0)</label><input type="number" class="form-control" id="prodSales" value="0" min="0"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-primary">商品規格 / 款式與價格</label><div class="row g-2 mb-2"><div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div><div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div></div><div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">商品多圖輪播設定</label><div class="input-group mb-2"><input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)"><button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button></div><div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">商品內容介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button></div></div></div></div>
 
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-secondary text-white"><h5 class="modal-title fw-bold">管理商品類別</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="input-group mb-3"><input type="text" class="form-control" id="newCategoryName" placeholder="輸入新類別名稱..."><button class="btn btn-success" type="button" onclick="addCategory()">新增類別</button></div><hr><ul class="list-group" id="categoryListGroup"></ul></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
 
@@ -382,14 +380,14 @@
 
     const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
     const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
-    const defaultProducts = [{ id: 1, name: "招牌手作烘焙麵包", category: "烘焙與茶飲", price: 120, sales: 350, specs: [{ name: "標準規格", price: 120 }], img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80", images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"], description: "嚴選優質小麥與天然酵母手作烘焙。" }];
+    const defaultProducts = [{ id: 1, name: "招牌手作烘焙麵包", category: "烘焙與茶飲", price: 120, sales: 0, specs: [{ name: "標準規格", price: 120 }], img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80", images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"], description: "嚴選優質小麥與天然酵母手作烘焙。" }];
 
     let currentAdminCategory = 'all';
     let currentEditingSpecs = [];
     let currentEditingImages = []; 
     let currentEditingHistoryMedia = [];
-    let selectedChatUser = null; // 當前選取的聊天用戶
-    let allUsersInfoCache = {}; // 緩存所有會員資料以供對照姓名/電話
+    let selectedChatUser = null; 
+    let allUsersInfoCache = {}; 
 
     let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
@@ -447,7 +445,6 @@
             renderAdminPasswordResets();
         });
 
-        // 即時監聽會員資料庫，支援自動 ID 與各種 Key 值的深度比對
         db.ref('shop_users').on('value', (snapshot) => {
             const val = snapshot.val() || {};
             allUsersInfoCache = val;
@@ -457,15 +454,11 @@
             }
         });
 
-        // 全域監聽 chats 根路徑以隨時更新側邊欄的未讀紅點計數與列表
         db.ref('chats').on('value', (snapshot) => {
             loadChatUsersList();
         });
     }
 
-    // ==========================================
-    // 後台即時聊天室管理功能：自動對應前台實際登入會員與訪客的聊天內容（含姓名同步）
-    // ==========================================
     function loadChatUsersList() {
         db.ref('chats').once('value').then((snapshot) => {
             const val = snapshot.val() || {};
@@ -493,7 +486,6 @@
                 });
                 totalUnreadCount += unreadCount;
 
-                // 智慧深度對應：支援直接 Key 匹配以及透過 email/phone 屬性匹配自動產生的 Push ID 節點
                 let displayName = '';
                 let displayPhone = '';
                 let accountLabel = userId;
@@ -505,7 +497,6 @@
                 } else {
                     for (let key in allUsersInfoCache) {
                         const uInfo = allUsersInfoCache[key];
-                        // 檢查 email、phone 或 key 是否與當前聊天 userId 相符
                         const cleanUserId = userId.replace(/[@._]/g, '').toLowerCase();
                         const cleanEmail = (uInfo.email || '').replace(/[@._]/g, '').toLowerCase();
                         if (
@@ -523,7 +514,6 @@
 
                 let finalTitleHtml = '';
                 if (displayName) {
-                    // 要求格式：會員帳號後面接名字，再接信箱在下方
                     finalTitleHtml = `<i class="fa-solid fa-user-check me-1 text-success"></i><strong>會員帳號：${displayName}</strong><br><small class="text-muted">${accountLabel}</small>`;
                     if (displayPhone) {
                         finalTitleHtml += `<br><small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${displayPhone}</small>`;
@@ -559,7 +549,6 @@
     function selectChatUser(userId) {
         selectedChatUser = userId;
         
-        let titleLabel = `與 訪客 (${userId}) 對話中`;
         let matchedName = '';
         let matchedPhone = '';
 
@@ -585,17 +574,9 @@
             }
         }
 
-        if (matchedName) {
-            titleLabel = `與 顧客：${matchedName} (${userId}) ${matchedPhone ? ' - 電話：' + matchedPhone : ''} 對話中`;
-        } else if (userId.startsWith('訪客_')) {
-            titleLabel = `與 訪客 (${userId}) 對話中`;
-        } else {
-            titleLabel = `與 登入會員 (${userId}) 對話中`;
-        }
-
+        let titleLabel = matchedName ? `與 顧客：${matchedName} (${userId}) ${matchedPhone ? ' - 電話：' + matchedPhone : ''} 對話中` : (userId.startsWith('訪客_') ? `與 訪客 (${userId}) 對話中` : `與 登入會員 (${userId}) 對話中`);
         document.getElementById('activeChatUserTitle').textContent = titleLabel;
 
-        // 點選聊天對象時將該使用者的訊息全部標記為已讀
         db.ref(`chats/${userId}`).once('value').then((snapshot) => {
             const msgs = snapshot.val() || {};
             let updates = {};
@@ -611,7 +592,6 @@
 
         loadChatUsersList();
 
-        // 監聽特定使用者的即時對話訊息
         db.ref(`chats/${userId}`).on('value', (snapshot) => {
             const messages = snapshot.val() || {};
             const box = document.getElementById('adminChatMessagesBox');
@@ -657,7 +637,6 @@
         input.value = '';
     }
 
-    // 其他輔助函式
     function getStoredCategories() { return dbCache.categories; }
     function saveStoredCategories(cats) { db.ref('shop_categories').set(cats); }
     function getStoredOrderStatuses() { return dbCache.order_statuses; }
@@ -699,9 +678,6 @@
         initFirebaseListeners();
     });
 
-    // ==========================================
-    // 5. 畫面渲染與互動邏輯
-    // ==========================================
     function renderAdminServicesTable() {
         const services = getStoredServices();
         const tbody = document.getElementById('adminServiceTableBody');
@@ -936,7 +912,7 @@
                     <td><span class="badge bg-info text-dark">${prod.category}</span></td>
                     <td class="text-success fw-bold">$${prod.price}</td>
                     <td>${specsHtml}</td>
-                    <td>${prod.sales}</td>
+                    <td><span class="badge bg-success">${prod.sales || 0} 件</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1" onclick="openProductModal(${prod.id})"><i class="fa-solid fa-pen"></i> 編輯</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${prod.id})"><i class="fa-solid fa-trash"></i> 刪除</button>
@@ -1125,21 +1101,24 @@
         }
     }
 
+    // 🔥 核心修復：後台確認訂單完成後，自動將各商品銷售數量累加至商品銷量
     function completeOrderAndCount(orderId) {
         let orders = dbCache.orders;
         let products = getStoredProducts();
         const ord = orders.find(o => o.id === orderId);
         if (!ord || ord.status.includes('已完成')) return;
 
-        if (confirm(`確定將訂單 ${orderId} 標記為完成並自動增加商品銷量？`)) {
+        if (confirm(`確定將訂單 ${orderId} 標記為完成並自動累加商品熱銷銷量？`)) {
             ord.items.forEach(item => {
                 const p = products.find(prod => prod.id === item.id);
-                if (p) p.sales = (p.sales || 0) + item.qty;
+                if (p) {
+                    p.sales = (p.sales || 0) + item.qty;
+                }
             });
             ord.status = "✅ 已完成";
             db.ref('shop_orders').set(orders);
             saveStoredProducts(products);
-            alert('🎉 訂單完成並已成功累加熱銷銷量！');
+            alert('🎉 訂單已完成，並成功連動累加前台商品的熱銷數量！');
         }
     }
 
@@ -1159,14 +1138,14 @@
                 document.getElementById('prodName').value = prod.name;
                 document.getElementById('prodCategory').value = prod.category;
                 document.getElementById('prodPrice').value = prod.price;
-                document.getElementById('prodSales').value = prod.sales;
+                document.getElementById('prodSales').value = prod.sales || 0;
                 document.getElementById('prodDescription').value = prod.description || '';
                 currentEditingSpecs = prod.specs ? [...prod.specs] : [];
                 currentEditingImages = prod.images ? [...prod.images] : [prod.img];
             }
         } else {
             document.getElementById('productModalTitle').textContent = '新增商品';
-            document.getElementById('prodSales').value = 100;
+            document.getElementById('prodSales').value = 0; // 🔥 改為預設 0，取消隨便亂報數字
             currentEditingImages = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
         }
         renderSpecsContainer();
@@ -1298,9 +1277,6 @@
         }
     }
 
-    // ==========================================
-    // 6. 忘記密碼申請與發信管理模組
-    // ==========================================
     function renderAdminPasswordResets() {
         const tbody = document.getElementById('passwordResetTableBody');
         if(!tbody) return;
@@ -1326,14 +1302,10 @@
     }
 
     function sendPasswordResetEmailToCustomer(resetId, targetEmail) {
-        if (!targetEmail) {
-            alert('❌ 找不到客人的聯絡帳號或信箱！');
-            return;
-        }
+        if (!targetEmail) { alert('❌ 找不到客人的聯絡帳號或信箱！'); return; }
 
         if (confirm(`確定要發送重設密碼驗證信到 ${targetEmail} 嗎？`)) {
             const verifyCode = Math.floor(100000 + Math.random() * 900000);
-
             let resets = dbCache.password_resets || [];
             const idx = resets.findIndex(r => r.id === resetId);
             if (idx > -1) {
