@@ -1281,7 +1281,8 @@
                         <!-- 支援自動輪播的名片展示區塊 -->
                         <div class="business-card-showcase">
                             <div class="business-card-title">📇 聯絡名片 (點擊可切換下一張)</div>
-                            <img id="rotatingBusinessCard" src="1.png" alt="師傅名片" onclick="nextBusinessCard()" title="點擊可手動切換下一張" onerror="this.src='2.png'">
+                            <!-- 修正：預設 src 改對應第一張名片，onerror 確保找不到時有備用圖 -->
+                            <img id="rotatingBusinessCard" src="1.png" alt="師傅名片" onclick="nextBusinessCard()" title="點擊可手動切換下一張" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         </div>
                     </div>
 
@@ -1536,10 +1537,10 @@
         let selectedTimesArray = [];
         let currentUserEmail = localStorage.getItem('currentUserEmail') || null;
 
-        // 名片自動輪播設定：使用您的兩張名片圖片
+        // 名片自動輪播設定：確保對應正確的圖片檔名 (例如 "1.png" 與 "2.png"，或您實際上傳的檔名)
         const businessCards = [
-            "1_2.png",
-            "2_2.png"
+            "1.png",
+            "2.png"
         ];
         let currentCardIndex = 0;
 
