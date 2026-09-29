@@ -1934,7 +1934,7 @@
             grid.innerHTML = '';
             services.forEach(s => {
                 grid.innerHTML += `
-                    <div class="service-card" onclick="openCaseModal(${s.id})">
+                    <div class="service-card" onclick="openCaseModal('${s.id}')">
                         <div class="service-icon"><i class="${s.icon || 'fa-solid fa-tools'}">🛠️</i></div>
                         <h3>${s.name}</h3>
                         <p>${s.description || ''}</p>
@@ -1954,13 +1954,14 @@
         }
 
         function openCaseModal(serviceId) {
-            const service = services.find(s => s.id === serviceId);
+            const service = services.find(s => s.id == serviceId);
             if (!service) return;
 
             document.getElementById('caseModalTitle').textContent = `${service.name} - 施工成果藝廊`;
             const body = document.getElementById('caseModalBodyContainer');
             
-            const matchedCases = historyCases.filter(c => c.serviceId == serviceId || c.category === service.name);
+            // 修正：同時比對服務 ID (字串/數字) 以及分類名稱，確保照片能順利讀取顯示
+            const matchedCases = historyCases.filter(c => String(c.serviceId) === String(serviceId) || c.category === service.name);
 
             if (matchedCases.length === 0) {
                 body.innerHTML = `
