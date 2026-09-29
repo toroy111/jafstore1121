@@ -1189,7 +1189,7 @@
                         <input type="text" id="checkoutCustomerName" required placeholder="請輸入姓名">
                     </div>
                     <div class="checkout-form-group">
-                        <label>聯絡電話</label>
+                        <label>聯絡電話 (手機)</label>
                         <input type="tel" id="checkoutCustomerPhone" required placeholder="請輸入聯絡電話">
                     </div>
                     <div class="checkout-form-group">
@@ -1291,7 +1291,7 @@
                         <form onsubmit="submitRepairConsultation(event)">
                             <div class="form-row">
                                 <input type="text" id="repairName" placeholder="您的姓名" required>
-                                <input type="tel" id="repairPhone" placeholder="聯絡電話" required>
+                                <input type="tel" id="repairPhone" placeholder="聯絡電話 (手機)" required>
                             </div>
                             <select id="repairCategory" required>
                                 <option value="" disabled selected>請選擇水電諮詢項目</option>
@@ -1388,7 +1388,7 @@
         </div>
     </div>
 
-    <!-- 會員登入/註冊/忘記密碼/會員中心 Modal -->
+    <!-- 會員登入/註冊/忘記密碼/會員中心 Modal (改用手機號碼作為帳號識別) -->
     <div class="auth-modal-overlay" id="authModalOverlay" onclick="closeAuthModal(event)">
         <div class="auth-modal" onclick="event.stopPropagation()">
             <div class="auth-modal-header">
@@ -1404,11 +1404,11 @@
                     </div>
                 </div>
 
-                <!-- 1. 會員登入表單 -->
+                <!-- 1. 會員登入表單 (改用手機號碼) -->
                 <form id="loginFormPanel" class="auth-form-panel active" onsubmit="handleUserLogin(event)">
                     <div class="auth-form-group">
-                        <label>信箱帳號 (登入使用)</label>
-                        <input type="email" id="loginEmail" required placeholder="請輸入註冊信箱">
+                        <label>手機號碼 (登入帳號)</label>
+                        <input type="tel" id="loginPhone" required placeholder="請輸入註冊的手機號碼">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1417,19 +1417,19 @@
                     <button type="submit" class="auth-submit-btn">立即登入</button>
                 </form>
 
-                <!-- 2. 註冊帳號表單 -->
+                <!-- 2. 註冊帳號表單 (改用手機號碼為主) -->
                 <form id="registerFormPanel" class="auth-form-panel" onsubmit="handleUserRegister(event)">
                     <div class="auth-form-group">
                         <label>名字</label>
                         <input type="text" id="regName" required placeholder="請輸入您的名字">
                     </div>
                     <div class="auth-form-group">
-                        <label>手機號碼</label>
+                        <label>手機號碼 (作為登入與聯絡使用)</label>
                         <input type="tel" id="regPhone" required placeholder="請輸入手機號碼">
                     </div>
                     <div class="auth-form-group">
-                        <label>信箱帳號 (作為登入使用)</label>
-                        <input type="email" id="regEmail" required placeholder="請輸入信箱帳號">
+                        <label>電子信箱 (選填)</label>
+                        <input type="email" id="regEmail" placeholder="請輸入信箱 (選填)">
                     </div>
                     <div class="auth-form-group">
                         <label>密碼</label>
@@ -1441,17 +1441,17 @@
                 <!-- 3. 忘記密碼申請表單 -->
                 <form id="forgotFormPanel" class="auth-form-panel" onsubmit="handleUserForgot(event)">
                     <div class="auth-form-group">
-                        <label>註冊時的手機號碼或信箱</label>
-                        <input type="text" id="forgotInput" required placeholder="輸入手機號碼或信箱">
+                        <label>註冊時的手機號碼</label>
+                        <input type="tel" id="forgotInput" required placeholder="輸入手機號碼">
                     </div>
-                    <button type="submit" class="auth-submit-btn">送出密碼重新申請</button>
+                    <button type="submit" class="auth-submit-btn">送出驗證碼申請</button>
                 </form>
 
                 <!-- 3-1. 輸入驗證碼與更改密碼介面 -->
                 <form id="forgotVerifyPanel" class="auth-form-panel" onsubmit="handleVerifyAndResetPass(event)">
                     <div class="auth-form-group">
                         <label>請輸入驗證碼</label>
-                        <input type="text" id="forgotCode" required placeholder="請輸入驗證碼">
+                        <input type="text" id="forgotCode" required placeholder="請輸入驗證碼 (預設: 1234)">
                     </div>
                     <div class="auth-form-group">
                         <label>要更改的新密碼</label>
@@ -1468,12 +1468,12 @@
                             <input type="text" id="editName" required>
                         </div>
                         <div class="auth-form-group">
-                            <label>編輯手機號碼</label>
-                            <input type="tel" id="editPhone" required>
+                            <label>編輯手機號碼 (登入帳號)</label>
+                            <input type="tel" id="editPhone" required disabled style="background:#f1f5f9;">
                         </div>
                         <div class="auth-form-group">
-                            <label>編輯信箱 (登入帳號)</label>
-                            <input type="email" id="editEmail" required disabled style="background:#f1f5f9;">
+                            <label>編輯信箱</label>
+                            <input type="email" id="editEmail">
                         </div>
                         <div class="auth-form-group">
                             <label>更改密碼 (若不修改請保持空白)</label>
@@ -1524,7 +1524,7 @@
         const db = firebase.database();
 
         // ==========================================
-        // 2. 前台全域狀態與變數
+        // 2. 前台全域狀態與變數 (改以手機號碼作為用戶識別)
         // ==========================================
         let categories = ["烘焙與茶飲", "生活用品", "水電五金"];
         let products = [];
@@ -1536,9 +1536,9 @@
         let selectedProductForModal = null;
         let selectedSpecForModal = null;
         let selectedTimesArray = [];
-        let currentUserEmail = localStorage.getItem('currentUserEmail') || null;
+        let currentUserPhone = localStorage.getItem('currentUserPhone') || null;
 
-        // 名片自動輪播設定：確保對應正確的圖片檔名 (例如 "1.png" 與 "2.png")
+        // 名片自動輪播設定
         const businessCards = [
             "1.png",
             "2.png"
@@ -1552,8 +1552,6 @@
                 cardImg.src = businessCards[currentCardIndex];
             }
         }
-
-        // 啟動每隔 3 秒自動切換名片
         setInterval(nextBusinessCard, 3000);
 
         let currentChatVisitorId = localStorage.getItem('currentChatVisitorId');
@@ -1561,7 +1559,7 @@
             currentChatVisitorId = '訪客_' + Math.floor(1000 + Math.random() * 9000);
             localStorage.setItem('currentChatVisitorId', currentChatVisitorId);
         }
-        const activeChatUserId = currentUserEmail ? currentUserEmail.replace(/[^a-zA-Z0-9]/g, '_') : currentChatVisitorId;
+        const activeChatUserId = currentUserPhone ? currentUserPhone.replace(/[^a-zA-Z0-9]/g, '_') : currentChatVisitorId;
 
         // ==========================================
         // 3. 資料監聽與初始化載入
@@ -1806,7 +1804,7 @@
             const cartItem = {
                 id: selectedProductForModal.id,
                 name: selectedProductForModal.name,
-                spec: selectedSpecForModal ? selectedSpecForModal.spec : '標準規格',
+                spec: selectedSpecForModal ? selectedSpecForModal.name : '標準規格',
                 price: selectedSpecForModal ? selectedSpecForModal.price : selectedProductForModal.price,
                 qty: qty
             };
@@ -2119,7 +2117,7 @@
         }
 
         function openAuthModal() {
-            if (currentUserEmail) {
+            if (currentUserPhone) {
                 loadUserProfileData();
             } else {
                 switchAuthTab('login');
@@ -2154,12 +2152,12 @@
 
         function handleUserLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
+            const phone = document.getElementById('loginPhone').value.trim();
             const pass = document.getElementById('loginPass').value;
 
-            db.ref('shop_users').orderByChild('email').equalTo(email).once('value').then(snapshot => {
+            db.ref('shop_users').orderByChild('phone').equalTo(phone).once('value').then(snapshot => {
                 if (!snapshot.exists()) {
-                    alert('查無此信箱帳號，請先註冊！');
+                    alert('查無此手機號碼帳號，請先註冊！');
                     return;
                 }
                 let userData = null;
@@ -2172,8 +2170,8 @@
                     return;
                 }
 
-                currentUserEmail = email;
-                localStorage.setItem('currentUserEmail', email);
+                currentUserPhone = phone;
+                localStorage.setItem('currentUserPhone', phone);
                 alert('🎉 登入成功！');
                 document.getElementById('authModalOverlay').classList.remove('active');
                 location.reload();
@@ -2187,9 +2185,9 @@
             const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPass').value;
 
-            db.ref('shop_users').orderByChild('email').equalTo(email).once('value').then(snapshot => {
+            db.ref('shop_users').orderByChild('phone').equalTo(phone).once('value').then(snapshot => {
                 if (snapshot.exists()) {
-                    alert('此信箱已經被註冊過了！');
+                    alert('此手機號碼已經被註冊過了！');
                     return;
                 }
 
@@ -2213,7 +2211,7 @@
         function handleUserForgot(e) {
             e.preventDefault();
             const inputVal = document.getElementById('forgotInput').value.trim();
-            alert('系統已發送驗證碼（模擬：驗證碼為 1234）');
+            alert('系統已發送驗證碼到您的手機（模擬：驗證碼為 1234）');
             document.getElementById('forgotFormPanel').classList.remove('active');
             document.getElementById('forgotVerifyPanel').classList.add('active');
             window.tempForgotInput = inputVal;
@@ -2238,13 +2236,13 @@
                 let foundKey = null;
                 snapshot.forEach(child => {
                     const u = child.val();
-                    if (u.email === target || u.phone === target) {
+                    if (u.phone === target) {
                         foundKey = child.key;
                     }
                 });
 
                 if (!foundKey) {
-                    alert('找不到對應的使用者帳號！');
+                    alert('找不到對應的手機號碼帳號！');
                     return;
                 }
 
@@ -2262,7 +2260,7 @@
             document.getElementById('loggedInInfoPanel').classList.add('active');
             document.getElementById('authModalTitle').textContent = '會員中心與編輯';
 
-            db.ref('shop_users').orderByChild('email').equalTo(currentUserEmail).once('value').then(snapshot => {
+            db.ref('shop_users').orderByChild('phone').equalTo(currentUserPhone).once('value').then(snapshot => {
                 if (snapshot.exists()) {
                     snapshot.forEach(child => {
                         const u = child.val();
@@ -2278,10 +2276,10 @@
         function handleUpdateProfile(e) {
             e.preventDefault();
             const name = document.getElementById('editName').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
             const pass = document.getElementById('editPass').value;
 
-            const updates = { name, phone };
+            const updates = { name, email };
             if (pass) {
                 updates.password = pass;
             }
@@ -2295,8 +2293,8 @@
         }
 
         function handleUserLogout() {
-            localStorage.removeItem('currentUserEmail');
-            currentUserEmail = null;
+            localStorage.removeItem('currentUserPhone');
+            currentUserPhone = null;
             alert('已成功登出帳號！');
             location.reload();
         }
