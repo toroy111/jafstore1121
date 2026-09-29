@@ -1509,11 +1509,20 @@
         // 3. 資料監聽與初始化載入 (整合後台訂單銷售量連動)
         // ==========================================
         function initFrontendListeners() {
-            db.ref('shop_categories').on('value', (snapshot) => {
-                const val = snapshot.val();
-                if (val) categories = Array.isArray(val) ? val : Object.values(val);
-                renderCategoryTabs();
-            });
+            // 修改後的強固寫法
+db.ref('shop_categories').on('value', (snapshot) => {
+    const val = snapshot.val();
+    if (val) {
+        if (Array.isArray(val)) {
+            // 如果是陣列，過濾掉空值，並確保裡面如果是物件時能取出 name 屬性
+            categories = val.filter(Boolean).map(item => typeof item === 'object' ? item.name : item);
+        } else {
+            // 如果是 Firebase 物件結構 (例如帶有 0, 1... 鍵值)，轉成陣列並取出 name
+            categories = Object.values(val).filter(Boolean).map(item => typeof item === 'object' ? item.name : item);
+        }
+    }
+    renderCategoryTabs();
+});
 
             // 即時監聽後台訂單，計算各商品的實際已售出總數
             db.ref('shop_orders').on('value', (snapshot) => {
@@ -1602,7 +1611,7 @@
         });
 
         // ==========================================
-        // 4. 商城分類與商品列表渲染 (動態帶入已售出數量)
+        // 4. 商城分類與商品列表渲染 (動態帶入已售出數量與即時圖片)
         // ==========================================
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
@@ -1634,8 +1643,8 @@
 
             grid.innerHTML = '';
             list.forEach(p => {
-                const cover = (p.images && p.images.length > 0) ? p.images[0] : (p.img || '');
-                // 優先計算後台實際訂單售出量，若無則顯示商品預設或0
+                // 修正圖片取得邏輯：優先檢查 images 陣列的第一張，若無則取 img 屬性，確保後台更新圖示後能即時渲染
+                const cover = (p.images && Array.isArray(p.images) && p.images.length > 0 && p.images[0]) ? p.images[0] : (p.img || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80');
                 const totalSales = (orderSalesMap[p.id] !== undefined) ? orderSalesMap[p.id] : (p.sales || 0);
                 
                 grid.innerHTML += `
@@ -1643,7 +1652,7 @@
                         <span class="hot-badge">熱銷 ${totalSales}</span>
                         <img src="${cover}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         <div class="product-info">
-                            <span class="product-category-tag">${p.category}</span>
+                            <span class="product-category-tag">${p.category || '未分類'}</span>
                             <div class="product-title">${p.name}</div>
                             <div class="product-sales">已售出 ${totalSales} 件</div>
                             <div class="product-price">NT$ ${p.price}</div>
@@ -1664,14 +1673,24 @@
             document.getElementById('modalProdNameName').textContent = prod.name;
             document.getElementById('modalProdPrice').textContent = `NT$ ${prod.price}`;
             
-            // 動態帶入彈跳視窗內的已售出數量
             const totalSales = (orderSalesMap[prod.id] !== undefined) ? orderSalesMap[prod.id] : (prod.sales || 0);
             document.getElementById('modalProdSales').textContent = `已售出 ${totalSales} 件`;
 
             document.getElementById('modalProdDesc').textContent = prod.description || '暫無詳細說明。';
             document.getElementById('modalQtyInput').value = 1;
 
-            const imgs = (prod.images && prod.images.length > 0) ? prod.images : [prod.img];
+            // 修正彈跳視窗圖示/多圖輪播讀取
+            let imgs = [];
+            if (prod.images && Array.isArray(prod.images) && prod.images.length > 0) {
+                imgs = prod.images.filter(Boolean);
+            }
+            if (imgs.length === 0 && prod.img) {
+                imgs = [prod.img];
+            }
+            if (imgs.length === 0) {
+                imgs = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+            }
+
             document.getElementById('modalProdImg').src = imgs[0];
 
             const thumbContainer = document.getElementById('modalThumbnailsContainer');
@@ -1682,7 +1701,7 @@
 
             const specContainer = document.getElementById('modalSpecOptionsContainer');
             specContainer.innerHTML = '';
-            if (prod.specs && prod.specs.length > 0) {
+            if (prod.specs && Array.isArray(prod.specs) && prod.specs.length > 0) {
                 selectedSpecForModal = prod.specs[0];
                 prod.specs.forEach((s, idx) => {
                     specContainer.innerHTML += `<button type="button" class="spec-btn ${idx === 0 ? 'active' : ''}" onclick="selectModalSpec('${s.name}', ${s.price}, this)">${s.name} ($${s.price})</button>`;
@@ -1698,7 +1717,7 @@
         function changeModalMainImage(url, el) {
             document.getElementById('modalProdImg').src = url;
             document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('active'));
-            el.classList.add('active');
+            if (el) el.classList.add('active');
         }
 
         function selectModalSpec(name, price, el) {
@@ -1727,8 +1746,8 @@
             const cartItem = {
                 id: selectedProductForModal.id,
                 name: selectedProductForModal.name,
-                spec: selectedSpecForModal.name,
-                price: selectedSpecForModal.price,
+                spec: selectedSpecForModal ? selectedSpecForModal.name : '標準規格',
+                price: selectedSpecForModal ? selectedSpecForModal.price : selectedProductForModal.price,
                 qty: qty
             };
 
@@ -1856,7 +1875,7 @@
             services.forEach(s => {
                 grid.innerHTML += `
                     <div class="service-card" onclick="openCaseModal('${s.name}')">
-                        <div class="service-icon"><i class="${s.icon} text-primary"></i></div>
+                        <div class="service-icon"><i class="${s.icon || 'fa-solid fa-wrench'} text-primary"></i></div>
                         <h3>${s.name}</h3>
                         <p>${s.description}</p>
                     </div>
@@ -1885,7 +1904,7 @@
                 container.innerHTML = '';
                 matchedCases.forEach(c => {
                     let mediaHtml = '';
-                    if (c.media && c.media.length > 0) {
+                    if (c.media && Array.isArray(c.media) && c.media.length > 0) {
                         c.media.forEach(url => {
                             const isVid = url.startsWith('data:video') || url.includes('.mp4');
                             mediaHtml += isVid ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
