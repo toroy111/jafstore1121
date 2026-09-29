@@ -1509,20 +1509,17 @@
         // 3. 資料監聽與初始化載入 (整合後台訂單銷售量連動)
         // ==========================================
         function initFrontendListeners() {
-            // 修改後的強固寫法
-db.ref('shop_categories').on('value', (snapshot) => {
-    const val = snapshot.val();
-    if (val) {
-        if (Array.isArray(val)) {
-            // 如果是陣列，過濾掉空值，並確保裡面如果是物件時能取出 name 屬性
-            categories = val.filter(Boolean).map(item => typeof item === 'object' ? item.name : item);
-        } else {
-            // 如果是 Firebase 物件結構 (例如帶有 0, 1... 鍵值)，轉成陣列並取出 name
-            categories = Object.values(val).filter(Boolean).map(item => typeof item === 'object' ? item.name : item);
-        }
-    }
-    renderCategoryTabs();
-});
+            // 監聽並解析分類（支援字串或物件格式，並確保圖案能正確帶入）
+            db.ref('shop_categories').on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                    const parsedList = normalizeCategories(val);
+                    if (parsedList.length > 0) {
+                        categories = parsedList;
+                    }
+                }
+                renderCategoryTabs();
+            });
 
             // 即時監聽後台訂單，計算各商品的實際已售出總數
             db.ref('shop_orders').on('value', (snapshot) => {
@@ -1613,12 +1610,28 @@ db.ref('shop_categories').on('value', (snapshot) => {
         // ==========================================
         // 4. 商城分類與商品列表渲染 (動態帶入已售出數量與即時圖片)
         // ==========================================
+        function normalizeCategories(data) {
+            if (!data) return [];
+            const list = Array.isArray(data) ? data : Object.values(data);
+            return list.filter(Boolean).map(item => {
+                if (typeof item === 'string') {
+                    return { name: item, icon: "🛠️" };
+                }
+                return { name: item.name || '', icon: item.icon || "🛠️" };
+            });
+        }
+
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
             if (!container) return;
+            
+            // 確保 categories 中的每個元素皆為物件或字串，相容新舊結構
             let html = `<button type="button" class="category-btn ${currentCategory === 'all' ? 'active' : ''}" onclick="filterCategory('all', this)">🔥 全部商品</button>`;
+            
             categories.forEach(cat => {
-                html += `<button type="button" class="category-btn ${currentCategory === cat ? 'active' : ''}" onclick="filterCategory('${cat}', this)">🛠️ ${cat}</button>`;
+                const catName = typeof cat === 'object' ? cat.name : cat;
+                const catIcon = typeof cat === 'object' ? (cat.icon || '🛠️') : '🛠️';
+                html += `<button type="button" class="category-btn ${currentCategory === catName ? 'active' : ''}" onclick="filterCategory('${catName}', this)">${catIcon} ${catName}</button>`;
             });
             container.innerHTML = html;
         }
