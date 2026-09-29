@@ -360,7 +360,6 @@
 
 <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productForm"><input type="hidden" id="prodEditId"><div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div><div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div><div class="col-md-3"><label class="form-label fw-bold">初始銷量 (預設0)</label><input type="number" class="form-control" id="prodSales" value="0" min="0"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-primary">商品規格 / 款式與價格</label><div class="row g-2 mb-2"><div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div><div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div></div><div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">商品多圖輪播設定</label><div class="input-group mb-2"><input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)"><button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button></div><div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">商品內容介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button></div></div></div></div>
 
-<!-- 🛠️ 修改：增強版「管理商品類別」彈窗 (可編輯與位子移動) -->
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -406,7 +405,6 @@
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    // 🛠️ 預設類別結構升級為包含名稱與圖示符號
     const defaultCategories = [
         { name: "烘焙與茶飲", icon: "🛠️" },
         { name: "生活用品", icon: "🛠️" },
@@ -424,7 +422,6 @@
 
     let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
-    // 相容性正規化：將原本舊格式（純字串）轉為物件 { name, icon }
     function normalizeCategories(data) {
         if (!data) return defaultCategories;
         const list = Array.isArray(data) ? data : Object.values(data);
@@ -815,14 +812,25 @@
             return;
         }
         cases.forEach(item => {
-            const cover = (item.media && item.media.length > 0) ? item.media[0] : '';
+            // 🛠️ 修正：確保能相容陣列、單一字串或多媒體格式，並正確取得預覽封面
+            let cover = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80';
+            if (Array.isArray(item.media) && item.media.length > 0) {
+                cover = item.media[0];
+            } else if (typeof item.media === 'string' && item.media.trim() !== '') {
+                cover = item.media;
+            } else if (item.img) {
+                cover = item.img;
+            }
+
+            const mediaCount = Array.isArray(item.media) ? item.media.length : (item.media ? 1 : 0);
+
             tbody.innerHTML += `
                 <tr>
                     <td><img src="${cover}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'"></td>
                     <td><strong>${item.title}</strong></td>
                     <td><span class="badge bg-primary">${item.category}</span></td>
-                    <td><span class="badge bg-secondary">${item.media ? item.media.length : 0} 個檔案</span></td>
-                    <td><small class="text-muted text-truncate-2" style="max-width:250px; display:inline-block;">${item.description}</small></td>
+                    <td><span class="badge bg-secondary">${mediaCount} 個檔案</span></td>
+                    <td><small class="text-muted text-truncate-2" style="max-width:250px; display:inline-block;">${item.description || ''}</small></td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1" onclick="openHistoryModal(${item.id})"><i class="fa-solid fa-pen"></i> 編輯</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteHistoryCase(${item.id})"><i class="fa-solid fa-trash"></i> 刪除</button>
@@ -847,11 +855,20 @@
                 document.getElementById('historyTitle').value = c.title;
                 document.getElementById('historyCategory').value = c.category;
                 document.getElementById('historyDesc').value = c.description || '';
-                currentEditingHistoryMedia = c.media ? [...c.media] : [];
+                
+                if (Array.isArray(c.media)) {
+                    currentEditingHistoryMedia = [...c.media];
+                } else if (typeof c.media === 'string' && c.media.trim() !== '') {
+                    currentEditingHistoryMedia = [c.media];
+                } else if (c.img) {
+                    currentEditingHistoryMedia = [c.img];
+                } else {
+                    currentEditingHistoryMedia = [];
+                }
             }
         } else {
             document.getElementById('historyModalTitle').textContent = '新增歷史施工成果';
-            currentEditingHistoryMedia = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+            currentEditingHistoryMedia = [];
         }
         renderHistoryMediaPreview();
         modal.show();
@@ -898,7 +915,14 @@
         if (!title) { alert('請填寫案件標題！'); return; }
 
         let cases = getStoredHistoryCases();
-        const data = { id: editId ? parseInt(editId) : Date.now(), title, category, media: currentEditingHistoryMedia, description };
+        const data = { 
+            id: editId ? parseInt(editId) : Date.now(), 
+            title, 
+            category, 
+            media: currentEditingHistoryMedia, 
+            img: currentEditingHistoryMedia.length > 0 ? currentEditingHistoryMedia[0] : '', // 同步兼容 img 欄位供前台讀取
+            description 
+        };
         if (editId) {
             const idx = cases.findIndex(x => x.id === parseInt(editId));
             if (idx > -1) cases[idx] = data;
@@ -918,326 +942,136 @@
         }
     }
 
-    // 🛠️ 修改：渲染頁面頂部的類別頁籤（顯示使用者設定的圖示符號）
     function renderAdminCategoryTabs() {
         const container = document.getElementById('adminCategoryTabsContainer');
         if(!container) return;
-        let html = `<button type="button" class="admin-cat-btn ${currentAdminCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all', this)">🔥 全部商品</button>`;
+        container.innerHTML = `<button class="admin-cat-btn ${currentAdminCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all')">全部分類</button>`;
         getStoredCategories().forEach(cat => {
-            html += `<button type="button" class="admin-cat-btn ${currentAdminCategory === cat.name ? 'active' : ''}" onclick="filterAdminCategory('${cat.name}', this)">${cat.icon || '🛠️'} ${cat.name}</button>`;
+            const isActive = currentAdminCategory === cat.name ? 'active' : '';
+            container.innerHTML += `<button class="admin-cat-btn ${isActive}" onclick="filterAdminCategory('${cat.name}')">${cat.icon || '🛠️'} ${cat.name}</button>`;
         });
-        container.innerHTML = html;
     }
 
-    function filterAdminCategory(categoryName, btnElement) {
-        currentAdminCategory = categoryName;
-        document.querySelectorAll('.admin-cat-btn').forEach(btn => btn.classList.remove('active'));
-        if(btnElement) btnElement.classList.add('active');
-        renderAdminProducts(categoryName);
-    }
-
-    function renderAdminProducts(category = currentAdminCategory) {
-        let products = getStoredProducts();
-        const tbody = document.getElementById('adminProductTableBody');
-        if(!tbody) return;
-        tbody.innerHTML = '';
-        if (category !== 'all') products = products.filter(p => p.category === category);
-
-        if (products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">此類別目前尚無商品！</td></tr>`;
-            return;
-        }
-
-        products.forEach(prod => {
-            const specsHtml = (prod.specs && prod.specs.length > 0) ? prod.specs.map(s => `<span class="badge bg-secondary me-1">${s.name} ($${s.price})</span>`).join('') : '<span class="text-muted small">無特殊規格</span>';
-            const coverImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
-            tbody.innerHTML += `
-                <tr>
-                    <td><img src="${coverImg}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'"></td>
-                    <td><strong>${prod.name}</strong></td>
-                    <td><span class="badge bg-info text-dark">${prod.category}</span></td>
-                    <td class="text-success fw-bold">$${prod.price}</td>
-                    <td>${specsHtml}</td>
-                    <td><span class="badge bg-success">${prod.sales || 0} 件</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openProductModal(${prod.id})"><i class="fa-solid fa-pen"></i> 編輯</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${prod.id})"><i class="fa-solid fa-trash"></i> 刪除</button>
-                    </td>
-                </tr>
-            `;
-        });
+    function filterAdminCategory(catName) {
+        currentAdminCategory = catName;
+        renderAdminCategoryTabs();
+        renderAdminProducts(catName);
     }
 
     function updateCategorySelectOptions() {
         const select = document.getElementById('prodCategory');
         if (!select) return;
         select.innerHTML = '';
-        getStoredCategories().forEach(cat => { select.innerHTML += `<option value="${cat.name}">${cat.icon || ''} ${cat.name}</option>`; });
+        getStoredCategories().forEach(c => { select.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+        renderCategoryListModal();
     }
 
-    const categoryModalElement = document.getElementById('categoryModal');
-    if (categoryModalElement) {
-        categoryModalElement.addEventListener('show.bs.modal', function () { renderCategoryListGroup(); });
-    }
-
-    // 🛠️ 修改：重新渲染「管理商品類別」彈窗清單（包含編輯與前後移動按鈕）
-    function renderCategoryListGroup() {
+    function renderCategoryListModal() {
         const listGroup = document.getElementById('categoryListGroup');
-        if(!listGroup) return;
+        if (!listGroup) return;
         listGroup.innerHTML = '';
-        const categories = getStoredCategories();
-
-        if(categories.length === 0) {
-            listGroup.innerHTML = `<li class="list-group-item text-center text-muted">目前尚無類別，請新增！</li>`;
+        const cats = getStoredCategories();
+        if (cats.length === 0) {
+            listGroup.innerHTML = `<li class="list-group-item text-center text-muted">目前尚無分類</li>`;
             return;
         }
-
-        categories.forEach((cat, index) => {
-            listGroup.innerHTML += `
-                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
-                    <div class="d-flex align-items-center gap-2" style="max-width: 55%;">
-                        <span class="fs-5">${cat.icon || '🛠️'}</span>
-                        <span class="fw-bold text-dark text-truncate">${cat.name}</span>
+        cats.forEach((cat, index) => {
+            listGroup.innerHTML = `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="text" class="form-control form-control-sm" style="width: 60px;" value="${cat.icon || '🛠️'}" id="catIcon_${index}">
+                        <input type="text" class="form-control form-control-sm" style="width: 150px;" value="${cat.name}" id="catName_${index}">
                     </div>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary" onclick="moveCategory(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="向上移動">⬆️</button>
-                        <button class="btn btn-outline-secondary" onclick="moveCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled' : ''} title="向下移動">⬇️</button>
-                        <button class="btn btn-outline-primary" onclick="editCategory(${index})" title="編輯類別"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-outline-danger" onclick="deleteCategory(${index})" title="刪除類別"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-outline-primary" onclick="moveCategory(${index}, -1)" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-arrow-up"></i></button>
+                        <button class="btn btn-outline-primary" onclick="moveCategory(${index}, 1)" ${index === cats.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-arrow-down"></i></button>
+                        <button class="btn btn-success" onclick="updateCategoryItem(${index})"><i class="fa-solid fa-check"></i></button>
+                        <button class="btn btn-outline-danger" onclick="deleteCategory(${index})"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </li>
             `;
         });
     }
 
-    // 🛠️ 修改：新增商品類別 (包含圖示與名稱)
     function addCategory() {
         const nameInput = document.getElementById('newCategoryName');
         const iconInput = document.getElementById('newCategoryIcon');
         const name = nameInput.value.trim();
         const icon = iconInput.value.trim() || '🛠️';
-
         if (!name) { alert('請輸入類別名稱！'); return; }
-        let categories = getStoredCategories();
-        if (categories.some(c => c.name === name)) { alert('該類別名稱已存在！'); return; }
-        
-        categories.push({ name, icon });
-        saveStoredCategories(categories);
+        let cats = getStoredCategories();
+        if (cats.some(c => c.name === name)) { alert('該類別名稱已存在！'); return; }
+        cats.push({ name, icon });
+        saveStoredCategories(cats);
         nameInput.value = '';
-        iconInput.value = '🛠️';
-        renderCategoryListGroup();
-        renderAdminCategoryTabs();
-        updateCategorySelectOptions();
-        renderAdminProducts(currentAdminCategory);
+        alert('🎉 新增類別成功！');
     }
 
-    // 🛠️ 新增：編輯/修改類別名稱與符號
-    function editCategory(index) {
-        let categories = getStoredCategories();
-        const cat = categories[index];
-        const newName = prompt('請輸入新的類別名稱：', cat.name);
-        if (newName === null) return; // 使用者取消
-        const trimmedName = newName.trim();
-        if (!trimmedName) { alert('類別名稱不能為空！'); return; }
-
-        const newIcon = prompt('請輸入類別前面的圖示符號 (如 🛠️, ☕, 🥐)：', cat.icon || '🛠️');
-        
-        // 更新商品原本關聯的舊類別名稱
-        const oldName = cat.name;
-        cat.name = trimmedName;
-        cat.icon = (newIcon !== null && newIcon.trim()) ? newIcon.trim() : (cat.icon || '🛠️');
-
-        if (oldName !== trimmedName) {
-            let products = getStoredProducts();
-            products.forEach(p => {
-                if (p.category === oldName) p.category = trimmedName;
-            });
-            saveStoredProducts(products);
-        }
-
-        saveStoredCategories(categories);
-        renderCategoryListGroup();
-        renderAdminCategoryTabs();
-        updateCategorySelectOptions();
-        renderAdminProducts(currentAdminCategory);
+    function updateCategoryItem(index) {
+        let cats = getStoredCategories();
+        const newName = document.getElementById(`catName_${index}`).value.trim();
+        const newIcon = document.getElementById(`catIcon_${index}`).value.trim() || '🛠️';
+        if (!newName) { alert('類別名稱不能為空！'); return; }
+        cats[index] = { name: newName, icon: newIcon };
+        saveStoredCategories(cats);
+        alert('🎉 類別更新成功！');
     }
 
-    // 🛠️ 新增：移動類別位置順序 (dir: -1 為往上, 1 為往下)
-    function moveCategory(index, dir) {
-        let categories = getStoredCategories();
-        const targetIndex = index + dir;
-        if (targetIndex < 0 || targetIndex >= categories.length) return;
-
-        // 調換陣列元素位置
-        const temp = categories[index];
-        categories[index] = categories[targetIndex];
-        categories[targetIndex] = temp;
-
-        saveStoredCategories(categories);
-        renderCategoryListGroup();
-        renderAdminCategoryTabs();
-        updateCategorySelectOptions();
+    function moveCategory(index, direction) {
+        let cats = getStoredCategories();
+        const targetIndex = index + direction;
+        if (targetIndex < 0 || targetIndex >= cats.length) return;
+        const temp = cats[index];
+        cats[index] = cats[targetIndex];
+        cats[targetIndex] = temp;
+        saveStoredCategories(cats);
     }
 
     function deleteCategory(index) {
-        let categories = getStoredCategories();
-        if (categories.length <= 1) { alert('至少保留一個商品類別！'); return; }
+        let cats = getStoredCategories();
+        if (cats.length <= 1) { alert('至少需要保留一個類別！'); return; }
         if (confirm('確定要刪除這個類別嗎？')) {
-            categories.splice(index, 1);
-            saveStoredCategories(categories);
-            renderCategoryListGroup();
-            renderAdminCategoryTabs();
-            updateCategorySelectOptions();
-            renderAdminProducts('all');
+            cats.splice(index, 1);
+            saveStoredCategories(cats);
         }
     }
 
-    const orderStatusModalElement = document.getElementById('orderStatusSettingModal');
-    if (orderStatusModalElement) {
-        orderStatusModalElement.addEventListener('show.bs.modal', function () { renderOrderStatusListGroup(); });
-    }
-
-    function renderOrderStatusListGroup() {
-        const listGroup = document.getElementById('orderStatusListGroup');
-        if(!listGroup) return;
-        listGroup.innerHTML = '';
-        getStoredOrderStatuses().forEach((st, index) => {
-            listGroup.innerHTML += `
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${st}</span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrderStatus(${index})"><i class="fa-solid fa-xmark"></i></button>
-                </li>
-            `;
-        });
-    }
-
-    function addNewOrderStatus() {
-        const input = document.getElementById('newOrderStatusInput');
-        const name = input.value.trim();
-        if (!name) return;
-        let statuses = getStoredOrderStatuses();
-        if (statuses.includes(name)) { alert('已存在！'); return; }
-        statuses.push(name);
-        saveStoredOrderStatuses(statuses);
-        input.value = '';
-        renderOrderStatusListGroup();
-        renderAdminOrders();
-    }
-
-    function deleteOrderStatus(index) {
-        let statuses = getStoredOrderStatuses();
-        if (statuses.length <= 1) { alert('至少保留一個！'); return; }
-        if (confirm('確定刪除此狀態選項？')) {
-            statuses.splice(index, 1);
-            saveStoredOrderStatuses(statuses);
-            renderOrderStatusListGroup();
-            renderAdminOrders();
-        }
-    }
-
-    function renderAdminOrders() {
-        const pendingTbody = document.getElementById('pendingOrderTableBody');
-        const completedTbody = document.getElementById('completedOrderTableBody');
-        if(!pendingTbody || !completedTbody) return;
-
-        const orders = dbCache.orders;
-        const statuses = getStoredOrderStatuses();
-        
-        document.getElementById('totalOrdersCount').textContent = orders.length;
-        let totalAmount = orders.reduce((sum, ord) => sum + (ord.total || 0), 0);
-        document.getElementById('totalSalesAmount').textContent = `$${totalAmount}`;
-
-        pendingTbody.innerHTML = '';
-        completedTbody.innerHTML = '';
-        let pendingCount = 0, completedCount = 0;
-
-        if (orders.length === 0) {
-            pendingTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無訂單！</td></tr>`;
-            completedTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無已完成訂單！</td></tr>`;
+    function renderAdminProducts(filterCat = 'all') {
+        const prods = getStoredProducts();
+        const tbody = document.getElementById('adminProductTableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        const filtered = filterCat === 'all' ? prods : prods.filter(p => p.category === filterCat);
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無商品記錄！</td></tr>`;
             return;
         }
-
-        orders.forEach(ord => {
-            const isCompleted = ord.status && (ord.status.includes('已完成') || ord.status.includes('已完工'));
-            if (isCompleted) completedCount++; else pendingCount++;
-
-            let statusSelectHtml = `<select class="form-select form-select-sm" onchange="updateOrderStatus('${ord.id}', this.value)">`;
-            statuses.forEach(st => {
-                statusSelectHtml += `<option value="${st}" ${ord.status === st ? 'selected' : ''}>${st}</option>`;
-            });
-            statusSelectHtml += `</select>`;
-
-            let rowHtml = `
+        filtered.forEach(p => {
+            const cover = (p.images && p.images.length > 0) ? p.images[0] : (p.img || '');
+            let specsHtml = '';
+            if (p.specs && p.specs.length > 0) {
+                specsHtml = p.specs.map(s => `<span class="badge bg-light text-dark border me-1">${s.name}: $${s.price}</span>`).join('');
+            } else {
+                specsHtml = `<span class="text-muted">無特殊規格</span>`;
+            }
+            tbody.innerHTML += `
                 <tr>
-                    <td><strong>${ord.id}</strong></td>
-                    <td>${ord.customer}<br><small class="text-muted">${ord.phone}</small></td>
-                    <td>共 ${ord.items.length} 項 <button class="btn btn-sm btn-outline-info py-0 px-1" onclick="openOrderDetailModal('${ord.id}')">明細</button></td>
-                    <td class="text-success fw-bold">$${ord.total}</td>
-                    <td><small>${ord.date}</small></td>
-                    <td>${statusSelectHtml}</td>
+                    <td><img src="${cover}" class="admin-prod-img" onerror="this.src='https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=200&q=80'"></td>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="badge bg-secondary">${p.category}</span></td>
+                    <td>$${p.price}</td>
+                    <td>${specsHtml}</td>
+                    <td><span class="badge bg-success">${p.sales || 0}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-success w-100 mb-1" ${isCompleted ? 'disabled' : `onclick="completeOrderAndCount('${ord.id}')"`}>${isCompleted ? '已計數' : '完成計數'}</button>
-                        <button class="btn btn-sm btn-outline-danger w-100" onclick="deleteOrder('${ord.id}')">刪除</button>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openProductModal(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `;
-            if (isCompleted) completedTbody.innerHTML += rowHtml; else pendingTbody.innerHTML += rowHtml;
         });
-        document.getElementById('pendingOrdersCountBadge').textContent = pendingCount;
-        document.getElementById('completedOrdersCountBadge').textContent = completedCount;
     }
 
-    function openOrderDetailModal(orderId) {
-        const ord = dbCache.orders.find(o => o.id === orderId);
-        if (!ord) return;
-        document.getElementById('orderDetailModalBody').innerHTML = `
-            <p><strong>編號：</strong>${ord.id}</p>
-            <p><strong>收件人：</strong>${ord.customer} (${ord.phone})</p>
-            <p><strong>地址：</strong>${ord.address}</p>
-            <hr>
-            <ul>${ord.items.map(i => `<li>${i.name} (${i.spec}) × ${i.qty} =$${i.price * i.qty}</li>`).join('')}</ul>
-            <h5 class="text-end text-success mt-3">總計：$${ord.total}</h5>
-        `;
-        new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
-    }
-
-    function deleteOrder(orderId) {
-        if (confirm('確定刪除訂單？')) {
-            let orders = dbCache.orders.filter(o => o.id !== orderId);
-            db.ref('shop_orders').set(orders);
-        }
-    }
-
-    function updateOrderStatus(orderId, newStatus) {
-        let orders = dbCache.orders;
-        const idx = orders.findIndex(o => o.id === orderId);
-        if (idx > -1) {
-            orders[idx].status = newStatus;
-            db.ref('shop_orders').set(orders);
-        }
-    }
-
-    function completeOrderAndCount(orderId) {
-        let orders = dbCache.orders;
-        let products = getStoredProducts();
-        const ord = orders.find(o => o.id === orderId);
-        if (!ord || ord.status.includes('已完成')) return;
-
-        if (confirm(`確定將訂單 ${orderId} 標記為完成並自動累加商品熱銷銷量？`)) {
-            ord.items.forEach(item => {
-                const p = products.find(prod => prod.id === item.id);
-                if (p) {
-                    p.sales = (p.sales || 0) + item.qty;
-                }
-            });
-            ord.status = "✅ 已完成";
-            db.ref('shop_orders').set(orders);
-            saveStoredProducts(products);
-            alert('🎉 訂單已完成，並成功連動累加前台商品的熱銷數量！');
-        }
-    }
-
-    function openProductModal(productId = null) {
+    function openProductModal(id = null) {
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
         document.getElementById('productForm').reset();
         document.getElementById('prodEditId').value = '';
@@ -1245,23 +1079,23 @@
         currentEditingImages = [];
         updateCategorySelectOptions();
 
-        if (productId) {
+        if (id) {
             document.getElementById('productModalTitle').textContent = '編輯商品';
-            const prod = getStoredProducts().find(p => p.id === productId);
-            if (prod) {
-                document.getElementById('prodEditId').value = prod.id;
-                document.getElementById('prodName').value = prod.name;
-                document.getElementById('prodCategory').value = prod.category;
-                document.getElementById('prodPrice').value = prod.price;
-                document.getElementById('prodSales').value = prod.sales || 0;
-                document.getElementById('prodDescription').value = prod.description || '';
-                currentEditingSpecs = prod.specs ? [...prod.specs] : [];
-                currentEditingImages = prod.images ? [...prod.images] : [prod.img];
+            const p = getStoredProducts().find(x => x.id === id);
+            if (p) {
+                document.getElementById('prodEditId').value = p.id;
+                document.getElementById('prodName').value = p.name;
+                document.getElementById('prodCategory').value = p.category;
+                document.getElementById('prodPrice').value = p.price;
+                document.getElementById('prodSales').value = p.sales || 0;
+                document.getElementById('prodDescription').value = p.description || '';
+                currentEditingSpecs = p.specs ? [...p.specs] : [{ name: '標準規格', price: p.price }];
+                currentEditingImages = p.images ? [...p.images] : (p.img ? [p.img] : []);
             }
         } else {
             document.getElementById('productModalTitle').textContent = '新增商品';
-            document.getElementById('prodSales').value = 0;
-            currentEditingImages = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
+            currentEditingSpecs = [{ name: '標準規格', price: 0 }];
+            currentEditingImages = ['https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80'];
         }
         renderSpecsContainer();
         renderImagePreviewContainer();
@@ -1269,32 +1103,42 @@
     }
 
     function addSpecOption() {
-        const name = document.getElementById('newSpecNameInput').value.trim();
-        const price = parseInt(document.getElementById('newSpecPriceInput').value);
-        if (!name || isNaN(price)) { alert('請填寫規格與價格！'); return; }
+        const nameInput = document.getElementById('newSpecNameInput');
+        const priceInput = document.getElementById('newSpecPriceInput');
+        const name = nameInput.value.trim();
+        const price = parseInt(priceInput.value);
+        if (!name || isNaN(price)) { alert('請填寫完整的規格名稱與價格！'); return; }
         currentEditingSpecs.push({ name, price });
-        document.getElementById('newSpecNameInput').value = '';
-        document.getElementById('newSpecPriceInput').value = '';
+        nameInput.value = '';
+        priceInput.value = '';
         renderSpecsContainer();
     }
 
-    function removeSpecOption(index) { currentEditingSpecs.splice(index, 1); renderSpecsContainer(); }
+    function removeSpecOption(index) {
+        currentEditingSpecs.splice(index, 1);
+        renderSpecsContainer();
+    }
 
     function renderSpecsContainer() {
         const container = document.getElementById('specsContainer');
         if(!container) return;
-        container.innerHTML = currentEditingSpecs.length === 0 ? '<span class="text-muted small">尚未新增特殊規格</span>' : '';
-        currentEditingSpecs.forEach((spec, index) => {
-            container.innerHTML += `<span class="badge bg-primary p-2 d-flex align-items-center gap-2">${spec.name} ($${spec.price}) <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="removeSpecOption(${index})"></i></span>`;
+        container.innerHTML = '';
+        currentEditingSpecs.forEach((s, idx) => {
+            container.innerHTML += `
+                <div class="badge bg-light text-dark border p-2 d-flex align-items-center gap-2">
+                    <span>${s.name} ($${s.price})</span>
+                    <button type="button" class="btn-close" style="font-size:0.6rem;" onclick="removeSpecOption(${idx})"></button>
+                </div>
+            `;
         });
     }
 
-    function handleImageFiles(event) {
-        const files = event.target.files;
+    function handleImageFiles(e) {
+        const files = e.target.files;
         for (let i = 0; i < files.length; i++) {
             const reader = new FileReader();
-            reader.onload = function(e) {
-                currentEditingImages.push(e.target.result);
+            reader.onload = function(evt) {
+                currentEditingImages.push(evt.target.result);
                 renderImagePreviewContainer();
             };
             reader.readAsDataURL(files[i]);
@@ -1303,21 +1147,27 @@
 
     function addImgUrlInput() {
         const url = prompt('請輸入圖片網址 (URL)：');
-        if (url && url.trim()) { currentEditingImages.push(url.trim()); renderImagePreviewContainer(); }
+        if (url && url.trim() !== '') {
+            currentEditingImages.push(url.trim());
+            renderImagePreviewContainer();
+        }
     }
 
-    function removeImageItem(index) { currentEditingImages.splice(index, 1); renderImagePreviewContainer(); }
+    function removeImage(index) {
+        currentEditingImages.splice(index, 1);
+        renderImagePreviewContainer();
+    }
 
     function renderImagePreviewContainer() {
         const container = document.getElementById('imagePreviewContainer');
         if(!container) return;
         container.innerHTML = '';
-        currentEditingImages.forEach((imgUrl, index) => {
+        currentEditingImages.forEach((url, idx) => {
             container.innerHTML += `
                 <div class="preview-thumb-box">
-                    <img src="${imgUrl}" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80'">
-                    <button type="button" class="btn btn-danger btn-remove-thumb" onclick="removeImageItem(${index})"><i class="fa-solid fa-xmark"></i></button>
-                    ${index === 0 ? '<span class="badge bg-success position-absolute bottom-0 start-0 w-100" style="font-size:0.55rem;">封面</span>' : ''}
+                    <img src="${url}">
+                    <button type="button" class="btn btn-danger btn-remove-thumb" onclick="removeImage(${idx})"><i class="fa-solid fa-xmark"></i></button>
+                    ${idx === 0 ? '<span class="badge bg-success position-absolute bottom-0 start-0 w-100" style="font-size:0.55rem;">封面</span>' : ''}
                 </div>
             `;
         });
@@ -1328,107 +1178,306 @@
         const name = document.getElementById('prodName').value.trim();
         const category = document.getElementById('prodCategory').value;
         const price = parseInt(document.getElementById('prodPrice').value);
-        if (!name || isNaN(price)) { alert('請填寫商品名稱與價格！'); return; }
+        const sales = parseInt(document.getElementById('prodSales').value) || 0;
+        const description = document.getElementById('prodDescription').value.trim();
 
-        let products = getStoredProducts();
-        const productData = {
+        if (!name || isNaN(price)) { alert('請填寫商品名稱與預設價格！'); return; }
+        if (currentEditingSpecs.length === 0) { currentEditingSpecs = [{ name: '標準規格', price: price }]; }
+        if (currentEditingImages.length === 0) { currentEditingImages = ['https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80']; }
+
+        let prods = getStoredProducts();
+        const data = {
             id: editId ? parseInt(editId) : Date.now(),
             name,
             category,
             price,
-            sales: parseInt(document.getElementById('prodSales').value) || 0,
+            sales,
             specs: currentEditingSpecs,
             img: currentEditingImages[0],
             images: currentEditingImages,
-            description: document.getElementById('prodDescription').value.trim()
+            description
         };
 
         if (editId) {
-            const index = products.findIndex(p => p.id === parseInt(editId));
-            if (index > -1) products[index] = productData;
+            const idx = prods.findIndex(x => x.id === parseInt(editId));
+            if (idx > -1) prods[idx] = data;
         } else {
-            products.unshift(productData);
+            prods.unshift(data);
         }
-
-        saveStoredProducts(products);
+        saveStoredProducts(prods);
         bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-        alert('商品儲存成功！');
+        renderAdminProducts(currentAdminCategory);
+        alert('🎉 商品儲存成功！');
     }
 
     function deleteProduct(id) {
-        if (confirm('確定刪除商品？')) {
-            saveStoredProducts(getStoredProducts().filter(p => p.id !== id));
+        if (confirm('確定要刪除這項商品嗎？')) {
+            saveStoredProducts(getStoredProducts().filter(x => x.id !== id));
+            renderAdminProducts(currentAdminCategory);
         }
     }
 
-    function renderAdminRepairs() {
-        const tbody = document.getElementById('repairTableBody');
-        if(!tbody) return;
-        const repairs = dbCache.repairs;
-        tbody.innerHTML = repairs.length === 0 ? `<tr><td colspan="8" class="text-center text-muted py-4">目前尚無預約諮詢記錄！</td></tr>` : '';
-        repairs.forEach(rep => {
-            tbody.innerHTML += `
+    function renderAdminOrders() {
+        const orders = dbCache.orders;
+        const statuses = getStoredOrderStatuses();
+        let totalCount = orders.length;
+        let totalAmount = 0;
+        let pendingCount = 0;
+        let completedCount = 0;
+
+        const pendingTbody = document.getElementById('pendingOrderTableBody');
+        const completedTbody = document.getElementById('completedOrderTableBody');
+        if(!pendingTbody || !completedTbody) return;
+
+        pendingTbody.innerHTML = '';
+        completedTbody.innerHTML = '';
+
+        if (orders.length === 0) {
+            pendingTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無訂單記錄！</td></tr>`;
+            completedTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">目前尚無已完成訂單記錄！</td></tr>`;
+            document.getElementById('totalOrdersCount').textContent = '0';
+            document.getElementById('totalSalesAmount').textContent = '$0';
+            document.getElementById('pendingOrdersCountBadge').textContent = '0';
+            document.getElementById('completedOrdersCountBadge').textContent = '0';
+            renderOrderStatusSettingModal();
+            return;
+        }
+
+        orders.forEach(o => {
+            const amount = parseInt(o.totalAmount || o.total || 0);
+            totalAmount += amount;
+            const isCompleted = (o.status && o.status.includes('已完成')) || o.status === '✅ 已完成';
+
+            if (isCompleted) completedCount++;
+            else pendingCount++;
+
+            let statusOptionsHtml = statuses.map(st => `<option value="${st}" ${o.status === st ? 'selected' : ''}>${st}</option>`).join('');
+            if (!statuses.includes(o.status)) {
+                statusOptionsHtml += `<option value="${o.status}" selected>${o.status}</option>`;
+            }
+
+            const rowHtml = `
                 <tr>
-                    <td><strong>${rep.id}</strong></td>
-                    <td>${rep.name}</td>
-                    <td>${rep.phone}</td>
-                    <td><span class="badge bg-primary">${rep.category}</span><br><small>${rep.times}</small></td>
-                    <td><small>${rep.desc}</small></td>
-                    <td><small>${rep.date}</small></td>
-                    <td><span class="badge bg-warning text-dark">${rep.status || '處理中'}</span></td>
-                    <td><button class="btn btn-sm btn-outline-success" onclick="updateRepairStatus('${rep.id}')">完工結案</button></td>
+                    <td><small class="fw-bold">${o.orderId || o.id}</small></td>
+                    <td>
+                        <strong>${o.name || o.customerName || '未具名'}</strong><br>
+                        <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>${o.phone || o.customerPhone || '無電話'}</small><br>
+                        <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>${o.address || o.customerAddress || '無地址'}</small>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick='showOrderDetail(${JSON.stringify(o.items || o.cart || []).replace(/'/g, "&quot;")})'>
+                            <i class="fa-solid fa-eye me-1"></i>查看明細
+                        </button>
+                    </td>
+                    <td class="fw-bold text-danger">$${amount}</td>
+                    <td><small class="text-muted">${o.time || o.date || new Date().toLocaleString()}</small></td>
+                    <td>
+                        <div class="input-group input-group-sm" style="width: 160px;">
+                            <select class="form-select" id="orderStatus_${o.id || o.orderId}" onchange="updateOrderStatus('${o.id || o.orderId}')">
+                                ${statusOptionsHtml}
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        ${!isCompleted ? `<button class="btn btn-sm btn-success me-1" onclick="completeOrderAndAddSales('${o.id || o.orderId}')" title="點擊直接將訂單改為已完成並自動計入商品銷量"><i class="fa-solid fa-check me-1"></i>完成計數</button>` : ''}
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder('${o.id || o.orderId}')"><i class="fa-solid fa-trash"></i></button>
+                    </td>
                 </tr>
+            `;
+
+            if (isCompleted) {
+                completedTbody.innerHTML += rowHtml;
+            } else {
+                pendingTbody.innerHTML += rowHtml;
+            }
+        });
+
+        document.getElementById('totalOrdersCount').textContent = totalCount;
+        document.getElementById('totalSalesAmount').textContent = `$${totalAmount}`;
+        document.getElementById('pendingOrdersCountBadge').textContent = pendingCount;
+        document.getElementById('completedOrdersCountBadge').textContent = completedCount;
+        renderOrderStatusSettingModal();
+    }
+
+    function updateOrderStatus(id) {
+        const selectEl = document.getElementById(`orderStatus_${id}`);
+        if (!selectEl) return;
+        const newStatus = selectEl.value;
+        let orders = dbCache.orders;
+        const idx = orders.findIndex(x => (x.id === id || x.orderId === id));
+        if (idx > -1) {
+            orders[idx].status = newStatus;
+            db.ref('shop_orders').set(orders);
+            alert(`🎉 訂單狀態已更新為：${newStatus}`);
+        }
+    }
+
+    function completeOrderAndAddSales(id) {
+        let orders = dbCache.orders;
+        let products = getStoredProducts();
+        const idx = orders.findIndex(x => (x.id === id || x.orderId === id));
+        if (idx === -1) return;
+
+        const order = orders[idx];
+        if (order.status && order.status.includes('已完成')) {
+            alert('此訂單已經是完成狀態！');
+            return;
+        }
+
+        const items = order.items || order.cart || [];
+        items.forEach(item => {
+            const pIdx = products.findIndex(p => p.name === item.name || p.id === item.id);
+            if (pIdx > -1) {
+                products[pIdx].sales = (products[pIdx].sales || 0) + (parseInt(item.quantity) || 1);
+            }
+        });
+
+        saveStoredProducts(products);
+        orders[idx].status = '✅ 已完成';
+        db.ref('shop_orders').set(orders);
+        alert('🎉 訂單已設為完成，並已自動將銷量累計至對應商品！');
+    }
+
+    function deleteOrder(id) {
+        if (confirm('確定要刪除這筆訂單記錄嗎？')) {
+            let orders = dbCache.orders.filter(x => x.id !== id && x.orderId !== id);
+            db.ref('shop_orders').set(orders);
+        }
+    }
+
+    function showOrderDetail(items) {
+        const body = document.getElementById('orderDetailModalBody');
+        body.innerHTML = '';
+        if (!items || items.length === 0) {
+            body.innerHTML = `<p class="text-muted">無詳細商品明細</p>`;
+        } else {
+            let html = `<ul class="list-group">`;
+            items.forEach(item => {
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${item.name}</strong>
+                            ${item.spec ? `<br><small class="text-muted">規格：${item.spec}</small>` : ''}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">數量：${item.quantity || 1} | 單價：$${item.price || 0}</span>
+                    </li>
+                `;
+            });
+            html += `</ul>`;
+            body.innerHTML = html;
+        }
+        new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+    }
+
+    function renderOrderStatusSettingModal() {
+        const statuses = getStoredOrderStatuses();
+        const listGroup = document.getElementById('orderStatusListGroup');
+        if(!listGroup) return;
+        listGroup.innerHTML = '';
+        statuses.forEach((st, idx) => {
+            listGroup.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${st}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrderStatus(${idx})"><i class="fa-solid fa-trash"></i></button>
+                </li>
             `;
         });
     }
 
-    function updateRepairStatus(id) {
-        let repairs = dbCache.repairs;
-        const idx = repairs.findIndex(r => r.id === id);
-        if (idx > -1) {
-            repairs[idx].status = "✅ 已完工 (結案)";
-            db.ref('shop_repairs').set(repairs);
-            alert('預約單狀態已更新為已完工！');
+    function addNewOrderStatus() {
+        const input = document.getElementById('newOrderStatusInput');
+        const val = input.value.trim();
+        if (!val) { alert('請輸入狀態名稱！'); return; }
+        let statuses = getStoredOrderStatuses();
+        if (statuses.includes(val)) { alert('此狀態已存在！'); return; }
+        statuses.push(val);
+        saveStoredOrderStatuses(statuses);
+        input.value = '';
+        alert('🎉 新增訂單狀態成功！');
+    }
+
+    function deleteOrderStatus(idx) {
+        let statuses = getStoredOrderStatuses();
+        if (statuses.length <= 1) { alert('至少需要保留一個訂單狀態！'); return; }
+        if (confirm('確定要刪除這個訂單狀態嗎？')) {
+            statuses.splice(idx, 1);
+            saveStoredOrderStatuses(statuses);
         }
     }
 
-    function renderAdminPasswordResets() {
-        const tbody = document.getElementById('passwordResetTableBody');
+    function renderAdminRepairs() {
+        const repairs = dbCache.repairs;
+        const tbody = document.getElementById('repairTableBody');
         if(!tbody) return;
-        const resets = dbCache.password_resets || [];
-        tbody.innerHTML = resets.length === 0 ? `<tr><td colspan="5" class="text-center text-muted py-4">目前尚無忘記密碼申請記錄！</td></tr>` : '';
-        
-        resets.forEach(item => {
-            const isSent = item.status && item.status.includes('已發送');
+        tbody.innerHTML = '';
+        if (repairs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">目前尚無維修諮詢單據記錄！</td></tr>`;
+            return;
+        }
+        repairs.forEach(r => {
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${item.id || 'N/A'}</strong></td>
-                    <td>${item.phone || item.email || '未提供'}</td>
-                    <td><small>${item.date || ''}</small></td>
-                    <td><span class="badge ${isSent ? 'bg-success' : 'bg-warning text-dark'}">${item.status || '待後台發送驗證碼至信箱'}</span></td>
+                    <td><small class="fw-bold">${r.id || r.repairId || 'N/A'}</small></td>
+                    <td><strong>${r.name || r.customerName || '訪客'}</strong></td>
+                    <td>${r.phone || r.customerPhone || '無'}</td>
+                    <td><span class="badge bg-warning text-dark">${r.serviceItem || r.category || '一般諮詢'}</span><br><small class="text-muted">${r.timeSlot || ''}</small></td>
+                    <td><small class="text-muted text-truncate-2" style="max-width:200px; display:inline-block;">${r.description || r.issue || ''}</small></td>
+                    <td><small class="text-muted">${r.time || r.date || ''}</small></td>
+                    <td><span class="badge bg-secondary">${r.status || '處理中'}</span></td>
                     <td>
-                        <button class="btn btn-sm ${isSent ? 'btn-outline-secondary' : 'btn-danger'} w-100" onclick="sendPasswordResetEmailToCustomer('${item.id}', '${item.phone || item.email}')">
-                            <i class="fa-solid fa-paper-plane me-1"></i>${isSent ? '重新發送驗證碼' : '發送驗證碼至信箱'}
-                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRepair(${r.id})"><i class="fa-solid fa-trash"></i></button>
                     </td>
                 </tr>
             `;
         });
     }
 
-    function sendPasswordResetEmailToCustomer(resetId, targetEmail) {
-        if (!targetEmail) { alert('❌ 找不到客人的聯絡帳號或信箱！'); return; }
+    function deleteRepair(id) {
+        if (confirm('確定要刪除這筆維修諮詢單嗎？')) {
+            let repairs = dbCache.repairs.filter(x => x.id !== id);
+            db.ref('shop_repairs').set(repairs);
+        }
+    }
 
-        if (confirm(`確定要發送重設密碼驗證信到 ${targetEmail} 嗎？`)) {
-            const verifyCode = Math.floor(100000 + Math.random() * 900000);
-            let resets = dbCache.password_resets || [];
-            const idx = resets.findIndex(r => r.id === resetId);
-            if (idx > -1) {
-                resets[idx].status = "✅ 已發送驗證碼至信箱";
-                resets[idx].verifyCode = verifyCode;
-                db.ref('shop_password_resets').set(resets);
-                alert(`🎉 成功發送驗證碼 (${verifyCode}) 至 ${targetEmail}！`);
-            }
+    function renderAdminPasswordResets() {
+        const resets = dbCache.password_resets;
+        const tbody = document.getElementById('passwordResetTableBody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        if (resets.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">目前尚無忘記密碼申請記錄！</td></tr>`;
+            return;
+        }
+        resets.forEach(pr => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><small class="fw-bold">${pr.id || 'N/A'}</small></td>
+                    <td><strong>${pr.account || pr.email || pr.phone || '未知'}</strong></td>
+                    <td><small class="text-muted">${pr.time || new Date().toLocaleString()}</small></td>
+                    <td><span class="badge bg-info text-dark">${pr.status || '待處理'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="sendPasswordResetCode('${pr.id}')"><i class="fa-solid fa-paper-plane me-1"></i>發送驗證碼</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deletePasswordReset(${pr.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function sendPasswordResetCode(id) {
+        let resets = dbCache.password_resets;
+        const idx = resets.findIndex(x => x.id == id);
+        if (idx > -1) {
+            resets[idx].status = '已發送驗證碼';
+            db.ref('shop_password_resets').set(resets);
+            alert('🎉 成功發送密碼重設驗證通知！');
+        }
+    }
+
+    function deletePasswordReset(id) {
+        if (confirm('確定要刪除這筆忘記密碼申請記錄嗎？')) {
+            let resets = dbCache.password_resets.filter(x => x.id != id);
+            db.ref('shop_password_resets').set(resets);
         }
     }
 </script>
