@@ -360,7 +360,35 @@
 
 <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5 class="modal-title fw-bold" id="productModalTitle">新增商品</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productForm"><input type="hidden" id="prodEditId"><div class="mb-3"><label class="form-label fw-bold">商品名稱</label><input type="text" class="form-control" id="prodName" required></div><div class="row mb-3"><div class="col-md-6"><label class="form-label fw-bold">商品類別</label><select class="form-select" id="prodCategory" required></select></div><div class="col-md-3"><label class="form-label fw-bold">預設價格 (NT$)</label><input type="number" class="form-control" id="prodPrice" required min="0"></div><div class="col-md-3"><label class="form-label fw-bold">初始銷量 (預設0)</label><input type="number" class="form-control" id="prodSales" value="0" min="0"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-primary">商品規格 / 款式與價格</label><div class="row g-2 mb-2"><div class="col-md-7"><input type="text" class="form-control" id="newSpecNameInput" placeholder="規格名稱"></div><div class="col-md-3"><input type="number" class="form-control" id="newSpecPriceInput" placeholder="價格" min="0"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" type="button" onclick="addSpecOption()">新增</button></div></div><div id="specsContainer" class="d-flex flex-wrap gap-2 mt-2"></div></div><div class="mb-3 p-3 border rounded bg-light"><label class="form-label fw-bold text-success">商品多圖輪播設定</label><div class="input-group mb-2"><input type="file" class="form-control" id="prodImageFile" accept="image/*" multiple onchange="handleImageFiles(event)"><button class="btn btn-outline-success" type="button" onclick="addImgUrlInput()">加入圖片網址</button></div><div id="imagePreviewContainer" class="d-flex flex-wrap mt-2"></div></div><div class="mb-3"><label class="form-label fw-bold">商品內容介紹</label><textarea class="form-control" id="prodDescription" rows="4"></textarea></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="saveProduct()">儲存上架</button></div></div></div></div>
 
-<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-secondary text-white"><h5 class="modal-title fw-bold">管理商品類別</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="input-group mb-3"><input type="text" class="form-control" id="newCategoryName" placeholder="輸入新類別名稱..."><button class="btn btn-success" type="button" onclick="addCategory()">新增類別</button></div><hr><ul class="list-group" id="categoryListGroup"></ul></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div></div></div></div>
+<!-- 🛠️ 修改：增強版「管理商品類別」彈窗 (可編輯與位子移動) -->
+<div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-layer-group me-2"></i>管理商品類別與順序</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-3">
+                        <input type="text" class="form-control" id="newCategoryIcon" placeholder="符號 🛠️" value="🛠️">
+                    </div>
+                    <div class="col-6">
+                        <input type="text" class="form-control" id="newCategoryName" placeholder="新類別名稱...">
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-success w-100 fw-bold" type="button" onclick="addCategory()">新增類別</button>
+                    </div>
+                </div>
+                <hr>
+                <ul class="list-group" id="categoryListGroup"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -378,7 +406,12 @@
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
 
-    const defaultCategories = ["烘焙與茶飲", "生活用品", "水電五金"];
+    // 🛠️ 預設類別結構升級為包含名稱與圖示符號
+    const defaultCategories = [
+        { name: "烘焙與茶飲", icon: "🛠️" },
+        { name: "生活用品", icon: "🛠️" },
+        { name: "水電五金", icon: "🛠️" }
+    ];
     const defaultOrderStatuses = ["處理中 (準備備貨中)", "已付款 (準備出貨)", "已出貨", "✅ 已完成"];
     const defaultProducts = [{ id: 1, name: "招牌手作烘焙麵包", category: "烘焙與茶飲", price: 120, sales: 0, specs: [{ name: "標準規格", price: 120 }], img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80", images: ["https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80"], description: "嚴選優質小麥與天然酵母手作烘焙。" }];
 
@@ -391,10 +424,22 @@
 
     let dbCache = { categories: [], order_statuses: [], products: [], services: [], history_cases: [], orders: [], repairs: [], password_resets: [] };
 
+    // 相容性正規化：將原本舊格式（純字串）轉為物件 { name, icon }
+    function normalizeCategories(data) {
+        if (!data) return defaultCategories;
+        const list = Array.isArray(data) ? data : Object.values(data);
+        return list.map(item => {
+            if (typeof item === 'string') {
+                return { name: item, icon: "🛠️" };
+            }
+            return { name: item.name || '', icon: item.icon || "🛠️" };
+        });
+    }
+
     function initFirebaseListeners() {
         db.ref('shop_categories').on('value', (snapshot) => {
             const val = snapshot.val();
-            dbCache.categories = val ? (Array.isArray(val) ? val : Object.values(val)) : defaultCategories;
+            dbCache.categories = normalizeCategories(val);
             if(!val) db.ref('shop_categories').set(defaultCategories);
             renderAdminCategoryTabs();
             updateCategorySelectOptions();
@@ -873,12 +918,13 @@
         }
     }
 
+    // 🛠️ 修改：渲染頁面頂部的類別頁籤（顯示使用者設定的圖示符號）
     function renderAdminCategoryTabs() {
         const container = document.getElementById('adminCategoryTabsContainer');
         if(!container) return;
         let html = `<button type="button" class="admin-cat-btn ${currentAdminCategory === 'all' ? 'active' : ''}" onclick="filterAdminCategory('all', this)">🔥 全部商品</button>`;
         getStoredCategories().forEach(cat => {
-            html += `<button type="button" class="admin-cat-btn ${currentAdminCategory === cat ? 'active' : ''}" onclick="filterAdminCategory('${cat}', this)">🛠️ ${cat}</button>`;
+            html += `<button type="button" class="admin-cat-btn ${currentAdminCategory === cat.name ? 'active' : ''}" onclick="filterAdminCategory('${cat.name}', this)">${cat.icon || '🛠️'} ${cat.name}</button>`;
         });
         container.innerHTML = html;
     }
@@ -926,7 +972,7 @@
         const select = document.getElementById('prodCategory');
         if (!select) return;
         select.innerHTML = '';
-        getStoredCategories().forEach(cat => { select.innerHTML += `<option value="${cat}">${cat}</option>`; });
+        getStoredCategories().forEach(cat => { select.innerHTML += `<option value="${cat.name}">${cat.icon || ''} ${cat.name}</option>`; });
     }
 
     const categoryModalElement = document.getElementById('categoryModal');
@@ -934,39 +980,109 @@
         categoryModalElement.addEventListener('show.bs.modal', function () { renderCategoryListGroup(); });
     }
 
+    // 🛠️ 修改：重新渲染「管理商品類別」彈窗清單（包含編輯與前後移動按鈕）
     function renderCategoryListGroup() {
         const listGroup = document.getElementById('categoryListGroup');
         if(!listGroup) return;
         listGroup.innerHTML = '';
-        getStoredCategories().forEach((cat, index) => {
+        const categories = getStoredCategories();
+
+        if(categories.length === 0) {
+            listGroup.innerHTML = `<li class="list-group-item text-center text-muted">目前尚無類別，請新增！</li>`;
+            return;
+        }
+
+        categories.forEach((cat, index) => {
             listGroup.innerHTML += `
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>${cat}</span>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${index})"><i class="fa-solid fa-xmark"></i></button>
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                    <div class="d-flex align-items-center gap-2" style="max-width: 55%;">
+                        <span class="fs-5">${cat.icon || '🛠️'}</span>
+                        <span class="fw-bold text-dark text-truncate">${cat.name}</span>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="moveCategory(${index}, -1)" ${index === 0 ? 'disabled' : ''} title="向上移動">⬆️</button>
+                        <button class="btn btn-outline-secondary" onclick="moveCategory(${index}, 1)" ${index === categories.length - 1 ? 'disabled' : ''} title="向下移動">⬇️</button>
+                        <button class="btn btn-outline-primary" onclick="editCategory(${index})" title="編輯類別"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-outline-danger" onclick="deleteCategory(${index})" title="刪除類別"><i class="fa-solid fa-trash"></i></button>
+                    </div>
                 </li>
             `;
         });
     }
 
+    // 🛠️ 修改：新增商品類別 (包含圖示與名稱)
     function addCategory() {
-        const input = document.getElementById('newCategoryName');
-        const name = input.value.trim();
-        if (!name) return;
+        const nameInput = document.getElementById('newCategoryName');
+        const iconInput = document.getElementById('newCategoryIcon');
+        const name = nameInput.value.trim();
+        const icon = iconInput.value.trim() || '🛠️';
+
+        if (!name) { alert('請輸入類別名稱！'); return; }
         let categories = getStoredCategories();
-        if (categories.includes(name)) { alert('已存在！'); return; }
-        categories.push(name);
+        if (categories.some(c => c.name === name)) { alert('該類別名稱已存在！'); return; }
+        
+        categories.push({ name, icon });
         saveStoredCategories(categories);
-        input.value = '';
+        nameInput.value = '';
+        iconInput.value = '🛠️';
         renderCategoryListGroup();
         renderAdminCategoryTabs();
         updateCategorySelectOptions();
         renderAdminProducts(currentAdminCategory);
     }
 
+    // 🛠️ 新增：編輯/修改類別名稱與符號
+    function editCategory(index) {
+        let categories = getStoredCategories();
+        const cat = categories[index];
+        const newName = prompt('請輸入新的類別名稱：', cat.name);
+        if (newName === null) return; // 使用者取消
+        const trimmedName = newName.trim();
+        if (!trimmedName) { alert('類別名稱不能為空！'); return; }
+
+        const newIcon = prompt('請輸入類別前面的圖示符號 (如 🛠️, ☕, 🥐)：', cat.icon || '🛠️');
+        
+        // 更新商品原本關聯的舊類別名稱
+        const oldName = cat.name;
+        cat.name = trimmedName;
+        cat.icon = (newIcon !== null && newIcon.trim()) ? newIcon.trim() : (cat.icon || '🛠️');
+
+        if (oldName !== trimmedName) {
+            let products = getStoredProducts();
+            products.forEach(p => {
+                if (p.category === oldName) p.category = trimmedName;
+            });
+            saveStoredProducts(products);
+        }
+
+        saveStoredCategories(categories);
+        renderCategoryListGroup();
+        renderAdminCategoryTabs();
+        updateCategorySelectOptions();
+        renderAdminProducts(currentAdminCategory);
+    }
+
+    // 🛠️ 新增：移動類別位置順序 (dir: -1 為往上, 1 為往下)
+    function moveCategory(index, dir) {
+        let categories = getStoredCategories();
+        const targetIndex = index + dir;
+        if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+        // 調換陣列元素位置
+        const temp = categories[index];
+        categories[index] = categories[targetIndex];
+        categories[targetIndex] = temp;
+
+        saveStoredCategories(categories);
+        renderCategoryListGroup();
+        renderAdminCategoryTabs();
+        updateCategorySelectOptions();
+    }
+
     function deleteCategory(index) {
         let categories = getStoredCategories();
-        if (categories.length <= 1) { alert('至少保留一個！'); return; }
-        if (confirm('確定刪除？')) {
+        if (categories.length <= 1) { alert('至少保留一個商品類別！'); return; }
+        if (confirm('確定要刪除這個類別嗎？')) {
             categories.splice(index, 1);
             saveStoredCategories(categories);
             renderCategoryListGroup();
@@ -1101,7 +1217,6 @@
         }
     }
 
-    // 🔥 核心修復：後台確認訂單完成後，自動將各商品銷售數量累加至商品銷量
     function completeOrderAndCount(orderId) {
         let orders = dbCache.orders;
         let products = getStoredProducts();
@@ -1145,7 +1260,7 @@
             }
         } else {
             document.getElementById('productModalTitle').textContent = '新增商品';
-            document.getElementById('prodSales').value = 0; // 🔥 改為預設 0，取消隨便亂報數字
+            document.getElementById('prodSales').value = 0;
             currentEditingImages = ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'];
         }
         renderSpecsContainer();
