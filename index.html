@@ -707,13 +707,14 @@
             text-align: center;
         }
 
-        /* 名片專屬展示區塊樣式（已移除邊框） */
+        /* 名片專屬輪播展示區塊樣式 */
         .business-card-showcase {
             margin-top: 10px;
             text-align: center;
-            background: transparent;
-            border: none;
-            padding: 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
         }
         .business-card-showcase img {
             width: 100%;
@@ -728,10 +729,10 @@
             transform: scale(1.02);
         }
         .business-card-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
-            color: #64748b;
-            margin-bottom: 8px;
+            color: #0f172a;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1277,11 +1278,11 @@
                             </div>
                         </div>
 
-                       <!-- 支援自動輪播的名片展示區塊 -->
-<div class="business-card-showcase">
-    <div class="business-card-title">聯絡名片</div>
-    <img id="rotatingBusinessCard" src="1.png" alt="師傅名片" onclick="nextBusinessCard()" title="點擊可手動切換下一張" onerror="this.src='2.png'">
-</div>
+                        <!-- 支援自動輪播的名片展示區塊 -->
+                        <div class="business-card-showcase">
+                            <div class="business-card-title">📇 聯絡名片 (點擊可切換下一張)</div>
+                            <img id="rotatingBusinessCard" src="1_2.png" alt="師傅名片" onclick="nextBusinessCard()" title="點擊可手動切換下一張" onerror="this.src='1.png'">
+                        </div>
                     </div>
 
                     <div class="contact-form">
@@ -1535,7 +1536,7 @@
         let selectedTimesArray = [];
         let currentUserEmail = localStorage.getItem('currentUserEmail') || null;
 
-        // 名片自動輪播設定：已更新為您提供的兩張名片 (1_2.png 與 2_2.png)
+        // 名片自動輪播設定：使用您的兩張名片圖片
         const businessCards = [
             "1_2.png",
             "2_2.png"
