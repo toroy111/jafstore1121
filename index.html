@@ -707,21 +707,23 @@
             text-align: center;
         }
 
-        /* 名片專屬輪播展示區塊樣式 */
+        /* 名片專屬輪播展示區塊樣式（已移除框線與陰影，呈現自然無框感） */
         .business-card-showcase {
             margin-top: 10px;
             text-align: center;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 15px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 5px 0;
         }
         .business-card-showcase img {
             width: 100%;
             max-width: 100%;
             height: auto;
-            border-radius: 6px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            border: none;
+            box-shadow: none;
+            background: transparent;
             transition: transform 0.2s;
             cursor: pointer;
         }
@@ -1278,10 +1280,9 @@
                             </div>
                         </div>
 
-                        <!-- 支援自動輪播的名片展示區塊 -->
+                        <!-- 支援自動輪播的名片展示區塊（外框已移除） -->
                         <div class="business-card-showcase">
-                            <div class="business-card-title">📇 聯絡名片 (點擊可切換下一張)</div>
-                            <!-- 修正：預設 src 改對應第一張名片，onerror 確保找不到時有備用圖 -->
+                            <div class="business-card-title">📇 聯絡名片 </div>
                             <img id="rotatingBusinessCard" src="1.png" alt="師傅名片" onclick="nextBusinessCard()" title="點擊可手動切換下一張" onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=500&q=80'">
                         </div>
                     </div>
@@ -1537,7 +1538,7 @@
         let selectedTimesArray = [];
         let currentUserEmail = localStorage.getItem('currentUserEmail') || null;
 
-        // 名片自動輪播設定：確保對應正確的圖片檔名 (例如 "1.png" 與 "2.png"，或您實際上傳的檔名)
+        // 名片自動輪播設定：確保對應正確的圖片檔名 (例如 "1.png" 與 "2.png")
         const businessCards = [
             "1.png",
             "2.png"
@@ -1842,7 +1843,7 @@
                     container.innerHTML += `
                         <div class="cart-item-row">
                             <div><strong>${item.name}</strong><br><small>${item.spec} × ${item.qty}</small></div>
-                            <div class="text-end text-success fw-bold">$${item.price * item.qty} <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 ms-2" onclick="removeCartItem(${index})">刪除</button></div>
+                            <div class="text-end text-success fw-bold">$${item.price * item.qty}</div>
                         </div>
                     `;
                 });
@@ -1856,37 +1857,71 @@
             }
         }
 
-        function removeCartItem(index) {
-            cart.splice(index, 1);
-            updateCartBadge();
-            openCartModal();
-        }
-
         function toggleDeliveryAddressField() {
-            const deliveryType = document.getElementById('checkoutDeliveryType').value;
-            const addressInputGroup = document.getElementById('addressInputGroup');
-            const addressLabelText = document.getElementById('addressLabelText');
-            const storeInfoGroup = document.getElementById('storeInfoGroup');
-            const addressInput = document.getElementById('checkoutCustomerAddress');
+            const type = document.getElementById('checkoutDeliveryType').value;
+            const addressGroup = document.getElementById('addressInputGroup');
+            const storeGroup = document.getElementById('storeInfoGroup');
+            const addressLabel = document.getElementById('addressLabelText');
 
-            if (deliveryType === '住家地址') {
-                addressInputGroup.style.display = 'block';
-                addressLabelText.textContent = '收件/配送地址';
-                addressInput.placeholder = '請輸入完整地址';
-                storeInfoGroup.style.display = 'none';
+            if (type === '住家地址') {
+                addressGroup.style.display = 'block';
+                storeGroup.style.display = 'none';
+                addressLabel.textContent = '收件完整地址';
+                document.getElementById('checkoutCustomerAddress').required = true;
+                document.getElementById('checkoutStoreInfo').required = false;
             } else {
-                addressInputGroup.style.display = 'none';
-                storeInfoGroup.style.display = 'block';
+                addressGroup.style.display = 'none';
+                storeGroup.style.display = 'block';
+                document.getElementById('checkoutCustomerAddress').required = false;
+                document.getElementById('checkoutStoreInfo').required = true;
             }
         }
 
-        // 切換水電工程區塊展開/隱藏
+        function submitCheckoutOrder(e) {
+            e.preventDefault();
+            if (cart.length === 0) {
+                alert('購物車是空的，無法結帳！');
+                return;
+            }
+
+            const name = document.getElementById('checkoutCustomerName').value;
+            const phone = document.getElementById('checkoutCustomerPhone').value;
+            const deliveryType = document.getElementById('checkoutDeliveryType').value;
+            const address = deliveryType === '住家地址' ? document.getElementById('checkoutCustomerAddress').value : document.getElementById('checkoutStoreInfo').value;
+            const payment = document.getElementById('checkoutPaymentMethod').value;
+
+            const totalAmount = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+            const newOrder = {
+                orderId: 'ORD_' + Date.now(),
+                name,
+                phone,
+                deliveryType,
+                address,
+                payment,
+                items: cart,
+                totalAmount,
+                status: '訂單處理中',
+                timestamp: new Date().toISOString()
+            };
+
+            db.ref('shop_orders').push(newOrder).then(() => {
+                alert('🎉 訂單已成功送出！感謝您的購買。');
+                cart = [];
+                updateCartBadge();
+                document.getElementById('cartModalOverlay').classList.remove('active');
+                e.target.reset();
+            }).catch(err => {
+                alert('送出訂單失敗，請稍後再試：' + err.message);
+            });
+        }
+
         function toggleWaterElectric() {
             const section = document.getElementById('waterElectricSection');
             const btn = document.getElementById('toggleBtn');
             section.classList.toggle('show');
             if (section.classList.contains('show')) {
-                btn.textContent = '隱藏水電弱電工程與預選單';
+                btn.textContent = '收起水電弱電工程與預選單';
                 section.scrollIntoView({ behavior: 'smooth' });
             } else {
                 btn.textContent = '展開水電弱電工程與預選單';
@@ -1900,9 +1935,9 @@
             services.forEach(s => {
                 grid.innerHTML += `
                     <div class="service-card" onclick="openCaseModal(${s.id})">
-                        <div class="service-icon"><i class="${s.icon || 'fa-solid fa-bolt'}"></i></div>
+                        <div class="service-icon"><i class="${s.icon || 'fa-solid fa-tools'}">🛠️</i></div>
                         <h3>${s.name}</h3>
-                        <p>${s.description}</p>
+                        <p>${s.description || ''}</p>
                     </div>
                 `;
             });
@@ -1911,7 +1946,7 @@
         function updateRepairCategorySelect() {
             const select = document.getElementById('repairCategory');
             if (!select) return;
-            let html = `<option value="" disabled selected>請選擇水電諮詢項目</option>`;
+            let html = '<option value="" disabled selected>請選擇水電諮詢項目</option>';
             services.forEach(s => {
                 html += `<option value="${s.name}">${s.name}</option>`;
             });
@@ -1921,18 +1956,18 @@
         function openCaseModal(serviceId) {
             const service = services.find(s => s.id === serviceId);
             if (!service) return;
+
             document.getElementById('caseModalTitle').textContent = `${service.name} - 施工成果藝廊`;
             const body = document.getElementById('caseModalBodyContainer');
             
-            const matchedCases = historyCases.filter(c => c.serviceId === serviceId || c.category === service.name);
+            const matchedCases = historyCases.filter(c => c.serviceId == serviceId || c.category === service.name);
+
             if (matchedCases.length === 0) {
                 body.innerHTML = `
                     <div class="case-item-box">
-                        <h4 style="color:#0f172a; margin-bottom: 8px;">${service.name} 實務案例</h4>
-                        <p style="font-size: 14px; color:#64748b;">本項目包含專業標準施工流程與嚴格品質控管，歡迎透過右方表單預約諮詢！</p>
-                        <div class="case-media-grid">
-                            <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=300&q=80" alt="施工範例">
-                        </div>
+                        <h4>${service.name}</h4>
+                        <p class="text-muted mt-2">${service.description}</p>
+                        <p class="text-muted mt-3" style="font-size: 14px;">💡 目前此項目尚無上傳的施工實景照片，歡迎直接加 Line 或來電洽詢施工細節！</p>
                     </div>
                 `;
             } else {
@@ -1944,19 +1979,20 @@
                             if (m.type === 'video') {
                                 mediaHtml += `<video src="${m.url}" controls></video>`;
                             } else {
-                                mediaHtml += `<img src="${m.url}" alt="施工照">`;
+                                mediaHtml += `<img src="${m.url}" alt="施工照片">`;
                             }
                         });
                     }
                     body.innerHTML += `
                         <div class="case-item-box">
-                            <h4 style="color:#0f172a; margin-bottom: 8px;">${c.title || service.name}</h4>
-                            <p style="font-size: 14px; color:#475569; margin-bottom: 8px;">${c.desc || ''}</p>
+                            <h4>${c.title || service.name}</h4>
+                            <p style="font-size: 14px; color: #475569; margin-top: 6px;">${c.description || ''}</p>
                             <div class="case-media-grid">${mediaHtml}</div>
                         </div>
                     `;
                 });
             }
+
             document.getElementById('caseModalOverlay').classList.add('active');
         }
 
@@ -1974,45 +2010,43 @@
 
         document.addEventListener('click', function(e) {
             const dropdown = document.getElementById('timeDropdown');
-            const list = document.getElementById('dropdownList');
             if (dropdown && !dropdown.contains(e.target)) {
-                if(list) list.classList.remove('active');
+                document.getElementById('dropdownList').classList.remove('active');
             }
         });
 
         function addSelectedTime() {
-            const dayRadio = document.querySelector('input[name="dayRadio"]:checked');
-            const slotRadio = document.querySelector('input[name="slotRadio"]:checked');
+            const dayEl = document.querySelector('input[name="dayRadio"]:checked');
+            const slotEl = document.querySelector('input[name="slotRadio"]:checked');
 
-            if (!dayRadio || !slotRadio) {
-                alert('請務必同時勾選「星期」與「時段」後再新增！');
+            if (!dayEl || !slotEl) {
+                alert('請同時選擇一個「星期」與一個「時段」！');
                 return;
             }
 
-            const timeStr = `${dayRadio.value} ${slotRadio.value}`;
+            const timeStr = `${dayEl.value} ${slotEl.value}`;
             if (selectedTimesArray.includes(timeStr)) {
-                alert('這個時段已經在預約清單中了！');
+                alert('此時段已經在預約清單中了！');
                 return;
             }
 
             selectedTimesArray.push(timeStr);
-            renderSelectedTimes();
+            renderSelectedTimesTags();
             document.getElementById('dropdownList').classList.remove('active');
         }
 
         function removeSelectedTime(index) {
             selectedTimesArray.splice(index, 1);
-            renderSelectedTimes();
+            renderSelectedTimesTags();
         }
 
-        function renderSelectedTimes() {
+        function renderSelectedTimesTags() {
             const container = document.getElementById('selectedTimesContainer');
             const hiddenInput = document.getElementById('finalTimesInput');
 
             if (selectedTimesArray.length === 0) {
                 container.innerHTML = `<span style="font-size: 13px; color: #64748b;" id="emptyTimeTip">尚未新增時段（請點上方選單新增）</span>`;
                 hiddenInput.value = '';
-                hiddenInput.required = true;
             } else {
                 container.innerHTML = '';
                 selectedTimesArray.forEach((t, idx) => {
@@ -2024,94 +2058,42 @@
                     `;
                 });
                 hiddenInput.value = selectedTimesArray.join(', ');
-                hiddenInput.required = false;
             }
         }
 
-        // 送出結帳訂單
-        function submitCheckoutOrder(event) {
-            event.preventDefault();
-            if (cart.length === 0) {
-                alert('您的購物車是空的！');
-                return;
-            }
-
-            const name = document.getElementById('checkoutCustomerName').value.trim();
-            const phone = document.getElementById('checkoutCustomerPhone').value.trim();
-            const deliveryType = document.getElementById('checkoutDeliveryType').value;
-            const address = document.getElementById('checkoutCustomerAddress').value.trim();
-            const storeInfo = document.getElementById('checkoutStoreInfo').value.trim();
-            const payment = document.getElementById('checkoutPaymentMethod').value;
-
-            const totalAmount = cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
-            const orderId = 'ORD_' + Date.now();
-
-            const newOrder = {
-                orderId: orderId,
-                customerName: name,
-                customerPhone: phone,
-                deliveryType: deliveryType,
-                address: address,
-                storeInfo: storeInfo,
-                paymentMethod: payment,
-                items: cart,
-                totalAmount: totalAmount,
-                status: '未處理',
-                createdAt: new Date().toISOString()
-            };
-
-            db.ref('shop_orders').push(newOrder, (error) => {
-                if (error) {
-                    alert('送出訂單失敗，請稍後再試：' + error.message);
-                } else {
-                    alert('🎉 您的訂單已成功送出！後台管理者將盡快為您處理。');
-                    cart = [];
-                    updateCartBadge();
-                    document.getElementById('cartModalOverlay').classList.remove('active');
-                    event.target.reset();
-                }
-            });
-        }
-
-        // 送出水電預約諮詢
-        function submitRepairConsultation(event) {
-            event.preventDefault();
-            const name = document.getElementById('repairName').value.trim();
-            const phone = document.getElementById('repairPhone').value.trim();
-            const category = document.getElementById('repairCategory').value;
-            const times = document.getElementById('finalTimesInput').value;
-            const desc = document.getElementById('repairDesc').value.trim();
-
-            if (!times) {
+        function submitRepairConsultation(e) {
+            e.preventDefault();
+            if (selectedTimesArray.length === 0) {
                 alert('請至少新增一個方便的預約時段！');
                 return;
             }
 
-            const consultId = 'CONS_' + Date.now();
-            const newConsult = {
-                consultId: consultId,
-                name: name,
-                phone: phone,
-                category: category,
-                availableTimes: times,
-                description: desc,
-                status: '未聯絡',
-                createdAt: new Date().toISOString()
+            const name = document.getElementById('repairName').value;
+            const phone = document.getElementById('repairPhone').value;
+            const category = document.getElementById('repairCategory').value;
+            const description = document.getElementById('repairDesc').value;
+
+            const newConsultation = {
+                id: 'CONS_' + Date.now(),
+                name,
+                phone,
+                category,
+                times: selectedTimesArray.join(', '),
+                description,
+                status: '預約審核中',
+                timestamp: new Date().toISOString()
             };
 
-            db.ref('shop_consultations').push(newConsult, (error) => {
-                if (error) {
-                    alert('送出諮詢失敗：' + error.message);
-                } else {
-                    alert('✅ 您的水電預約諮詢已送出！師傅將會盡快與您電話聯繫確認。');
-                    selectedTimesArray = [];
-                    renderSelectedTimes();
-                    event.target.reset();
-                }
+            db.ref('shop_consultations').push(newConsultation).then(() => {
+                alert('🎉 水電諮詢預約已成功送出！師傅將盡快與您聯繫確認。');
+                e.target.reset();
+                selectedTimesArray = [];
+                renderSelectedTimesTags();
+            }).catch(err => {
+                alert('送出預約失敗，請稍後再試：' + err.message);
             });
         }
 
-        // 懸浮即時客服
         function toggleChatWidget() {
             const box = document.getElementById('chatWidgetBox');
             box.classList.toggle('active');
@@ -2123,88 +2105,254 @@
             const text = input.value.trim();
             if (!text) return;
 
-            const msgObj = {
+            const msgData = {
                 sender: 'customer',
                 text: text,
-                timestamp: Date.now()
+                timestamp: new Date().toISOString()
             };
 
-            db.ref(`chats/${activeChatUserId}`).push(msgObj, (err) => {
-                if (!err) {
-                    input.value = '';
-                }
+            db.ref(`chats/${activeChatUserId}`).push(msgData).then(() => {
+                input.value = '';
+            }).catch(err => {
+                alert('發送訊息失敗：' + err.message);
             });
         }
 
-        // 會員中心與訂單查詢互動佔位
         function openAuthModal() {
+            if (currentUserEmail) {
+                loadUserProfileData();
+            } else {
+                switchAuthTab('login');
+            }
             document.getElementById('authModalOverlay').classList.add('active');
         }
-        function closeAuthModal() {
-            document.getElementById('authModalOverlay').classList.remove('active');
-        }
-        function openOrderTrackModal() {
-            document.getElementById('orderTrackModalOverlay').classList.add('active');
-            const box = document.getElementById('orderTrackContentBox');
-            box.innerHTML = `<p class="text-center text-muted py-4">請輸入您的手機號碼或訂單編號以查詢進度...</p>
-                <div class="checkout-form-group">
-                    <input type="text" id="trackQueryInput" placeholder="輸入手機號碼">
-                </div>
-                <button type="button" class="auth-submit-btn" onclick="executeOrderTrack()">立即查詢</button>
-                <div id="trackResultContainer" style="margin-top: 15px;"></div>
-            `;
-        }
-        function closeOrderTrackModal(e) {
-            if (!e || e.target.id === 'orderTrackModalOverlay' || e.target.classList.contains('auth-close-btn')) {
-                document.getElementById('orderTrackModalOverlay').classList.remove('active');
+
+        function closeAuthModal(e) {
+            if (!e || e.target.id === 'authModalOverlay' || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('authModalOverlay').classList.remove('active');
             }
-        }
-        function executeOrderTrack() {
-            const q = document.getElementById('trackQueryInput').value.trim();
-            const resBox = document.getElementById('trackResultContainer');
-            if(!q) { alert('請輸入查詢資料！'); return; }
-            resBox.innerHTML = `<p class="text-center text-muted">正在查詢...</p>`;
-            
-            db.ref('shop_orders').orderByChild('customerPhone').equalTo(q).once('value', snapshot => {
-                const val = snapshot.val();
-                if(!val) {
-                    resBox.innerHTML = `<p class="text-danger text-center">查無此手機號碼相關的商城訂單紀錄。</p>`;
-                    return;
-                }
-                let html = `<div style="font-size: 13px;">`;
-                Object.values(val).forEach(o => {
-                    html += `<div style="background:#f8fafc; padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid #e2e8f0;">
-                        <strong>訂單編號：${o.orderId}</strong><br>
-                        狀態：<span class="text-primary fw-bold">${o.status}</span><br>
-                        金額：$${o.totalAmount}
-                    </div>`;
-                });
-                html += `</div>`;
-                resBox.innerHTML = html;
-            });
         }
 
         function switchAuthTab(tabName) {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-form-panel').forEach(p => p.classList.remove('active'));
+
             if (tabName === 'login') {
                 document.getElementById('tabLoginBtn').classList.add('active');
                 document.getElementById('loginFormPanel').classList.add('active');
+                document.getElementById('authModalTitle').textContent = '會員登入';
             } else if (tabName === 'register') {
                 document.getElementById('tabRegisterBtn').classList.add('active');
                 document.getElementById('registerFormPanel').classList.add('active');
+                document.getElementById('authModalTitle').textContent = '註冊新帳號';
             } else if (tabName === 'forgot') {
                 document.getElementById('tabForgotBtn').classList.add('active');
                 document.getElementById('forgotFormPanel').classList.add('active');
+                document.getElementById('authModalTitle').textContent = '忘記密碼';
             }
         }
 
-        function handleUserLogin(e) { e.preventDefault(); alert('登入功能已連動'); }
-        function handleUserRegister(e) { e.preventDefault(); alert('註冊功能已連動'); }
-        function handleUserForgot(e) { e.preventDefault(); alert('已發送驗證碼'); }
-        function handleVerifyAndResetPass(e) { e.preventDefault(); }
-        function handleUpdateProfile(e) { e.preventDefault(); }
-        function handleUserLogout() { localStorage.removeItem('currentUserEmail'); location.reload(); }
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value;
+
+            db.ref('shop_users').orderByChild('email').equalTo(email).once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    alert('查無此信箱帳號，請先註冊！');
+                    return;
+                }
+                let userData = null;
+                snapshot.forEach(child => {
+                    userData = child.val();
+                });
+
+                if (userData.password !== pass) {
+                    alert('密碼錯誤，請重新輸入！');
+                    return;
+                }
+
+                currentUserEmail = email;
+                localStorage.setItem('currentUserEmail', email);
+                alert('🎉 登入成功！');
+                document.getElementById('authModalOverlay').classList.remove('active');
+                location.reload();
+            });
+        }
+
+        function handleUserRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPass').value;
+
+            db.ref('shop_users').orderByChild('email').equalTo(email).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    alert('此信箱已經被註冊過了！');
+                    return;
+                }
+
+                const newUserKey = db.ref('shop_users').push().key;
+                const newUser = {
+                    id: newUserKey,
+                    name,
+                    phone,
+                    email,
+                    password: pass,
+                    created_at: new Date().toISOString()
+                };
+
+                db.ref(`shop_users/${newUserKey}`).set(newUser).then(() => {
+                    alert('🎉 註冊成功！請直接登入。');
+                    switchAuthTab('login');
+                });
+            });
+        }
+
+        function handleUserForgot(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('forgotInput').value.trim();
+            alert('系統已發送驗證碼（模擬：驗證碼為 1234）');
+            document.getElementById('forgotFormPanel').classList.remove('active');
+            document.getElementById('forgotVerifyPanel').classList.add('active');
+            window.tempForgotInput = inputVal;
+        }
+
+        function handleVerifyAndResetPass(e) {
+            e.preventDefault();
+            const code = document.getElementById('forgotCode').value.trim();
+            const newPass = document.getElementById('newResetPass').value;
+
+            if (code !== '1234') {
+                alert('驗證碼錯誤！（測試請輸入 1234）');
+                return;
+            }
+
+            const target = window.tempForgotInput;
+            db.ref('shop_users').once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    alert('找不到使用者資料');
+                    return;
+                }
+                let foundKey = null;
+                snapshot.forEach(child => {
+                    const u = child.val();
+                    if (u.email === target || u.phone === target) {
+                        foundKey = child.key;
+                    }
+                });
+
+                if (!foundKey) {
+                    alert('找不到對應的使用者帳號！');
+                    return;
+                }
+
+                db.ref(`shop_users/${foundKey}/password`).set(newPass).then(() => {
+                    alert('🎉 密碼修改成功！請使用新密碼登入。');
+                    document.getElementById('forgotVerifyPanel').classList.remove('active');
+                    switchAuthTab('login');
+                });
+            });
+        }
+
+        function loadUserProfileData() {
+            document.getElementById('authTabsContainer').style.display = 'none';
+            document.querySelectorAll('.auth-form-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('loggedInInfoPanel').classList.add('active');
+            document.getElementById('authModalTitle').textContent = '會員中心與編輯';
+
+            db.ref('shop_users').orderByChild('email').equalTo(currentUserEmail).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const u = child.val();
+                        document.getElementById('editName').value = u.name || '';
+                        document.getElementById('editPhone').value = u.phone || '';
+                        document.getElementById('editEmail').value = u.email || '';
+                        window.currentUserDbKey = child.key;
+                    });
+                }
+            });
+        }
+
+        function handleUpdateProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            const pass = document.getElementById('editPass').value;
+
+            const updates = { name, phone };
+            if (pass) {
+                updates.password = pass;
+            }
+
+            if (window.currentUserDbKey) {
+                db.ref(`shop_users/${window.currentUserDbKey}`).update(updates).then(() => {
+                    alert('🎉 會員資料更新成功！');
+                    document.getElementById('authModalOverlay').classList.remove('active');
+                });
+            }
+        }
+
+        function handleUserLogout() {
+            localStorage.removeItem('currentUserEmail');
+            currentUserEmail = null;
+            alert('已成功登出帳號！');
+            location.reload();
+        }
+
+        function openOrderTrackModal() {
+            const box = document.getElementById('orderTrackContentBox');
+            box.innerHTML = `<p class="text-center text-muted py-3">正在載入您的訂單與施工預約進度...</p>`;
+            document.getElementById('orderTrackModalOverlay').classList.add('active');
+
+            let ordersHtml = '<h5>🛒 您的商城訂單</h5>';
+            db.ref('shop_orders').once('value').then(snapOrders => {
+                if (!snapOrders.exists()) {
+                    ordersHtml += '<p class="text-muted small">尚無商城訂單記錄。</p>';
+                } else {
+                    ordersHtml += '<div style="max-height: 180px; overflow-y:auto; margin-bottom:15px;">';
+                    snapOrders.forEach(child => {
+                        const o = child.val();
+                        ordersHtml += `
+                            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:8px; font-size:13px;">
+                                <strong>訂單編號：</strong>${o.orderId}<br>
+                                <strong>總金額：</strong>$${o.totalAmount} | <strong>狀態：</strong><span style="color:#2563eb; font-weight:bold;">${o.status}</span>
+                            </div>
+                        `;
+                    });
+                    ordersHtml += '</div>';
+                }
+
+                let consultHtml = '<h5>🛠️ 您的水電預約諮詢</h5>';
+                db.ref('shop_consultations').once('value').then(snapConsult => {
+                    if (!snapConsult.exists()) {
+                        consultHtml += '<p class="text-muted small">尚無水電預約記錄。</p>';
+                    } else {
+                        consultHtml += '<div style="max-height: 180px; overflow-y:auto;">';
+                        snapConsult.forEach(child => {
+                            const c = child.val();
+                            consultHtml += `
+                                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:8px; font-size:13px;">
+                                    <strong>諮詢項目：</strong>${c.category}<br>
+                                    <strong>預約時段：</strong>${c.times}<br>
+                                    <strong>狀態：</strong><span style="color:#16a34a; font-weight:bold;">${c.status}</span>
+                                </div>
+                            `;
+                        });
+                        consultHtml += '</div>';
+                    }
+
+                    box.innerHTML = ordersHtml + consultHtml;
+                });
+            });
+        }
+
+        function closeOrderTrackModal(e) {
+            if (!e || e.target.id === 'orderTrackModalOverlay' || e.target.classList.contains('auth-close-btn')) {
+                document.getElementById('orderTrackModalOverlay').classList.remove('active');
+            }
+        }
     </script>
 </body>
 </html>
