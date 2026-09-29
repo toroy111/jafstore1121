@@ -812,7 +812,7 @@
             return;
         }
         cases.forEach(item => {
-            // 🛠️ 修正：確保能相容陣列、單一字串或多媒體格式，並正確取得預覽封面
+            // 🛠️ 已修復：相容陣列、單一字串、或舊有 img 欄位，確保前台與後台施工照片能正常顯示
             let cover = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=200&q=80';
             if (Array.isArray(item.media) && item.media.length > 0) {
                 cover = item.media[0];
@@ -920,7 +920,7 @@
             title, 
             category, 
             media: currentEditingHistoryMedia, 
-            img: currentEditingHistoryMedia.length > 0 ? currentEditingHistoryMedia[0] : '', // 同步兼容 img 欄位供前台讀取
+            img: currentEditingHistoryMedia.length > 0 ? currentEditingHistoryMedia[0] : '', 
             description 
         };
         if (editId) {
