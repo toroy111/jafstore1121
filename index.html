@@ -1667,10 +1667,19 @@
         function renderCategoryTabs() {
             const container = document.getElementById('categoryTabsContainer');
             if (!container) return;
+            
+            // 渲染「全部商品」按鈕
             let html = `<button type="button" class="category-btn ${currentCategory === 'all' ? 'active' : ''}" onclick="filterCategory('all', this)">🔥 全部商品</button>`;
+            
+            // 渲染動態分類按鈕（套用與全部商品一致的 .category-btn 樣式與點擊事件）
             categories.forEach(cat => {
-                html += `<button type="button" class="category-btn ${currentCategory === cat ? 'active' : ''}" onclick="filterCategory('${cat}', this)">🛠️ ${cat}</button>`;
+                const catName = (typeof cat === 'string') ? cat : (cat.name || '');
+                const catIcon = (typeof cat === 'string') ? '🛠️' : (cat.icon || '🛠️');
+                const isActive = (currentCategory === catName) ? 'active' : '';
+                
+                html += `<button type="button" class="category-btn ${isActive}" onclick="filterCategory('${catName}', this)">${catIcon} ${catName}</button>`;
             });
+            
             container.innerHTML = html;
         }
 
