@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -708,6 +707,36 @@
             text-align: center;
         }
 
+        /* 名片輪播專屬樣式 */
+        .business-card-container {
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: #000;
+        }
+        .business-card-slider {
+            position: relative;
+            width: 100%;
+            height: 250px;
+        }
+        .business-card-slide {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+        .business-card-slide.active {
+            opacity: 1;
+        }
+        .business-card-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .contact-form form {
             display: flex;
             flex-direction: column;
@@ -1246,6 +1275,21 @@
                                 <div><strong>服務範圍：</strong>大台北地區（水電弱電工程）</div>
                             </div>
                         </div>
+
+                        <!-- 放置您的名片自動輪播區塊 (位置對齊與原樣式) -->
+                        <div style="margin-top: 15px; text-align: center;">
+                            <div style="font-size: 14px; font-weight: bold; color: #1e293b; margin-bottom: 8px;">📇 聯絡名片</div>
+                            <div class="business-card-container">
+                                <div class="business-card-slider" id="businessCardSlider">
+                                    <div class="business-card-slide active">
+                                        <img src="1.png" alt="名片正面">
+                                    </div>
+                                    <div class="business-card-slide">
+                                        <img src="2.png" alt="名片背面">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="contact-form">
@@ -1600,7 +1644,22 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             initFrontendListeners();
+            initBusinessCardSlider(); // 啟動名片自動輪播
         });
+
+        // ==========================================
+        // 名片自動輪播控制邏輯
+        // ==========================================
+        function initBusinessCardSlider() {
+            const slides = document.querySelectorAll('.business-card-slide');
+            if (slides.length === 0) return;
+            let currentIdx = 0;
+            setInterval(() => {
+                slides[currentIdx].classList.remove('active');
+                currentIdx = (currentIdx + 1) % slides.length;
+                slides[currentIdx].classList.add('active');
+            }, 3000); // 每 3 秒切換一次
+        }
 
         // ==========================================
         // 4. 商城分類與商品列表渲染 (動態帶入已售出數量)
