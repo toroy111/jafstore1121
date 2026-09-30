@@ -656,6 +656,53 @@
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid #cbd5e1;
+            cursor: pointer; /* 提示可點擊放大 */
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .case-media-grid img:hover,
+        .case-media-grid video:hover {
+            transform: scale(1.03);
+            opacity: 0.9;
+        }
+
+        /* 施工成果圖片點擊放大專屬 Lightbox 彈跳視窗樣式 */
+        .image-lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+        }
+        .image-lightbox-overlay.active {
+            display: flex;
+        }
+        .image-lightbox-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .image-lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #ffffff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .image-lightbox-close:hover {
+            color: #c5a059;
         }
 
         /* ==========================================
@@ -1252,6 +1299,12 @@
             </div>
         </div>
 
+        <!-- 施工成果圖片點擊放大 Lightbox 彈跳視窗 -->
+        <div class="image-lightbox-overlay" id="imageLightboxOverlay" onclick="closeImageLightbox()">
+            <button class="image-lightbox-close" onclick="closeImageLightbox()">×</button>
+            <img id="lightboxImg" src="" alt="放大圖片" class="image-lightbox-content" onclick="event.stopPropagation()">
+        </div>
+
         <section id="contact" class="contact-section">
             <div class="container">
                 <div class="contact-grid">
@@ -1674,7 +1727,7 @@
             // 渲染動態分類按鈕（套用與全部商品一致的 .category-btn 樣式與點擊事件）
             categories.forEach(cat => {
                 const catName = (typeof cat === 'string') ? cat : (cat.name || '');
-                const catIcon = (typeof cat === 'string') ? '🛠️' : (cat.icon || '🛠️');
+                const catIcon = (typeof cat === 'string') ? '🛠️️' : (cat.icon || '🛠️');
                 const isActive = (currentCategory === catName) ? 'active' : '';
                 
                 html += `<button type="button" class="category-btn ${isActive}" onclick="filterCategory('${catName}', this)">${catIcon} ${catName}</button>`;
@@ -1797,7 +1850,7 @@
                 id: selectedProductForModal.id,
                 name: selectedProductForModal.name,
                 spec: selectedSpecForModal.name,
-                price: selectedSpecForModal.price,
+                price: selectedProductForModal.price,
                 qty: qty
             };
 
@@ -1957,7 +2010,12 @@
                     if (c.media && c.media.length > 0) {
                         c.media.forEach(url => {
                             const isVid = url.startsWith('data:video') || url.includes('.mp4');
-                            mediaHtml += isVid ? `<video src="${url}" controls></video>` : `<img src="${url}">`;
+                            if (isVid) {
+                                mediaHtml += `<video src="${url}" controls></video>`;
+                            } else {
+                                // 點擊圖片時直接帶入 Lightbox 放大顯示
+                                mediaHtml += `<img src="${url}" onclick="openImageLightbox('${url}')" title="點擊放大觀看">`;
+                            }
                         });
                     }
                     container.innerHTML += `
@@ -1976,6 +2034,20 @@
             if (!e || e.target.id === 'caseModalOverlay' || e.target.classList.contains('shop-close-btn')) {
                 document.getElementById('caseModalOverlay').classList.remove('active');
             }
+        }
+
+        // 開啟圖片放大 Lightbox 彈跳視窗
+        function openImageLightbox(imgUrl) {
+            const lightbox = document.getElementById('imageLightboxOverlay');
+            const lightboxImg = document.getElementById('lightboxImg');
+            lightboxImg.src = imgUrl;
+            lightbox.classList.add('active');
+        }
+
+        // 關閉圖片放大 Lightbox 彈跳視窗
+        function closeImageLightbox() {
+            const lightbox = document.getElementById('imageLightboxOverlay');
+            lightbox.classList.remove('active');
         }
 
         function toggleDropdown(e) {
